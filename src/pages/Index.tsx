@@ -432,7 +432,7 @@ const Index = () => {
             {/* Products Grid - 3 rows max */}
             <div className="flex-1">
               {productsLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {[...Array(MAX_PRODUCTS)].map((_, i) => (
                     <div key={i} className="space-y-4">
                       <Skeleton className="aspect-square rounded-2xl" />
@@ -442,7 +442,7 @@ const Index = () => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {displayProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
