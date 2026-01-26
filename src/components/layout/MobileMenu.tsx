@@ -120,12 +120,12 @@ export function MobileMenu() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">🎈</span>
-          <div>
-            <h2 className="font-heading font-bold text-lg">Радуга Праздника</h2>
-            <p className="text-sm text-primary-foreground/80">Воздушные шары</p>
-          </div>
+        <div className="flex items-center justify-center">
+          <img 
+            src="/assets/logo.png" 
+            alt="Радуга Праздника" 
+            className="h-12 w-auto"
+          />
         </div>
       </motion.div>
 
