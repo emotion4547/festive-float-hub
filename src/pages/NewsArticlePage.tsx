@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { Sidebar } from "@/components/layout/Sidebar";
+
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, Calendar, ArrowLeft } from "lucide-react";
@@ -55,7 +55,6 @@ const NewsArticlePage = () => {
       <Layout>
         <div className="container py-8">
           <div className="flex gap-8">
-            <Sidebar />
             <main className="flex-1 space-y-4">
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-64 w-full rounded-xl" />
@@ -107,7 +106,6 @@ const NewsArticlePage = () => {
 
       <div className="container py-8">
         <div className="flex gap-8">
-          <Sidebar />
           
           <main className="flex-1">
             <Button variant="ghost" className="mb-4 gap-2" asChild>
