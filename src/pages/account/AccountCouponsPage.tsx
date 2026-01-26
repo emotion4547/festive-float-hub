@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Ticket, Copy, Check } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Ticket, Copy, Check, Gift, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -17,13 +19,20 @@ interface UserCoupon {
   is_used: boolean;
   expires_at: string;
   created_at: string;
+  prize_type: string;
+  gift_product_id: string | null;
+  gift_product_name: string | null;
+  gift_product_image: string | null;
 }
 
 export default function AccountCouponsPage() {
   const { user } = useAuth();
+  const { addItem } = useCart();
+  const { toast } = useToast();
   const [coupons, setCoupons] = useState<UserCoupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [addedGiftIds, setAddedGiftIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchCoupons = async () => {
@@ -52,6 +61,31 @@ export default function AccountCouponsPage() {
     await navigator.clipboard.writeText(coupon.code);
     setCopiedId(coupon.id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleAddGiftToCart = async (coupon: UserCoupon) => {
+    if (!coupon.gift_product_id) return;
+
+    const { data: product } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", coupon.gift_product_id)
+      .maybeSingle();
+
+    if (product) {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: 0,
+        images: product.images,
+        in_stock: product.in_stock,
+      });
+      setAddedGiftIds((prev) => new Set([...prev, coupon.id]));
+      toast({
+        title: "Подарок добавлен в корзину!",
+        description: product.name,
+      });
+    }
   };
 
   const activeCoupons = coupons.filter(
@@ -134,12 +168,45 @@ export default function AccountCouponsPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge variant="default" className="text-lg px-3 py-1">
-                              {coupon.discount_type === "percentage"
-                                ? `−${coupon.discount_value}%`
-                                : `−${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
-                            </Badge>
+                          <div className="text-right flex flex-col items-end gap-2">
+                            {coupon.prize_type === "gift" ? (
+                              <>
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                                  <Gift className="h-3 w-3 mr-1" />
+                                  Подарок
+                                </Badge>
+                                {coupon.gift_product_name && (
+                                  <span className="text-sm text-muted-foreground">
+                                    {coupon.gift_product_name}
+                                  </span>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAddGiftToCart(coupon)}
+                                  disabled={addedGiftIds.has(coupon.id)}
+                                  className="gap-1"
+                                >
+                                  {addedGiftIds.has(coupon.id) ? (
+                                    <>
+                                      <Check className="h-3 w-3" />
+                                      Добавлено
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShoppingCart className="h-3 w-3" />
+                                      В корзину
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge variant="default" className="text-lg px-3 py-1">
+                                {coupon.discount_type === "percentage"
+                                  ? `−${coupon.discount_value}%`
+                                  : `−${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -179,11 +246,18 @@ export default function AccountCouponsPage() {
                               </p>
                             </div>
                           </div>
-                          <Badge variant="secondary">
-                            {coupon.discount_type === "percentage"
-                              ? `−${coupon.discount_value}%`
-                              : `−${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
-                          </Badge>
+                          {coupon.prize_type === "gift" ? (
+                            <Badge variant="secondary">
+                              <Gift className="h-3 w-3 mr-1" />
+                              Подарок
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              {coupon.discount_type === "percentage"
+                                ? `−${coupon.discount_value}%`
+                                : `−${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
+                            </Badge>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

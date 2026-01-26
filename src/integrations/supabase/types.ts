@@ -470,6 +470,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_wheel_spins: {
+        Row: {
+          created_at: string
+          discount_type: string | null
+          discount_value: number | null
+          expires_at: string
+          gift_product_id: string | null
+          id: string
+          prize_type: string
+          segment_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string
+          gift_product_id?: string | null
+          id?: string
+          prize_type: string
+          segment_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          expires_at?: string
+          gift_product_id?: string | null
+          id?: string
+          prize_type?: string
+          segment_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_wheel_spins_gift_product_id_fkey"
+            columns: ["gift_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_wheel_spins_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "wheel_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           balloon_count: number | null
@@ -667,9 +718,13 @@ export type Database = {
           discount_type: string
           discount_value: number
           expires_at: string
+          gift_product_id: string | null
+          gift_product_image: string | null
+          gift_product_name: string | null
           id: string
           is_used: boolean
           order_id: string | null
+          prize_type: string
           used_at: string | null
           user_id: string
         }
@@ -679,9 +734,13 @@ export type Database = {
           discount_type: string
           discount_value: number
           expires_at?: string
+          gift_product_id?: string | null
+          gift_product_image?: string | null
+          gift_product_name?: string | null
           id?: string
           is_used?: boolean
           order_id?: string | null
+          prize_type?: string
           used_at?: string | null
           user_id: string
         }
@@ -691,13 +750,24 @@ export type Database = {
           discount_type?: string
           discount_value?: number
           expires_at?: string
+          gift_product_id?: string | null
+          gift_product_image?: string | null
+          gift_product_name?: string | null
           id?: string
           is_used?: boolean
           order_id?: string | null
+          prize_type?: string
           used_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_coupons_gift_product_id_fkey"
+            columns: ["gift_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_coupons_order_id_fkey"
             columns: ["order_id"]
@@ -728,15 +798,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wheel_spins: {
+        Row: {
+          coupon_id: string | null
+          id: string
+          segment_id: string | null
+          spun_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id?: string | null
+          id?: string
+          segment_id?: string | null
+          spun_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string | null
+          id?: string
+          segment_id?: string | null
+          spun_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wheel_spins_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "user_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_wheel_spins_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "wheel_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wheel_segments: {
         Row: {
           color: string
           created_at: string
           discount_type: string
           discount_value: number
+          gift_product_id: string | null
           id: string
           is_active: boolean
           label: string
+          prize_type: string
           probability: number
           sort_order: number | null
         }
@@ -745,9 +856,11 @@ export type Database = {
           created_at?: string
           discount_type?: string
           discount_value: number
+          gift_product_id?: string | null
           id?: string
           is_active?: boolean
           label: string
+          prize_type?: string
           probability?: number
           sort_order?: number | null
         }
@@ -756,13 +869,23 @@ export type Database = {
           created_at?: string
           discount_type?: string
           discount_value?: number
+          gift_product_id?: string | null
           id?: string
           is_active?: boolean
           label?: string
+          prize_type?: string
           probability?: number
           sort_order?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wheel_segments_gift_product_id_fkey"
+            columns: ["gift_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

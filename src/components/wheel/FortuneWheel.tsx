@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
-interface WheelSegment {
+export interface WheelSegment {
   id: string;
   label: string;
   discount_type: string;
   discount_value: number;
   color: string;
   probability: number;
+  prize_type: string;
+  gift_product_id?: string | null;
 }
 
 interface FortuneWheelProps {
