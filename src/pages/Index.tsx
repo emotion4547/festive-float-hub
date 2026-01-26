@@ -222,7 +222,7 @@ const Index = () => {
             >
               <ShaderGradient
                 animate="on"
-                brightness={1.2}
+                brightness={1.1}
                 cAzimuthAngle={180}
                 cDistance={3.6}
                 cPolarAngle={90}
@@ -244,7 +244,7 @@ const Index = () => {
                 uAmplitude={1}
                 uDensity={1.3}
                 uFrequency={5.5}
-                uSpeed={0.4}
+                uSpeed={0.2}
                 uStrength={4}
               />
             </ShaderGradientCanvas>
