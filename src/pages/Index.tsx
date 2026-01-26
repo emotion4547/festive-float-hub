@@ -312,7 +312,7 @@ const Index = () => {
               )}
             </div>
           ) : (
-            <div className="max-w-2xl space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg">
+            <div className="max-w-2xl lg:mx-auto space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg lg:text-center">
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 <span className="block">Воздушные шары</span>
                 <span className="gradient-text">с доставкой</span> по&nbsp;Краснодару
@@ -320,7 +320,7 @@ const Index = () => {
               <p className="text-lg md:text-xl text-muted-foreground">
                 Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 lg:justify-center">
                 <Button size="lg" className="btn-primary text-lg px-8" asChild>
                   <Link to="/catalog" className="flex items-center gap-2">
                     Выбрать шары
