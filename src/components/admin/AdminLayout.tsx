@@ -62,12 +62,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b">
+      <div className="p-4 border-b">
         <Link to="/admin" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">РП</span>
-          </div>
-          <span className="font-semibold">Админ-панель</span>
+          <img 
+            src="/assets/logo.png" 
+            alt="Радуга Праздника" 
+            className="h-8 w-auto"
+          />
+          <span className="font-semibold text-sm">Админ</span>
         </Link>
       </div>
 

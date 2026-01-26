@@ -80,14 +80,12 @@ export function Header() {
           </Sheet>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1">
-              <span className="text-2xl">🎈</span>
-              <div className="font-heading hidden sm:block">
-                <span className="text-xl font-bold text-primary">Радуга</span>
-                <span className="text-xl font-bold text-secondary"> Праздника</span>
-              </div>
-            </div>
+          <Link to="/" className="flex items-center shrink-0">
+            <img 
+              src="/assets/logo.png" 
+              alt="Радуга Праздника" 
+              className="h-10 sm:h-12 w-auto"
+            />
           </Link>
 
           {/* Search */}

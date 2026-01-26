@@ -167,9 +167,12 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-background/10 mt-10 pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-muted-foreground text-sm">
-              © 2026 Радуга Праздника. Все права защищены.
-            </p>
+            <div className="flex items-center gap-3">
+              <img src="/assets/logo.png" alt="Радуга Праздника" className="h-8 w-auto" />
+              <p className="text-muted-foreground text-sm">
+                © 2026 Все права защищены.
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <img src="https://cdn.svgporn.com/logos/visa.svg" alt="Visa" className="h-6 opacity-70" />
               <img src="https://cdn.svgporn.com/logos/mastercard.svg" alt="Mastercard" className="h-6 opacity-70" />
