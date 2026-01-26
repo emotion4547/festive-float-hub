@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
+import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { QuickViewDialog } from "@/components/products/QuickViewDialog";
 import { DynamicFilterSidebar, FilterState } from "@/components/products/DynamicFilterSidebar";
 import { useProducts, useCategories } from "@/hooks/useProducts";
@@ -327,9 +328,13 @@ const Index = () => {
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-                  <Link to="/contacts">Заказать звонок</Link>
-                </Button>
+                <CallbackFormDialog
+                  trigger={
+                    <Button size="lg" variant="outline" className="text-lg px-8">
+                      Заказать звонок
+                    </Button>
+                  }
+                />
               </div>
             </div>
           )}
