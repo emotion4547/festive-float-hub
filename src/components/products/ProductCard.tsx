@@ -134,43 +134,43 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           )}
           
           {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {isNew && <span className="badge-new">Новое</span>}
-            {isHit && <span className="badge-hit">Хит</span>}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {isNew && <span className="badge-new text-[10px] sm:text-xs">Новое</span>}
+            {isHit && <span className="badge-hit text-[10px] sm:text-xs">Хит</span>}
             {product.discount && (
-              <span className="bg-error text-error-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
+              <span className="bg-error text-error-foreground text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full">
                 -{product.discount}%
               </span>
             )}
             {liveCoverUrl && (
-              <span className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full animate-pulse">
+              <span className="bg-primary text-primary-foreground text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full animate-pulse">
                 LIVE
               </span>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2">
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5">
             {/* Favorite Button */}
             <button
               onClick={handleToggleFavorite}
               className={cn(
-                "h-10 w-10 rounded-full flex items-center justify-center transition-all",
+                "h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all",
                 isProductFavorite
                   ? "bg-secondary text-secondary-foreground"
                   : "bg-background/80 backdrop-blur text-muted-foreground hover:text-secondary"
               )}
             >
-              <Heart className={cn("h-5 w-5", isProductFavorite && "fill-current")} />
+              <Heart className={cn("h-4 w-4 sm:h-5 sm:w-5", isProductFavorite && "fill-current")} />
             </button>
 
             {/* Quick View Button */}
             {onQuickView && (
               <button
                 onClick={handleQuickView}
-                className="h-10 w-10 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-primary transition-all opacity-0 group-hover:opacity-100"
               >
-                <Eye className="h-5 w-5" />
+                <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             )}
           </div>
@@ -184,34 +184,34 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         </div>
 
         {/* Content */}
-        <div className="p-4 flex flex-col flex-1">
+        <div className="p-2 sm:p-4 flex flex-col flex-1">
           {/* Rating */}
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-accent-yellow text-accent-yellow" />
-            <span className="text-sm font-medium">{rating}</span>
-            <span className="text-xs text-muted-foreground">({reviewsCount})</span>
+            <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-accent-yellow text-accent-yellow" />
+            <span className="text-xs sm:text-sm font-medium">{rating}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">({reviewsCount})</span>
           </div>
 
           {/* Title */}
-          <h3 className="font-heading font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 mt-2 flex-1">
+          <h3 className="font-heading font-semibold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mt-1 sm:mt-2 flex-1">
             {product.name}
           </h3>
 
           {/* Price */}
-          <div className="flex items-center gap-2 mt-3">
-            <span className="price-tag text-xl">{product.price.toLocaleString("ru-RU")} ₽</span>
+          <div className="flex items-center gap-1 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
+            <span className="price-tag text-sm sm:text-xl">{product.price.toLocaleString("ru-RU")} ₽</span>
             {oldPrice && (
-              <span className="price-old">{oldPrice.toLocaleString("ru-RU")} ₽</span>
+              <span className="price-old text-[10px] sm:text-sm">{oldPrice.toLocaleString("ru-RU")} ₽</span>
             )}
           </div>
 
           {/* Actions - always at bottom */}
           <Button
             onClick={handleAddToCart}
-            className="w-full btn-primary mt-3"
+            className="w-full btn-primary mt-2 sm:mt-3 text-xs sm:text-sm h-8 sm:h-10"
             disabled={!inStock && !onOrder}
           >
-            <ShoppingCart className="h-4 w-4 mr-2" />
+            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             {inStock ? "В корзину" : onOrder ? "Заказать" : "Нет в наличии"}
           </Button>
         </div>
