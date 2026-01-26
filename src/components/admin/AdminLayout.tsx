@@ -28,11 +28,14 @@ interface AdminLayoutProps {
   title: string;
 }
 
+import { UserCog } from "lucide-react";
+
 const menuItems = [
   { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
   { href: "/admin/products", label: "Товары", icon: Package },
   { href: "/admin/orders", label: "Заказы", icon: ShoppingCart },
   { href: "/admin/customers", label: "Клиенты", icon: Users },
+  { href: "/admin/users", label: "Роли", icon: UserCog },
   { href: "/admin/reviews", label: "Отзывы", icon: Star },
   { href: "/admin/coupons", label: "Промокоды", icon: Tag },
   { href: "/admin/banners", label: "Баннеры", icon: FileText },
