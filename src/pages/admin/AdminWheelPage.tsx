@@ -40,6 +40,13 @@ interface WheelSegment {
   color: string;
   is_active: boolean;
   sort_order: number;
+  prize_type: string;
+  gift_product_id: string | null;
+}
+
+interface Product {
+  id: string;
+  name: string;
 }
 
 const COLORS = [
@@ -55,11 +62,14 @@ const emptySegment = {
   probability: 10,
   color: COLORS[0],
   is_active: true,
+  prize_type: "discount",
+  gift_product_id: null as string | null,
 };
 
 export default function AdminWheelPage() {
   const { toast } = useToast();
   const [segments, setSegments] = useState<WheelSegment[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,8 +92,22 @@ export default function AdminWheelPage() {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select("id, name")
+        .eq("in_stock", true)
+        .order("name");
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
   useEffect(() => {
     fetchSegments();
+    fetchProducts();
   }, []);
 
   const handleOpenDialog = (segment?: WheelSegment) => {
@@ -96,6 +120,8 @@ export default function AdminWheelPage() {
         probability: segment.probability,
         color: segment.color,
         is_active: segment.is_active,
+        prize_type: segment.prize_type,
+        gift_product_id: segment.gift_product_id,
       });
     } else {
       setEditingSegment(null);
@@ -126,6 +152,8 @@ export default function AdminWheelPage() {
             probability: formData.probability,
             color: formData.color,
             is_active: formData.is_active,
+            prize_type: formData.prize_type,
+            gift_product_id: formData.gift_product_id,
           })
           .eq("id", editingSegment.id);
 
@@ -139,6 +167,8 @@ export default function AdminWheelPage() {
           probability: formData.probability,
           color: formData.color,
           is_active: formData.is_active,
+          prize_type: formData.prize_type,
+          gift_product_id: formData.gift_product_id,
           sort_order: segments.length,
         });
 
@@ -223,42 +253,87 @@ export default function AdminWheelPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* Prize type selector */}
+                <div className="space-y-2">
+                  <Label>Тип приза</Label>
+                  <Select
+                    value={formData.prize_type}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, prize_type: value, gift_product_id: value === "discount" ? null : formData.gift_product_id })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="discount">Скидка</SelectItem>
+                      <SelectItem value="gift">Подарок</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.prize_type === "discount" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Тип скидки</Label>
+                      <Select
+                        value={formData.discount_type}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, discount_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">Процент</SelectItem>
+                          <SelectItem value="fixed">Фиксированная (₽)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="discount_value">
+                        Размер {formData.discount_type === "percentage" ? "(%)" : "(₽)"}
+                      </Label>
+                      <Input
+                        id="discount_value"
+                        type="number"
+                        value={formData.discount_value}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            discount_value: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
                   <div className="space-y-2">
-                    <Label>Тип скидки</Label>
+                    <Label>Товар-подарок</Label>
                     <Select
-                      value={formData.discount_type}
+                      value={formData.gift_product_id || ""}
                       onValueChange={(value) =>
-                        setFormData({ ...formData, discount_type: value })
+                        setFormData({ ...formData, gift_product_id: value || null })
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Выберите товар" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="percentage">Процент</SelectItem>
-                        <SelectItem value="fixed">Фиксированная (₽)</SelectItem>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      При активации промокода товар добавляется в корзину бесплатно
+                    </p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="discount_value">
-                      Размер {formData.discount_type === "percentage" ? "(%)" : "(₽)"}
-                    </Label>
-                    <Input
-                      id="discount_value"
-                      type="number"
-                      value={formData.discount_value}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          discount_value: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="probability">Вероятность (вес)</Label>
@@ -335,7 +410,8 @@ export default function AdminWheelPage() {
                   <TableRow>
                     <TableHead>Цвет</TableHead>
                     <TableHead>Название</TableHead>
-                    <TableHead>Скидка</TableHead>
+                    <TableHead>Тип приза</TableHead>
+                    <TableHead>Значение</TableHead>
                     <TableHead>Вероятность</TableHead>
                     <TableHead>Статус</TableHead>
                     <TableHead className="w-24">Действия</TableHead>
@@ -352,9 +428,20 @@ export default function AdminWheelPage() {
                       </TableCell>
                       <TableCell className="font-medium">{segment.label}</TableCell>
                       <TableCell>
-                        {segment.discount_type === "percentage"
-                          ? `${segment.discount_value}%`
-                          : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          segment.prize_type === "gift"
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {segment.prize_type === "gift"
+                          ? "Товар"
+                          : segment.discount_type === "percentage"
+                            ? `${segment.discount_value}%`
+                            : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
                       </TableCell>
                       <TableCell>{segment.probability}</TableCell>
                       <TableCell>
