@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   SlidersHorizontal
 } from "lucide-react";
+import { ShaderGradientCanvas, ShaderGradient } from "shadergradient";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -205,12 +206,56 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section with Banners - Fixed height */}
-      <section className="relative overflow-hidden gradient-hero min-h-[400px] md:min-h-[480px]">
-        <div className="container py-16 md:py-24">
+      {/* Hero Section with Animated Gradient */}
+      <section className="relative overflow-hidden min-h-[400px] md:min-h-[480px]">
+        {/* Shader Gradient Background */}
+        <div className="absolute inset-0 z-0">
+          <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
+            <ShaderGradientCanvas
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              <ShaderGradient
+                animate="on"
+                brightness={1.2}
+                cAzimuthAngle={180}
+                cDistance={3.6}
+                cPolarAngle={90}
+                cameraZoom={1}
+                color1="#F9A8D4"
+                color2="#5BC5C8"
+                color3="#abfffc"
+                envPreset="city"
+                grain="on"
+                lightType="3d"
+                positionX={-1.4}
+                positionY={0}
+                positionZ={0}
+                reflection={0.1}
+                rotationX={0}
+                rotationY={10}
+                rotationZ={50}
+                type="plane"
+                uAmplitude={1}
+                uDensity={1.3}
+                uFrequency={5.5}
+                uSpeed={0.4}
+                uStrength={4}
+              />
+            </ShaderGradientCanvas>
+          </Suspense>
+        </div>
+
+        <div className="container py-16 md:py-24 relative z-10">
           {currentBanner ? (
             <div className="relative">
-              <div className="max-w-2xl space-y-6">
+              {/* Semi-transparent content container */}
+              <div className="max-w-2xl space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg">
                 <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   {currentBanner.title}
                 </h1>
@@ -239,6 +284,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    className="bg-background/80 backdrop-blur-sm"
                     onClick={() => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -248,7 +294,7 @@ const Index = () => {
                       <button
                         key={index}
                         className={`h-2 w-2 rounded-full transition-colors ${
-                          index === currentBannerIndex ? "bg-primary" : "bg-muted"
+                          index === currentBannerIndex ? "bg-primary" : "bg-background/60"
                         }`}
                         onClick={() => setCurrentBannerIndex(index)}
                       />
@@ -257,6 +303,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    className="bg-background/80 backdrop-blur-sm"
                     onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -265,7 +312,7 @@ const Index = () => {
               )}
             </div>
           ) : (
-            <div className="max-w-2xl space-y-6">
+            <div className="max-w-2xl space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg">
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Создаём <span className="gradient-text">праздничное</span> настроение
               </h1>
@@ -289,9 +336,9 @@ const Index = () => {
         </div>
         
         {/* Decorative balloons */}
-        <div className="absolute top-10 right-10 text-6xl animate-float opacity-70 hidden lg:block">🎈</div>
-        <div className="absolute top-32 right-32 text-4xl animate-float-delayed opacity-60 hidden lg:block">🎈</div>
-        <div className="absolute bottom-10 right-20 text-5xl animate-float opacity-50 hidden lg:block">🎈</div>
+        <div className="absolute top-10 right-10 text-6xl animate-float opacity-70 hidden lg:block z-10">🎈</div>
+        <div className="absolute top-32 right-32 text-4xl animate-float-delayed opacity-60 hidden lg:block z-10">🎈</div>
+        <div className="absolute bottom-10 right-20 text-5xl animate-float opacity-50 hidden lg:block z-10">🎈</div>
       </section>
 
       {/* Features */}
