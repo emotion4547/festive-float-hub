@@ -72,3 +72,8 @@ export function useReviews(options: UseReviewsOptions = {}) {
 
   return { reviews, loading, error, refetch: fetchReviews };
 }
+
+// Convenience hook for product page
+export function useProductReviews(productId: string) {
+  return useReviews({ productId, status: "approved" });
+}

@@ -16,7 +16,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useProducts";
-import { Loader2, X, Upload, Link as LinkIcon, GripVertical } from "lucide-react";
+import { Loader2, X, Upload, Link as LinkIcon, GripVertical, Video, Play, Trash2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface ProductFormProps {
   product?: {
@@ -37,6 +38,8 @@ interface ProductFormProps {
     images: string[] | null;
     colors: string[] | null;
     balloon_count: number | null;
+    live_cover_url?: string | null;
+    videos?: string[] | null;
   };
   onSuccess?: () => void;
 }
@@ -61,12 +64,17 @@ const sizeOptions = [
   { value: "L", label: "Большой (L)" },
 ];
 
+const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
+
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLiveCover, setUploadingLiveCover] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [formData, setFormData] = useState({
     name: product?.name || "",
@@ -89,6 +97,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [imageUrl, setImageUrl] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [liveCoverUrl, setLiveCoverUrl] = useState<string | null>(product?.live_cover_url || null);
+  const [videos, setVideos] = useState<string[]>(product?.videos || []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -122,6 +132,41 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
     const { data } = supabase.storage
       .from("product-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const uploadVideo = async (file: File): Promise<string | null> => {
+    if (file.size > MAX_VIDEO_SIZE) {
+      toast({
+        variant: "destructive",
+        title: "Файл слишком большой",
+        description: "Максимальный размер видео — 10 МБ",
+      });
+      return null;
+    }
+
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("product-videos")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Video upload error:", uploadError);
+      toast({
+        variant: "destructive",
+        title: "Ошибка загрузки видео",
+        description: uploadError.message,
+      });
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from("product-videos")
       .getPublicUrl(filePath);
 
     return data.publicUrl;
@@ -161,6 +206,67 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
     }
   };
 
+  const handleLiveCoverUpload = async (file: File) => {
+    setUploadingLiveCover(true);
+    setUploadProgress(0);
+
+    try {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const url = await uploadVideo(file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (url) {
+        setLiveCoverUrl(url);
+        toast({ title: "Живая обложка загружена" });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить видео",
+      });
+    } finally {
+      setUploadingLiveCover(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleGalleryVideoUpload = async (file: File) => {
+    setUploadingVideo(true);
+    setUploadProgress(0);
+
+    try {
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const url = await uploadVideo(file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (url) {
+        setVideos(prev => [...prev, url]);
+        toast({ title: "Видео добавлено в галерею" });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить видео",
+      });
+    } finally {
+      setUploadingVideo(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -190,6 +296,14 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeLiveCover = () => {
+    setLiveCoverUrl(null);
   };
 
   const handleImageDragStart = (index: number) => {
@@ -236,6 +350,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           ? parseInt(formData.balloon_count)
           : null,
         images: images.length > 0 ? images : null,
+        live_cover_url: liveCoverUrl,
+        videos: videos.length > 0 ? videos : null,
       };
 
       if (product?.id) {
@@ -449,8 +565,75 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           </Card>
         </div>
 
-        {/* Right column - Images & Status */}
+        {/* Right column - Media & Status */}
         <div className="space-y-6">
+          {/* Live Cover Video */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-primary" />
+                Живая обложка
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Видео будет проигрываться при наведении на карточку товара в каталоге. Макс. 10 МБ.
+              </p>
+              
+              {liveCoverUrl ? (
+                <div className="relative rounded-lg overflow-hidden bg-muted">
+                  <video
+                    src={liveCoverUrl}
+                    className="w-full aspect-video object-cover"
+                    controls
+                    muted
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={removeLiveCover}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                  {uploadingLiveCover ? (
+                    <div className="space-y-2">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                      <Progress value={uploadProgress} className="w-full" />
+                      <p className="text-sm text-muted-foreground">Загрузка...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Video className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+                      <label className="cursor-pointer">
+                        <span className="text-primary hover:underline">
+                          Загрузить видео
+                        </span>
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/ogg"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleLiveCoverUpload(file);
+                          }}
+                        />
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        MP4, WebM или OGG до 10 МБ
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Images */}
           <Card>
             <CardHeader>
               <CardTitle>Изображения</CardTitle>
@@ -552,6 +735,81 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                           Главное
                         </span>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Gallery Videos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Play className="h-5 w-5 text-primary" />
+                Видео в галерее
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Добавьте видео, которые будут отображаться в галерее карточки товара. Макс. 10 МБ каждое.
+              </p>
+
+              {/* Upload area */}
+              <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                {uploadingVideo ? (
+                  <div className="space-y-2">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <Progress value={uploadProgress} className="w-full" />
+                    <p className="text-sm text-muted-foreground">Загрузка...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Play className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <label className="cursor-pointer">
+                      <span className="text-primary hover:underline">
+                        Добавить видео
+                      </span>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/ogg"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleGalleryVideoUpload(file);
+                        }}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+
+              {/* Videos list */}
+              {videos.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {videos.map((video, index) => (
+                    <div key={index} className="relative rounded-lg overflow-hidden bg-muted group">
+                      <video
+                        src={video}
+                        className="w-full aspect-video object-cover"
+                        muted
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => removeVideo(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="absolute bottom-1 left-1 flex items-center gap-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                        <Play className="h-3 w-3" />
+                        Видео {index + 1}
+                      </div>
                     </div>
                   ))}
                 </div>

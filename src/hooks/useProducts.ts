@@ -21,6 +21,8 @@ export interface DbProduct {
   is_hit: boolean;
   colors: string[] | null;
   balloon_count: number | null;
+  live_cover_url: string | null;
+  videos: string[] | null;
   categories?: {
     name: string;
     slug: string;

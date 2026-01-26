@@ -1,5 +1,6 @@
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import { Heart, ShoppingCart, Star, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -24,6 +25,7 @@ interface ProductCardProduct {
   isNew?: boolean;
   is_hit?: boolean;
   isHit?: boolean;
+  live_cover_url?: string | null;
 }
 
 interface ProductCardProps {
@@ -34,6 +36,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const isProductFavorite = isFavorite(product.id);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
 
   // Normalize product fields for both DB and static data
   const inStock = product.in_stock ?? product.inStock ?? true;
@@ -45,6 +50,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const isHit = product.is_hit ?? product.isHit ?? false;
   const images = product.images || [];
   const imageUrl = images[0] || "https://placehold.co/400x400?text=🎈";
+  const liveCoverUrl = product.live_cover_url;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -56,16 +62,85 @@ export function ProductCard({ product }: ProductCardProps) {
     toggleFavorite(product as any);
   };
 
+  const handleToggleMute = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMuted(!isMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
   return (
-    <Link to={`/product/${product.id}`} className="group h-full">
+    <Link 
+      to={`/product/${product.id}`} 
+      className="group h-full"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="card-festive overflow-hidden h-full flex flex-col">
-        {/* Image Container */}
+        {/* Image/Video Container */}
         <div className="relative aspect-square overflow-hidden bg-muted">
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          {liveCoverUrl ? (
+            <>
+              {/* Fallback image shown when video is not playing */}
+              <img
+                src={imageUrl}
+                alt={product.name}
+                className={cn(
+                  "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                  isHovering ? "opacity-0" : "opacity-100"
+                )}
+              />
+              {/* Video - always rendered but hidden when not hovering */}
+              <video
+                ref={videoRef}
+                src={liveCoverUrl}
+                className={cn(
+                  "w-full h-full object-cover transition-opacity duration-300",
+                  isHovering ? "opacity-100" : "opacity-0"
+                )}
+                loop
+                muted={isMuted}
+                playsInline
+                preload="metadata"
+              />
+              {/* Sound toggle button */}
+              {isHovering && (
+                <button
+                  onClick={handleToggleMute}
+                  className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm p-2 rounded-full z-10 transition-opacity opacity-0 group-hover:opacity-100"
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-4 w-4" />
+                  ) : (
+                    <Volume2 className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+            </>
+          ) : (
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          )}
           
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -74,6 +149,11 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.discount && (
               <span className="bg-error text-error-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
                 -{product.discount}%
+              </span>
+            )}
+            {liveCoverUrl && (
+              <span className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full animate-pulse">
+                LIVE
               </span>
             )}
           </div>
