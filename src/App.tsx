@@ -36,12 +36,14 @@ import AdminProductEditPage from "./pages/admin/AdminProductEditPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
+import AdminWheelPage from "./pages/admin/AdminWheelPage";
 import AdminPagesPage from "./pages/admin/AdminPagesPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import AdminNewsPage from "./pages/admin/AdminNewsPage";
 import AdminBannersPage from "./pages/admin/AdminBannersPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AccountCouponsPage from "./pages/account/AccountCouponsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +81,7 @@ const App = () => (
               <Route path="/account/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
               <Route path="/account/addresses" element={<ProtectedRoute><AddressesPage /></ProtectedRoute>} />
               <Route path="/account/favorites" element={<ProtectedRoute><AccountFavoritesPage /></ProtectedRoute>} />
+              <Route path="/account/coupons" element={<ProtectedRoute><AccountCouponsPage /></ProtectedRoute>} />
               <Route path="/account/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
@@ -87,6 +90,7 @@ const App = () => (
               <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrdersPage /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviewsPage /></ProtectedRoute>} />
               <Route path="/admin/coupons" element={<ProtectedRoute requireAdmin><AdminCouponsPage /></ProtectedRoute>} />
+              <Route path="/admin/wheel" element={<ProtectedRoute requireAdmin><AdminWheelPage /></ProtectedRoute>} />
               <Route path="/admin/pages" element={<ProtectedRoute requireAdmin><AdminPagesPage /></ProtectedRoute>} />
               <Route path="/admin/customers" element={<ProtectedRoute requireAdmin><AdminCustomersPage /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />

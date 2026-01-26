@@ -20,10 +20,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Layout } from "@/components/layout/Layout";
 import { useCart } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { useUserCoupons } from "@/hooks/useUserCoupons";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { Ticket } from "lucide-react";
 
 type Step = 1 | 2 | 3;
 
@@ -40,6 +42,13 @@ const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const { coupon, calculateDiscount, removeCoupon } = useCoupon();
+  const { 
+    coupons: userCoupons, 
+    selectedCoupon: selectedUserCoupon, 
+    selectCoupon: selectUserCoupon,
+    markCouponAsUsed,
+    calculateDiscount: calculateUserCouponDiscount 
+  } = useUserCoupons();
   const [step, setStep] = useState<Step>(1);
   const [orderNumber, setOrderNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +56,9 @@ const CheckoutPage = () => {
   // Get coupon from cart page if passed via state
   const passedCoupon = location.state?.coupon as CouponData | undefined;
   const activeCoupon = coupon || passedCoupon;
+  
+  // Use user coupon if no regular coupon is active
+  const effectiveCoupon = activeCoupon || selectedUserCoupon;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -64,7 +76,11 @@ const CheckoutPage = () => {
     paymentMethod: "card",
   });
 
-  const discount = activeCoupon ? calculateDiscount(total) : 0;
+  const discount = activeCoupon 
+    ? calculateDiscount(total) 
+    : selectedUserCoupon 
+      ? calculateUserCouponDiscount(total) 
+      : 0;
   const deliveryCost = formData.deliveryMethod === "pickup" ? 0 : total >= 5000 ? 0 : 200;
   const finalTotal = total - discount + deliveryCost;
 
@@ -127,7 +143,7 @@ const CheckoutPage = () => {
 
         if (itemsError) throw itemsError;
 
-        // Record coupon usage if applied
+        // Record coupon usage if applied (regular coupon)
         if (activeCoupon) {
           await supabase
             .from("coupon_uses")
@@ -144,9 +160,15 @@ const CheckoutPage = () => {
             .eq("id", activeCoupon.id);
         }
 
+        // Mark user coupon as used (wheel coupon)
+        if (selectedUserCoupon) {
+          await markCouponAsUsed(selectedUserCoupon.id, orderData.id);
+        }
+
         setOrderNumber(orderData.order_number);
         clearCart();
         removeCoupon();
+        selectUserCoupon(null);
         setStep(3);
 
         toast({
@@ -455,6 +477,54 @@ const CheckoutPage = () => {
                       rows={3}
                     />
                   </div>
+
+                  {/* User Wheel Coupons */}
+                  {user && userCoupons.length > 0 && !activeCoupon && (
+                    <div className="bg-background rounded-xl p-6 shadow-sm space-y-4">
+                      <h2 className="font-heading text-xl font-bold flex items-center gap-2">
+                        <Ticket className="h-5 w-5 text-primary" />
+                        Ваши промокоды
+                      </h2>
+                      <div className="space-y-2">
+                        {userCoupons.map((uc) => (
+                          <div
+                            key={uc.id}
+                            onClick={() => selectUserCoupon(selectedUserCoupon?.id === uc.id ? null : uc)}
+                            className={cn(
+                              "flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors",
+                              selectedUserCoupon?.id === uc.id
+                                ? "border-primary bg-primary/5"
+                                : "hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                <Ticket className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <code className="font-mono font-medium">{uc.code}</code>
+                                <p className="text-xs text-muted-foreground">
+                                  Скидка {uc.discount_type === "percentage" 
+                                    ? `${uc.discount_value}%` 
+                                    : `${Number(uc.discount_value).toLocaleString("ru-RU")} ₽`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className={cn(
+                              "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                              selectedUserCoupon?.id === uc.id
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            )}>
+                              {selectedUserCoupon?.id === uc.id && (
+                                <Check className="h-3 w-3 text-primary-foreground" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -562,11 +632,11 @@ const CheckoutPage = () => {
                       )}
                     </span>
                   </div>
-                  {discount > 0 && activeCoupon && (
+                  {discount > 0 && effectiveCoupon && (
                     <div className="flex justify-between text-sm text-success">
                       <span className="flex items-center gap-1">
                         <Tag className="h-3 w-3" />
-                        Промокод ({activeCoupon.code}):
+                        Промокод ({effectiveCoupon.code}):
                       </span>
                       <span>−{discount.toLocaleString("ru-RU")} ₽</span>
                     </div>

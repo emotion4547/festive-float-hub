@@ -660,6 +660,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id: string
+          is_used: boolean
+          order_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          order_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -678,6 +725,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      wheel_segments: {
+        Row: {
+          color: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          label: string
+          probability: number
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          discount_type?: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          label: string
+          probability?: number
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          probability?: number
+          sort_order?: number | null
         }
         Relationships: []
       }
