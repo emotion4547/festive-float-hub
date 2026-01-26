@@ -534,6 +534,7 @@ export type Database = {
           in_stock: boolean | null
           is_hit: boolean | null
           is_new: boolean | null
+          live_cover_url: string | null
           name: string
           occasion: string[] | null
           old_price: number | null
@@ -544,6 +545,7 @@ export type Database = {
           size: string | null
           type: string | null
           updated_at: string
+          videos: string[] | null
         }
         Insert: {
           balloon_count?: number | null
@@ -557,6 +559,7 @@ export type Database = {
           in_stock?: boolean | null
           is_hit?: boolean | null
           is_new?: boolean | null
+          live_cover_url?: string | null
           name: string
           occasion?: string[] | null
           old_price?: number | null
@@ -567,6 +570,7 @@ export type Database = {
           size?: string | null
           type?: string | null
           updated_at?: string
+          videos?: string[] | null
         }
         Update: {
           balloon_count?: number | null
@@ -580,6 +584,7 @@ export type Database = {
           in_stock?: boolean | null
           is_hit?: boolean | null
           is_new?: boolean | null
+          live_cover_url?: string | null
           name?: string
           occasion?: string[] | null
           old_price?: number | null
@@ -590,6 +595,7 @@ export type Database = {
           size?: string | null
           type?: string | null
           updated_at?: string
+          videos?: string[] | null
         }
         Relationships: [
           {

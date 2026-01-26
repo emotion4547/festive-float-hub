@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ChevronRight, 
@@ -10,13 +10,17 @@ import {
   Truck, 
   Shield, 
   RefreshCw,
-  Check
+  Check,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Layout } from "@/components/layout/Layout";
-import { ProductCard } from "@/components/products/ProductCard";
-import { products } from "@/data/products";
+import { ProductGallery } from "@/components/products/ProductGallery";
+import { ProductReviews } from "@/components/products/ProductReviews";
+import { RelatedProducts } from "@/components/products/RelatedProducts";
+import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
@@ -26,19 +30,53 @@ const ProductPage = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
-
-  const product = products.find((p) => p.id === Number(id));
-  const [selectedImage, setSelectedImage] = useState(0);
+  
+  const { product, loading, error } = useProduct(id || "");
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
 
-  if (!product) {
+  // Scroll to top when product changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="bg-muted/30 py-4">
+          <div className="container">
+            <Skeleton className="h-5 w-64" />
+          </div>
+        </div>
+        <section className="py-12">
+          <div className="container">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <Skeleton className="aspect-square rounded-2xl" />
+              <div className="space-y-6">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-10 w-40" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
+  if (error || !product) {
     return (
       <Layout>
         <div className="container py-16 text-center">
           <h1 className="font-heading text-2xl font-bold mb-4">Товар не найден</h1>
-          <Link to="/" className="text-primary hover:underline">
-            Вернуться на главную
+          <p className="text-muted-foreground mb-6">
+            К сожалению, запрашиваемый товар не существует или был удалён
+          </p>
+          <Link to="/catalog" className="text-primary hover:underline">
+            Перейти в каталог
           </Link>
         </div>
       </Layout>
@@ -46,14 +84,33 @@ const ProductPage = () => {
   }
 
   const isProductFavorite = isFavorite(product.id);
-  const relatedProducts = products
-    .filter((p) => p.id !== product.id && p.occasion.some((o) => product.occasion.includes(o)))
-    .slice(0, 4);
+  const images = product.images || [];
+  const videos = (product as any).videos || [];
 
   const handleAddToCart = () => {
-    addItem(product, quantity);
+    const cartProduct = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      images: product.images,
+      inStock: product.in_stock,
+      onOrder: product.on_order,
+    };
+    addItem(cartProduct as any, quantity);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const typeLabels: Record<string, string> = {
+    helium: "Гелиевые",
+    latex: "Латексные",
+    foil: "Фольгированные",
+  };
+
+  const sizeLabels: Record<string, string> = {
+    S: "Маленький",
+    M: "Средний",
+    L: "Большой",
   };
 
   return (
@@ -69,8 +126,19 @@ const ProductPage = () => {
             <Link to="/catalog" className="hover:text-primary transition-colors">
               Каталог
             </Link>
+            {product.categories && (
+              <>
+                <ChevronRight className="h-4 w-4" />
+                <Link 
+                  to={`/catalog/${product.categories.slug}`}
+                  className="hover:text-primary transition-colors"
+                >
+                  {product.categories.name}
+                </Link>
+              </>
+            )}
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">{product.name}</span>
+            <span className="text-foreground line-clamp-1">{product.name}</span>
           </nav>
         </div>
       </div>
@@ -79,45 +147,20 @@ const ProductPage = () => {
       <section className="py-12">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Images */}
-            <div className="space-y-4">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-muted">
-                <img
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              {product.images.length > 1 && (
-                <div className="flex gap-3">
-                  {product.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={cn(
-                        "w-20 h-20 rounded-lg overflow-hidden border-2 transition-all",
-                        selectedImage === index
-                          ? "border-primary"
-                          : "border-transparent opacity-60 hover:opacity-100"
-                      )}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Gallery */}
+            <ProductGallery 
+              images={images}
+              videos={videos}
+              liveCoverUrl={(product as any).live_cover_url}
+              productName={product.name}
+            />
 
             {/* Product Info */}
             <div className="space-y-6">
               {/* Badges */}
               <div className="flex items-center gap-2">
-                {product.isNew && <span className="badge-new">Новое</span>}
-                {product.isHit && <span className="badge-hit">Хит</span>}
+                {product.is_new && <span className="badge-new">Новое</span>}
+                {product.is_hit && <span className="badge-hit">Хит</span>}
               </div>
 
               {/* Title */}
@@ -133,17 +176,17 @@ const ProductPage = () => {
                       key={i}
                       className={cn(
                         "h-5 w-5",
-                        i < Math.floor(product.rating)
+                        i < Math.floor(product.rating || 0)
                           ? "fill-accent-yellow text-accent-yellow"
                           : "text-muted"
                       )}
                     />
                   ))}
                 </div>
-                <span className="font-medium">{product.rating}</span>
-                <Link to="#reviews" className="text-primary hover:underline">
-                  {product.reviewsCount} отзывов
-                </Link>
+                <span className="font-medium">{product.rating || 0}</span>
+                <a href="#reviews" className="text-primary hover:underline">
+                  {product.reviews_count || 0} отзывов
+                </a>
               </div>
 
               {/* Price */}
@@ -151,10 +194,10 @@ const ProductPage = () => {
                 <span className="text-3xl font-bold text-primary">
                   {product.price.toLocaleString("ru-RU")} ₽
                 </span>
-                {product.oldPrice && (
+                {product.old_price && (
                   <>
                     <span className="text-xl text-muted-foreground line-through">
-                      {product.oldPrice.toLocaleString("ru-RU")} ₽
+                      {product.old_price.toLocaleString("ru-RU")} ₽
                     </span>
                     <span className="bg-error text-error-foreground text-sm font-semibold px-2 py-0.5 rounded">
                       -{product.discount}%
@@ -165,12 +208,12 @@ const ProductPage = () => {
 
               {/* Stock Status */}
               <div className="flex items-center gap-2">
-                {product.inStock ? (
+                {product.in_stock ? (
                   <>
                     <div className="h-3 w-3 rounded-full bg-success" />
                     <span className="text-success font-medium">В наличии</span>
                   </>
-                ) : product.onOrder ? (
+                ) : product.on_order ? (
                   <>
                     <div className="h-3 w-3 rounded-full bg-warning" />
                     <span className="text-warning font-medium">На заказ — готово за 3 дня</span>
@@ -184,26 +227,28 @@ const ProductPage = () => {
               </div>
 
               {/* Description */}
-              <p className="text-muted-foreground">{product.description}</p>
+              {product.description && (
+                <p className="text-muted-foreground">{product.description}</p>
+              )}
 
               {/* Characteristics */}
               <div className="grid grid-cols-2 gap-4 py-4 border-y">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Тип:</span>
-                  <span className="font-medium">
-                    {product.type === "helium" && "Гелиевые"}
-                    {product.type === "latex" && "Латексные"}
-                    {product.type === "foil" && "Фольгированные"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Размер:</span>
-                  <span className="font-medium">{product.size}</span>
-                </div>
-                {product.balloonCount && (
+                {product.type && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Тип:</span>
+                    <span className="font-medium">{typeLabels[product.type] || product.type}</span>
+                  </div>
+                )}
+                {product.size && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Размер:</span>
+                    <span className="font-medium">{sizeLabels[product.size] || product.size}</span>
+                  </div>
+                )}
+                {product.balloon_count && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Кол-во шаров:</span>
-                    <span className="font-medium">{product.balloonCount} шт</span>
+                    <span className="font-medium">{product.balloon_count} шт</span>
                   </div>
                 )}
               </div>
@@ -255,7 +300,7 @@ const ProductPage = () => {
                     addedToCart ? "bg-success hover:bg-success" : "btn-primary"
                   )}
                   onClick={handleAddToCart}
-                  disabled={!product.inStock && !product.onOrder}
+                  disabled={!product.in_stock && !product.on_order}
                 >
                   {addedToCart ? (
                     <>
@@ -276,7 +321,12 @@ const ProductPage = () => {
                     "flex-1 text-lg",
                     isProductFavorite && "border-secondary text-secondary"
                   )}
-                  onClick={() => toggleFavorite(product)}
+                  onClick={() => toggleFavorite({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    images: product.images,
+                  } as any)}
                 >
                   <Heart
                     className={cn("h-5 w-5 mr-2", isProductFavorite && "fill-current")}
@@ -306,26 +356,36 @@ const ProductPage = () => {
       </section>
 
       {/* Tabs */}
-      <section className="py-12 section-alt">
+      <section className="py-12 section-alt" id="reviews">
         <div className="container">
           <Tabs defaultValue="description" className="max-w-4xl">
             <TabsList className="mb-8">
               <TabsTrigger value="description">Описание</TabsTrigger>
               <TabsTrigger value="delivery">Доставка и оплата</TabsTrigger>
-              <TabsTrigger value="reviews" id="reviews">
-                Отзывы ({product.reviewsCount})
+              <TabsTrigger value="reviews">
+                Отзывы ({product.reviews_count || 0})
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="description" className="bg-background rounded-xl p-6">
               <div className="prose max-w-none">
-                <p>{product.description}</p>
-                <h3>Характеристики набора:</h3>
-                <ul>
-                  <li>Тип шаров: {product.type === "helium" ? "Гелиевые" : product.type === "latex" ? "Латексные" : "Фольгированные"}</li>
-                  <li>Размер: {product.size === "S" ? "Маленький" : product.size === "M" ? "Средний" : "Большой"}</li>
-                  {product.balloonCount && <li>Количество: {product.balloonCount} шт</li>}
-                </ul>
+                <p>{product.description || "Описание товара отсутствует."}</p>
+                {(product.type || product.size || product.balloon_count) && (
+                  <>
+                    <h3>Характеристики набора:</h3>
+                    <ul>
+                      {product.type && (
+                        <li>Тип шаров: {typeLabels[product.type] || product.type}</li>
+                      )}
+                      {product.size && (
+                        <li>Размер: {sizeLabels[product.size] || product.size}</li>
+                      )}
+                      {product.balloon_count && (
+                        <li>Количество: {product.balloon_count} шт</li>
+                      )}
+                    </ul>
+                  </>
+                )}
               </div>
             </TabsContent>
 
@@ -346,32 +406,24 @@ const ProductPage = () => {
             </TabsContent>
 
             <TabsContent value="reviews" className="bg-background rounded-xl p-6">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  Отзывы загружаются...
-                </p>
-                <Button variant="outline">Написать отзыв</Button>
-              </div>
+              <ProductReviews productId={product.id} productName={product.name} />
             </TabsContent>
           </Tabs>
         </div>
       </section>
 
       {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <section className="py-16">
-          <div className="container">
-            <h2 className="font-heading text-2xl md:text-3xl font-bold mb-8">
-              Похожие товары
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <section className="py-16">
+        <div className="container">
+          <h2 className="font-heading text-2xl md:text-3xl font-bold mb-8">
+            Похожие товары
+          </h2>
+          <RelatedProducts 
+            currentProductId={product.id} 
+            categoryId={product.category_id} 
+          />
+        </div>
+      </section>
     </Layout>
   );
 };
