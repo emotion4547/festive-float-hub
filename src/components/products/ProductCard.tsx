@@ -73,14 +73,11 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const handleMouseEnter = () => {
     setIsHovering(true);
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
   };
 
   const handleMouseLeave = () => {
     setIsHovering(false);
-    if (videoRef.current) {
+    if (videoRef.current && !liveCoverUrl) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
@@ -98,41 +95,27 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="relative aspect-square overflow-hidden bg-muted">
           {liveCoverUrl ? (
             <>
-              {/* Fallback image shown when video is not playing */}
-              <img
-                src={imageUrl}
-                alt={product.name}
-                className={cn(
-                  "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                  isHovering ? "opacity-0" : "opacity-100"
-                )}
-              />
-              {/* Video - always rendered but hidden when not hovering */}
+              {/* Video is always visible and playing for live covers */}
               <video
                 ref={videoRef}
                 src={liveCoverUrl}
-                className={cn(
-                  "w-full h-full object-cover transition-opacity duration-300",
-                  isHovering ? "opacity-100" : "opacity-0"
-                )}
+                className="w-full h-full object-cover"
                 loop
                 muted={isMuted}
                 playsInline
-                preload="metadata"
+                autoPlay
               />
               {/* Sound toggle button */}
-              {isHovering && (
-                <button
-                  onClick={handleToggleMute}
-                  className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm p-2 rounded-full z-10 transition-opacity opacity-0 group-hover:opacity-100"
-                >
-                  {isMuted ? (
-                    <VolumeX className="h-4 w-4" />
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleToggleMute}
+                className="absolute bottom-3 right-3 bg-background/80 backdrop-blur-sm p-2 rounded-full z-10 transition-opacity opacity-0 group-hover:opacity-100"
+              >
+                {isMuted ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </button>
             </>
           ) : (
             <img
