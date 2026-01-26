@@ -335,10 +335,6 @@ const Index = () => {
           )}
         </div>
         
-        {/* Decorative balloons */}
-        <div className="absolute top-10 right-10 text-6xl animate-float opacity-70 hidden lg:block z-10">🎈</div>
-        <div className="absolute top-32 right-32 text-4xl animate-float-delayed opacity-60 hidden lg:block z-10">🎈</div>
-        <div className="absolute bottom-10 right-20 text-5xl animate-float opacity-50 hidden lg:block z-10">🎈</div>
       </section>
 
       {/* Features */}
