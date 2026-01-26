@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSetting } from "@/contexts/SiteDataContext";
 import { SearchDropdown } from "./SearchDropdown";
 import { MobileMenu } from "./MobileMenu";
-import { useCategories } from "@/hooks/useProducts";
+import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 
 
 const mainNavLinks = [
@@ -45,19 +45,11 @@ export function Header() {
   const { itemsCount } = useCart();
   const { favoritesCount } = useFavorites();
   const { user, isAdmin, signOut } = useAuth();
-  const { categories } = useCategories();
   
   const phone = useSetting("phone", "+7 (918) 179-00-56");
   const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
   const telegram = useSetting("telegram", "https://t.me/+79181790056");
   const cleanPhone = phone.replace(/[^\d+]/g, "");
-  
-  // Prepare catalog categories from database
-  const catalogCategories = categories.map(cat => ({
-    name: cat.name,
-    href: `/catalog?category=${cat.slug}`,
-    image: cat.image,
-  }));
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
@@ -213,10 +205,14 @@ export function Header() {
             )}
 
             {/* Callback */}
-            <Button variant="outline" size="sm" className="hidden lg:flex gap-1">
-              <Phone className="h-4 w-4" />
-              Обратный звонок
-            </Button>
+            <CallbackFormDialog
+              trigger={
+                <Button variant="outline" size="sm" className="hidden lg:flex gap-1">
+                  <Phone className="h-4 w-4" />
+                  Обратный звонок
+                </Button>
+              }
+            />
 
             {/* Cart with total */}
             <Link to="/cart" className="flex items-center gap-2">
@@ -241,26 +237,14 @@ export function Header() {
       <div className="bg-primary text-primary-foreground hidden lg:block">
         <div className="container">
           <nav className="flex items-center">
-            {/* Catalog dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="bg-primary-hover hover:bg-primary-hover/80 text-primary-foreground font-heading font-semibold h-12 px-6 rounded-none gap-2"
-                >
-                  <Menu className="h-4 w-4" />
-                  КАТАЛОГ ТОВАРОВ
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                {catalogCategories.map((cat) => (
-                  <DropdownMenuItem key={cat.name} asChild>
-                    <Link to={cat.href}>{cat.name}</Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Catalog link */}
+            <Link 
+              to="/catalog"
+              className="bg-primary-hover hover:bg-primary-hover/80 text-primary-foreground font-heading font-semibold h-12 px-6 flex items-center gap-2"
+            >
+              <Menu className="h-4 w-4" />
+              КАТАЛОГ ТОВАРОВ
+            </Link>
 
             {/* Main nav links */}
             {mainNavLinks.map((link) => (
