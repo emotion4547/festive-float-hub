@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Star, Volume2, VolumeX } from "lucide-react";
+import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -26,13 +26,15 @@ interface ProductCardProduct {
   is_hit?: boolean;
   isHit?: boolean;
   live_cover_url?: string | null;
+  description?: string | null;
 }
 
 interface ProductCardProps {
   product: ProductCardProduct;
+  onQuickView?: (product: ProductCardProduct) => void;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const isProductFavorite = isFavorite(product.id);
@@ -69,6 +71,12 @@ export function ProductCard({ product }: ProductCardProps) {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
     }
+  };
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onQuickView?.(product);
   };
 
   const handleMouseEnter = () => {
@@ -141,18 +149,31 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
 
-          {/* Favorite Button */}
-          <button
-            onClick={handleToggleFavorite}
-            className={cn(
-              "absolute top-3 right-3 h-10 w-10 rounded-full flex items-center justify-center transition-all",
-              isProductFavorite
-                ? "bg-secondary text-secondary-foreground"
-                : "bg-background/80 backdrop-blur text-muted-foreground hover:text-secondary"
+          {/* Action Buttons */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {/* Favorite Button */}
+            <button
+              onClick={handleToggleFavorite}
+              className={cn(
+                "h-10 w-10 rounded-full flex items-center justify-center transition-all",
+                isProductFavorite
+                  ? "bg-secondary text-secondary-foreground"
+                  : "bg-background/80 backdrop-blur text-muted-foreground hover:text-secondary"
+              )}
+            >
+              <Heart className={cn("h-5 w-5", isProductFavorite && "fill-current")} />
+            </button>
+
+            {/* Quick View Button */}
+            {onQuickView && (
+              <button
+                onClick={handleQuickView}
+                className="h-10 w-10 rounded-full bg-background/80 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+              >
+                <Eye className="h-5 w-5" />
+              </button>
             )}
-          >
-            <Heart className={cn("h-5 w-5", isProductFavorite && "fill-current")} />
-          </button>
+          </div>
 
           {/* Stock Status */}
           {!inStock && onOrder && (

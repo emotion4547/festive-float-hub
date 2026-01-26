@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
+import { QuickViewDialog } from "@/components/products/QuickViewDialog";
 import { DynamicFilterSidebar, FilterState } from "@/components/products/DynamicFilterSidebar";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +50,7 @@ const CatalogPage = () => {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [sortBy, setSortBy] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
+  const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   
   const { products, loading: productsLoading } = useProducts({});
   const { categories } = useCategories();
@@ -257,7 +259,11 @@ const CatalogPage = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {paginatedProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onQuickView={setQuickViewProduct}
+                    />
                   ))}
                 </div>
 
@@ -320,6 +326,12 @@ const CatalogPage = () => {
           </div>
         </div>
       </div>
+      {/* Quick View Dialog */}
+      <QuickViewDialog
+        product={quickViewProduct}
+        open={!!quickViewProduct}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+      />
     </Layout>
   );
 };

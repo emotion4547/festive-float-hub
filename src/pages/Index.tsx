@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
+import { QuickViewDialog } from "@/components/products/QuickViewDialog";
 import { DynamicFilterSidebar, FilterState } from "@/components/products/DynamicFilterSidebar";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +108,7 @@ const Index = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [reviews, setReviews] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   
   // Load products from database
   const { products, loading: productsLoading } = useProducts({});
@@ -444,7 +446,11 @@ const Index = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {displayProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onQuickView={setQuickViewProduct}
+                    />
                   ))}
                 </div>
               )}
@@ -548,6 +554,13 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Quick View Dialog */}
+      <QuickViewDialog
+        product={quickViewProduct}
+        open={!!quickViewProduct}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+      />
     </Layout>
   );
 };
