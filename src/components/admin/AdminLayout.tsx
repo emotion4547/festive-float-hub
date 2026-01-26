@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   Menu,
   FileText,
+  RotateCcw,
 } from "lucide-react";
 import {
   Sheet,
@@ -38,6 +39,7 @@ const menuItems = [
   { href: "/admin/users", label: "Роли", icon: UserCog },
   { href: "/admin/reviews", label: "Отзывы", icon: Star },
   { href: "/admin/coupons", label: "Промокоды", icon: Tag },
+  { href: "/admin/wheel", label: "Колесо фортуны", icon: RotateCcw },
   { href: "/admin/banners", label: "Баннеры", icon: FileText },
   { href: "/admin/news", label: "Новости", icon: FileText },
   { href: "/admin/pages", label: "Страницы", icon: FileText },

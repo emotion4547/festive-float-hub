@@ -20,10 +20,13 @@ interface AccountLayoutProps {
   title: string;
 }
 
+import { Ticket } from "lucide-react";
+
 const menuItems = [
   { href: "/account", label: "Профиль", icon: User },
   { href: "/account/orders", label: "Мои заказы", icon: ShoppingBag },
   { href: "/account/addresses", label: "Адреса доставки", icon: MapPin },
+  { href: "/account/coupons", label: "Мои промокоды", icon: Ticket },
   { href: "/account/favorites", label: "Избранное", icon: Heart },
   { href: "/account/settings", label: "Настройки", icon: Settings },
 ];
