@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
-import { Sidebar } from "@/components/layout/Sidebar";
+
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Star } from "lucide-react";
 import { usePageContent } from "@/contexts/SiteDataContext";
@@ -66,7 +66,6 @@ const PrintingPage = () => {
     <Layout>
       <div className="container py-8">
         <div className="flex gap-8">
-          <Sidebar />
           
           <main className="flex-1">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">

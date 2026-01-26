@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
-import { Sidebar } from "@/components/layout/Sidebar";
+
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ const DeliveryPage = () => {
     <Layout>
       <div className="container py-8">
         <div className="flex gap-8">
-          <Sidebar />
           
           <main className="flex-1">
             {/* Hero Banner */}
