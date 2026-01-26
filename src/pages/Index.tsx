@@ -314,7 +314,8 @@ const Index = () => {
           ) : (
             <div className="max-w-2xl space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg">
               <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Воздушные шары <span className="gradient-text">с доставкой</span> по Краснодару
+                <span className="block">Воздушные шары</span>
+                <span className="gradient-text">с доставкой</span> по&nbsp;Краснодару
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
                 🎈 Более 1000 композиций из воздушных шаров на любой праздник: дни рождения, свадьбы, выписки, корпоративы. 
