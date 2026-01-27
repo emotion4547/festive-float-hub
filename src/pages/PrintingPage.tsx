@@ -1,8 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Star } from "lucide-react";
 import { usePageContent } from "@/contexts/SiteDataContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const pastelColors = [
   "#FFB6C1", "#FFC0CB", "#FFE4E1", "#FFDAB9", "#FFE4B5", "#FFFACD", 
@@ -64,6 +64,12 @@ const PrintingPage = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Печать на воздушных шарах"
+        description="Печать логотипов и изображений на воздушных шарах в Краснодаре. Шелкография, яркие цвета, экологичные материалы. Тиражи от 50 шт."
+        keywords="печать на шарах Краснодар, шары с логотипом, брендирование шаров, шелкография на шарах, корпоративные шары"
+        canonicalPath="/printing"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

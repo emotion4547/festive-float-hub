@@ -1,11 +1,17 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { AlertCircle, CheckCircle, XCircle, HelpCircle } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 const WarrantyPage = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Гарантия и возврат"
+        description="Условия гарантии на воздушные шары. Гарантия на полёт шаров 2-4 дня. Возврат и обмен товара. Радуга Праздника, Краснодар."
+        keywords="гарантия на шары, возврат шаров, обмен воздушных шаров, гарантия полета шаров"
+        canonicalPath="/about/warranty"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

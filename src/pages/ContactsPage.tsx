@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Phone, Mail, MapPin, Clock, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSetting, usePageContent } from "@/contexts/SiteDataContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const ContactsPage = () => {
   const pageContent = usePageContent("contacts");
@@ -34,10 +34,16 @@ const ContactsPage = () => {
     setFormData({ name: "", email: "", phone: "", message: "" });
   };
 
-  const mapEmbed = pageContent.map_embed?.content || "https://yandex.ru/map-widget/v1/?um=constructor%3A8f8b8b8b8b8b8b8b8b8b8b8b8b8b8b8b&source=constructor";
+  const mapEmbed = pageContent.map_embed?.content || "https://yandex.ru/map-widget/v1/?ll=39.017834%2C45.052788&z=17&pt=39.017834%2C45.052788%2Cpm2rdm";
 
   return (
     <Layout>
+      <SEOHead
+        title="Контакты"
+        description="Контакты магазина воздушных шаров Радуга Праздника в Краснодаре. Адрес: ул. Российская 72/1 к1, Торговая галерея Опера. Телефон: +7 (918) 179-00-56."
+        keywords="контакты Радуга Праздника, адрес магазина шаров, телефон магазина шаров Краснодар"
+        canonicalPath="/contacts"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

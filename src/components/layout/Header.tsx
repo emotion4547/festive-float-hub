@@ -135,7 +135,7 @@ export function Header() {
               <a href={`tel:${cleanPhone}`} className="font-bold text-lg hover:text-primary transition-colors">
                 {phone}
               </a>
-              <p className="text-xs text-muted-foreground">Краснодар, ежедневно 9:00-21:00</p>
+              <p className="text-xs text-muted-foreground">Краснодар, ежедневно 10:00-20:00</p>
             </div>
           </div>
 

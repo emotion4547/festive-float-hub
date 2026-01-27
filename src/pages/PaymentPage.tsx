@@ -1,11 +1,17 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { CreditCard, Banknote, QrCode, Shield } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 const PaymentPage = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Оплата заказа"
+        description="Удобные способы оплаты воздушных шаров: банковские карты, наличные, СБП, онлайн-банкинг. Безопасные платежи, чек при получении."
+        keywords="оплата шаров, способы оплаты, оплата картой, оплата наличными, СБП"
+        canonicalPath="/payment"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

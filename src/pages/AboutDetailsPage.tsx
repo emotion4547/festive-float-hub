@@ -32,7 +32,7 @@ const AboutDetailsPage = () => {
               </div>
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Юридическое лицо</h2>
-                <p className="text-muted-foreground">ИП Иванов Иван Иванович</p>
+                <p className="text-muted-foreground">ИП Федулова Наталья Александровна</p>
               </div>
             </div>
 
@@ -43,8 +43,8 @@ const AboutDetailsPage = () => {
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Регистрационные данные</h2>
                 <div className="space-y-1 text-muted-foreground">
-                  <p>ИНН: 123456789012</p>
-                  <p>ОГРНИП: 123456789012345</p>
+                  <p>ИНН: 790105979012</p>
+                  <p>ОГРНИП: 317237500144251</p>
                 </div>
               </div>
             </div>
@@ -59,7 +59,7 @@ const AboutDetailsPage = () => {
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Юридический адрес</h2>
                 <p className="text-muted-foreground">
-                  350000, Краснодарский край, г. Краснодар, ул. Красная, д. 1
+                  350000, Краснодарский край, г. Краснодар, ул. Российская 72/1 к1, Торговая галерея Опера
                 </p>
               </div>
             </div>
@@ -71,10 +71,10 @@ const AboutDetailsPage = () => {
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Телефон</h2>
                 <a 
-                  href="tel:+78001234567" 
+                  href="tel:+79181790056" 
                   className="text-primary hover:text-primary-hover transition-colors"
                 >
-                  +7 (800) 123-45-67
+                  +7 (918) 179-00-56
                 </a>
               </div>
             </div>
@@ -86,10 +86,10 @@ const AboutDetailsPage = () => {
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Email</h2>
                 <a 
-                  href="mailto:info@example.com" 
+                  href="mailto:info@radugaprazdnika.ru" 
                   className="text-primary hover:text-primary-hover transition-colors"
                 >
-                  info@example.com
+                  info@radugaprazdnika.ru
                 </a>
               </div>
             </div>

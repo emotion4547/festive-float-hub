@@ -22,6 +22,7 @@ import { QuickViewDialog } from "@/components/products/QuickViewDialog";
 import { DynamicFilterSidebar, FilterState } from "@/components/products/DynamicFilterSidebar";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Pagination,
   PaginationContent,
@@ -68,6 +69,18 @@ const CatalogPage = () => {
       case "new": return "Новинки";
       case "budget": return "Бюджетные варианты";
       default: return "Каталог товаров";
+    }
+  };
+
+  // Get SEO description based on filter/category
+  const getSEODescription = () => {
+    if (currentCategory) return `${currentCategory.name} - воздушные шары с доставкой по Краснодару. Большой выбор, гарантия свежести, доставка от 2 часов.`;
+    switch (filterParam) {
+      case "hits": return "Самые популярные воздушные шары в Краснодаре. Хиты продаж с доставкой от 2 часов.";
+      case "sale": return "Воздушные шары со скидкой в Краснодаре. Выгодные предложения с доставкой.";
+      case "new": return "Новые поступления воздушных шаров в Краснодаре. Свежие композиции с доставкой.";
+      case "budget": return "Недорогие воздушные шары до 3000₽ в Краснодаре. Бюджетные варианты с доставкой.";
+      default: return "Каталог воздушных шаров в Краснодаре. Более 1000 композиций на любой праздник с доставкой от 2 часов.";
     }
   };
 
@@ -187,6 +200,12 @@ const CatalogPage = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={getPageTitle()}
+        description={getSEODescription()}
+        keywords={`воздушные шары ${getPageTitle().toLowerCase()}, шары Краснодар, доставка шаров, гелиевые шары`}
+        canonicalPath="/catalog"
+      />
       {/* Breadcrumbs */}
       <div className="bg-muted/30 py-4">
         <div className="container">

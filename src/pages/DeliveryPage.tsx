@@ -1,9 +1,9 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePageContent, useSetting } from "@/contexts/SiteDataContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const deliveryZones = [
   { zone: "Центральный район", price: "от 300 ₽", time: "1-2 часа" },
@@ -22,6 +22,12 @@ const DeliveryPage = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Доставка воздушных шаров"
+        description="Доставка воздушных шаров по Краснодару и Краснодарскому краю. Доставка от 2 часов, работаем ежедневно 10:00-20:00. Бесплатная доставка от 5000₽."
+        keywords="доставка шаров Краснодар, доставка воздушных шаров, курьерская доставка шаров, доставка гелиевых шаров"
+        canonicalPath="/delivery"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           
