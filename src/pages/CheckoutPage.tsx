@@ -36,12 +36,20 @@ interface CouponData {
   discount_value: number;
 }
 
+interface UserCouponData {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  prize_type?: string;
+}
+
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const { coupon, calculateDiscount, removeCoupon } = useCoupon();
+  const { coupon, userCouponMatch, calculateDiscount, removeCoupon } = useCoupon();
   const { 
     coupons: userCoupons, 
     selectedCoupon: selectedUserCoupon, 
@@ -55,21 +63,27 @@ const CheckoutPage = () => {
 
   // Get coupon from cart page if passed via state
   const passedCoupon = location.state?.coupon as CouponData | undefined;
+  const passedUserCouponMatch = location.state?.userCouponMatch as UserCouponData | undefined;
   const passedUserCoupon = location.state?.selectedUserCoupon as typeof selectedUserCoupon | undefined;
+  
+  // Active admin coupon
   const activeCoupon = coupon || passedCoupon;
   
-  // Use passed user coupon from cart if available
-  const effectiveUserCoupon = selectedUserCoupon || passedUserCoupon;
+  // Active manually entered user coupon
+  const activeUserCouponMatch = userCouponMatch || passedUserCouponMatch;
+  
+  // Use passed user coupon from cart (selected from list) if available and no manual match
+  const effectiveUserCoupon = !activeUserCouponMatch ? (selectedUserCoupon || passedUserCoupon) : null;
   
   // Sync passed user coupon on mount
   useEffect(() => {
-    if (passedUserCoupon && !selectedUserCoupon) {
+    if (passedUserCoupon && !selectedUserCoupon && !activeUserCouponMatch) {
       selectUserCoupon(passedUserCoupon);
     }
   }, [passedUserCoupon]);
   
-  // Effective coupon for display
-  const effectiveCoupon = activeCoupon || effectiveUserCoupon;
+  // Effective coupon for display (prioritize manual match)
+  const effectiveCoupon = activeCoupon || activeUserCouponMatch || effectiveUserCoupon;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -87,11 +101,14 @@ const CheckoutPage = () => {
     paymentMethod: "card",
   });
 
+  // Calculate discount - prioritize admin coupon, then manual user coupon match, then selected user coupon
   const discount = activeCoupon 
     ? calculateDiscount(total) 
-    : effectiveUserCoupon 
-      ? calculateUserCouponDiscount(total) 
-      : 0;
+    : activeUserCouponMatch
+      ? calculateDiscount(total)
+      : effectiveUserCoupon 
+        ? calculateUserCouponDiscount(total) 
+        : 0;
   const deliveryCost = formData.deliveryMethod === "pickup" ? 0 : total >= 5000 ? 0 : 200;
   const finalTotal = total - discount + deliveryCost;
 
@@ -171,8 +188,10 @@ const CheckoutPage = () => {
             .eq("id", activeCoupon.id);
         }
 
-        // Mark user coupon as used (wheel coupon)
-        if (effectiveUserCoupon) {
+        // Mark user coupon as used (wheel coupon - either manually entered or selected from list)
+        if (activeUserCouponMatch) {
+          await markCouponAsUsed(activeUserCouponMatch.id, orderData.id);
+        } else if (effectiveUserCoupon) {
           await markCouponAsUsed(effectiveUserCoupon.id, orderData.id);
         }
 
