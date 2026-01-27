@@ -55,10 +55,21 @@ const CheckoutPage = () => {
 
   // Get coupon from cart page if passed via state
   const passedCoupon = location.state?.coupon as CouponData | undefined;
+  const passedUserCoupon = location.state?.selectedUserCoupon as typeof selectedUserCoupon | undefined;
   const activeCoupon = coupon || passedCoupon;
   
-  // Use user coupon if no regular coupon is active
-  const effectiveCoupon = activeCoupon || selectedUserCoupon;
+  // Use passed user coupon from cart if available
+  const effectiveUserCoupon = selectedUserCoupon || passedUserCoupon;
+  
+  // Sync passed user coupon on mount
+  useEffect(() => {
+    if (passedUserCoupon && !selectedUserCoupon) {
+      selectUserCoupon(passedUserCoupon);
+    }
+  }, [passedUserCoupon]);
+  
+  // Effective coupon for display
+  const effectiveCoupon = activeCoupon || effectiveUserCoupon;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -78,7 +89,7 @@ const CheckoutPage = () => {
 
   const discount = activeCoupon 
     ? calculateDiscount(total) 
-    : selectedUserCoupon 
+    : effectiveUserCoupon 
       ? calculateUserCouponDiscount(total) 
       : 0;
   const deliveryCost = formData.deliveryMethod === "pickup" ? 0 : total >= 5000 ? 0 : 200;
@@ -161,8 +172,8 @@ const CheckoutPage = () => {
         }
 
         // Mark user coupon as used (wheel coupon)
-        if (selectedUserCoupon) {
-          await markCouponAsUsed(selectedUserCoupon.id, orderData.id);
+        if (effectiveUserCoupon) {
+          await markCouponAsUsed(effectiveUserCoupon.id, orderData.id);
         }
 
         setOrderNumber(orderData.order_number);
@@ -486,13 +497,13 @@ const CheckoutPage = () => {
                         Ваши промокоды
                       </h2>
                       <div className="space-y-2">
-                        {userCoupons.map((uc) => (
+                        {userCoupons.filter(uc => uc.prize_type === "discount").map((uc) => (
                           <div
                             key={uc.id}
-                            onClick={() => selectUserCoupon(selectedUserCoupon?.id === uc.id ? null : uc)}
+                            onClick={() => selectUserCoupon(effectiveUserCoupon?.id === uc.id ? null : uc)}
                             className={cn(
                               "flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors",
-                              selectedUserCoupon?.id === uc.id
+                              effectiveUserCoupon?.id === uc.id
                                 ? "border-primary bg-primary/5"
                                 : "hover:border-primary/50"
                             )}
@@ -512,17 +523,23 @@ const CheckoutPage = () => {
                             </div>
                             <div className={cn(
                               "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                              selectedUserCoupon?.id === uc.id
+                              effectiveUserCoupon?.id === uc.id
                                 ? "border-primary bg-primary"
                                 : "border-muted-foreground"
                             )}>
-                              {selectedUserCoupon?.id === uc.id && (
+                              {effectiveUserCoupon?.id === uc.id && (
                                 <Check className="h-3 w-3 text-primary-foreground" />
                               )}
                             </div>
                           </div>
                         ))}
                       </div>
+                      {effectiveUserCoupon && (
+                        <p className="text-sm text-success flex items-center gap-1">
+                          <Check className="h-4 w-4" />
+                          Применён купон: {effectiveUserCoupon.code}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

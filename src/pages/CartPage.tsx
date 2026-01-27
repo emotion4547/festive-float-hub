@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Minus, Plus, Trash2, Heart, ShoppingBag, ChevronRight, Truck, CreditCard, RefreshCw, X, Tag, Loader2 } from "lucide-react";
+import { Minus, Plus, Trash2, Heart, ShoppingBag, ChevronRight, Truck, CreditCard, RefreshCw, X, Tag, Loader2, Ticket, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Layout } from "@/components/layout/Layout";
@@ -8,17 +8,37 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCoupon } from "@/hooks/useCoupon";
+import { useUserCoupons } from "@/hooks/useUserCoupons";
+import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/products";
+import { cn } from "@/lib/utils";
 
 const CartPage = () => {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
   const { addFavorite } = useFavorites();
+  const { user } = useAuth();
   const { coupon, isLoading: couponLoading, error: couponError, applyCoupon, removeCoupon, calculateDiscount } = useCoupon();
+  const { 
+    coupons: userCoupons, 
+    selectedCoupon: selectedUserCoupon, 
+    selectCoupon: selectUserCoupon,
+    calculateDiscount: calculateUserCouponDiscount,
+    applyGiftToCart 
+  } = useUserCoupons();
   const [promoCode, setPromoCode] = useState("");
+  const [showUserCoupons, setShowUserCoupons] = useState(false);
 
-  const discount = calculateDiscount(total);
+  // Calculate discounts
+  const adminCouponDiscount = coupon ? calculateDiscount(total) : 0;
+  const userCouponDiscount = selectedUserCoupon ? calculateUserCouponDiscount(total) : 0;
+  const discount = adminCouponDiscount + userCouponDiscount;
+  
   const deliveryCost = total >= 5000 ? 0 : 200;
   const finalTotal = total - discount + deliveryCost;
+
+  // Filter discount coupons (not gifts) for display
+  const discountCoupons = userCoupons.filter(c => c.prize_type === "discount");
+  const giftCoupons = userCoupons.filter(c => c.prize_type === "gift");
 
   // Recommended products
   const recommendedProducts = products
@@ -40,6 +60,18 @@ const CartPage = () => {
       addFavorite(item.product);
       removeItem(productId);
     }
+  };
+
+  const handleSelectUserCoupon = (uc: typeof discountCoupons[0]) => {
+    if (selectedUserCoupon?.id === uc.id) {
+      selectUserCoupon(null);
+    } else {
+      selectUserCoupon(uc);
+    }
+  };
+
+  const handleApplyGift = async (gc: typeof giftCoupons[0]) => {
+    await applyGiftToCart(gc);
   };
 
   if (items.length === 0) {
@@ -109,6 +141,7 @@ const CartPage = () => {
                     src={item.product.images?.[0] || item.product.image || "https://placehold.co/96x96?text=🎈"}
                     alt={item.product.name}
                     className="w-24 h-24 object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </Link>
 
@@ -248,70 +281,173 @@ const CartPage = () => {
                     </span>
                   </p>
                 )}
-              {discount > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Скидка по промокоду:</span>
-                  <span className="font-medium">−{discount.toLocaleString("ru-RU")} ₽</span>
-                </div>
-              )}
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="font-heading font-bold text-lg">Итого:</span>
-                  <span className="font-heading font-bold text-xl text-primary">
-                    {finalTotal.toLocaleString("ru-RU")} ₽
-                  </span>
+                {adminCouponDiscount > 0 && coupon && (
+                  <div className="flex justify-between text-success">
+                    <span>Промокод ({coupon.code}):</span>
+                    <span className="font-medium">−{adminCouponDiscount.toLocaleString("ru-RU")} ₽</span>
+                  </div>
+                )}
+                {userCouponDiscount > 0 && selectedUserCoupon && (
+                  <div className="flex justify-between text-success">
+                    <span>Личный купон ({selectedUserCoupon.code}):</span>
+                    <span className="font-medium">−{userCouponDiscount.toLocaleString("ru-RU")} ₽</span>
+                  </div>
+                )}
+                <div className="border-t pt-3">
+                  <div className="flex justify-between">
+                    <span className="font-heading font-bold text-lg">Итого:</span>
+                    <span className="font-heading font-bold text-xl text-primary">
+                      {finalTotal.toLocaleString("ru-RU")} ₽
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Promo Code */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                Промокод
-              </label>
-              {coupon ? (
-                <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
-                  <div>
-                    <span className="font-medium text-success">{coupon.code}</span>
-                    <p className="text-sm text-muted-foreground">
-                      {coupon.discount_type === "percentage" 
-                        ? `Скидка ${coupon.discount_value}%`
-                        : `Скидка ${coupon.discount_value.toLocaleString("ru-RU")} ₽`
-                      }
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={removeCoupon}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Введите код" 
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={handleApplyPromo}
-                      disabled={couponLoading || !promoCode.trim()}
-                    >
-                      {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Применить"}
+              {/* Promo Code Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Промокод
+                </label>
+                {coupon ? (
+                  <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
+                    <div>
+                      <span className="font-medium text-success">{coupon.code}</span>
+                      <p className="text-sm text-muted-foreground">
+                        {coupon.discount_type === "percentage" 
+                          ? `Скидка ${coupon.discount_value}%`
+                          : `Скидка ${coupon.discount_value.toLocaleString("ru-RU")} ₽`
+                        }
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={removeCoupon}>
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  {couponError && (
-                    <p className="text-sm text-destructive">{couponError}</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Введите код" 
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={handleApplyPromo}
+                        disabled={couponLoading || !promoCode.trim()}
+                      >
+                        {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Применить"}
+                      </Button>
+                    </div>
+                    {couponError && (
+                      <p className="text-sm text-destructive">{couponError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* User Coupons from Wheel */}
+              {user && userCoupons.length > 0 && (
+                <div className="space-y-3 pt-2 border-t">
+                  <button 
+                    onClick={() => setShowUserCoupons(!showUserCoupons)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <span className="text-sm font-medium flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-primary" />
+                      Ваши купоны ({userCoupons.length})
+                    </span>
+                    <ChevronRight className={cn(
+                      "h-4 w-4 transition-transform",
+                      showUserCoupons && "rotate-90"
+                    )} />
+                  </button>
+                  
+                  {showUserCoupons && (
+                    <div className="space-y-2">
+                      {/* Discount coupons */}
+                      {discountCoupons.length > 0 && (
+                        <>
+                          <p className="text-xs text-muted-foreground">Скидки:</p>
+                          {discountCoupons.map((uc) => (
+                            <div
+                              key={uc.id}
+                              onClick={() => handleSelectUserCoupon(uc)}
+                              className={cn(
+                                "flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors",
+                                selectedUserCoupon?.id === uc.id
+                                  ? "border-primary bg-primary/5"
+                                  : "hover:border-primary/50"
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                                  <Ticket className="h-3 w-3 text-primary" />
+                                </div>
+                                <div>
+                                  <code className="font-mono text-sm font-medium">{uc.code}</code>
+                                  <p className="text-xs text-muted-foreground">
+                                    {uc.discount_type === "percentage" 
+                                      ? `−${uc.discount_value}%` 
+                                      : `−${Number(uc.discount_value).toLocaleString("ru-RU")} ₽`}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className={cn(
+                                "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                selectedUserCoupon?.id === uc.id
+                                  ? "border-primary bg-primary"
+                                  : "border-muted-foreground"
+                              )}>
+                                {selectedUserCoupon?.id === uc.id && (
+                                  <Check className="h-3 w-3 text-primary-foreground" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+
+                      {/* Gift coupons */}
+                      {giftCoupons.length > 0 && (
+                        <>
+                          <p className="text-xs text-muted-foreground mt-2">Подарки:</p>
+                          {giftCoupons.map((gc) => (
+                            <div
+                              key={gc.id}
+                              className="flex items-center justify-between p-3 border rounded-lg bg-secondary/10 border-secondary/30"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-secondary/20 flex items-center justify-center">
+                                  <Gift className="h-3 w-3 text-secondary" />
+                                </div>
+                                <div>
+                                  <span className="text-sm font-medium">{gc.gift_product_name || "Подарок"}</span>
+                                  <p className="text-xs text-muted-foreground">Бесплатно</p>
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleApplyGift(gc)}
+                                className="text-xs"
+                              >
+                                В корзину
+                              </Button>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
 
-            <Button asChild size="lg" className="w-full btn-primary text-lg">
-              <Link to="/checkout" state={{ coupon }}>Оформить заказ</Link>
-            </Button>
+              <Button asChild size="lg" className="w-full btn-primary text-lg">
+                <Link to="/checkout" state={{ coupon, selectedUserCoupon }}>Оформить заказ</Link>
+              </Button>
 
               {/* Info */}
               <div className="space-y-3 pt-4 border-t">
