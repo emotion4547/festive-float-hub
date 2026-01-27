@@ -12,14 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -31,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Search } from "lucide-react";
+import { SortableList } from "@/components/admin/SortableList";
+import { SortableItem } from "@/components/admin/SortableItem";
 
 interface Collection {
   id: string;
@@ -198,6 +192,20 @@ export default function AdminCollectionEditPage() {
     fetchData();
   };
 
+  const handleReorderProducts = async (reorderedItems: CollectionProduct[]) => {
+    setCollectionProducts(reorderedItems);
+
+    // Update sort_order for all items
+    for (let i = 0; i < reorderedItems.length; i++) {
+      await supabase
+        .from("collection_products")
+        .update({ sort_order: i })
+        .eq("id", reorderedItems[i].id);
+    }
+
+    toast({ title: "Порядок сохранен" });
+  };
+
   const handleAddCategory = async () => {
     if (!selectedCategoryId || !id) return;
 
@@ -267,7 +275,7 @@ export default function AdminCollectionEditPage() {
           <TabsContent value="products" className="space-y-4">
             <div className="flex justify-between items-center">
               <p className="text-muted-foreground">
-                Товары, добавленные напрямую в подборку
+                Перетащите товары для изменения порядка
               </p>
               <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
                 <DialogTrigger asChild>
@@ -332,19 +340,11 @@ export default function AdminCollectionEditPage() {
             {collectionProducts.length === 0 ? (
               <p className="text-muted-foreground py-4">Товары не добавлены</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Фото</TableHead>
-                    <TableHead>Название</TableHead>
-                    <TableHead>Цена</TableHead>
-                    <TableHead className="text-right">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <div className="space-y-2">
+                <SortableList items={collectionProducts} onReorder={handleReorderProducts}>
                   {collectionProducts.map((cp) => (
-                    <TableRow key={cp.id}>
-                      <TableCell>
+                    <SortableItem key={cp.id} id={cp.id} className="p-2">
+                      <div className="flex items-center gap-3 flex-1">
                         {cp.product?.images?.[0] ? (
                           <img
                             src={cp.product.images[0]}
@@ -354,10 +354,10 @@ export default function AdminCollectionEditPage() {
                         ) : (
                           <div className="w-12 h-12 bg-muted rounded" />
                         )}
-                      </TableCell>
-                      <TableCell className="font-medium">{cp.product?.name}</TableCell>
-                      <TableCell>{cp.product?.price} ₽</TableCell>
-                      <TableCell className="text-right">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{cp.product?.name}</p>
+                          <p className="text-sm text-muted-foreground">{cp.product?.price} ₽</p>
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -366,11 +366,11 @@ export default function AdminCollectionEditPage() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </SortableItem>
                   ))}
-                </TableBody>
-              </Table>
+                </SortableList>
+              </div>
             )}
           </TabsContent>
 
@@ -419,33 +419,24 @@ export default function AdminCollectionEditPage() {
             {collectionCategories.length === 0 ? (
               <p className="text-muted-foreground py-4">Категории не добавлены</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Название категории</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead className="text-right">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {collectionCategories.map((cc) => (
-                    <TableRow key={cc.id}>
-                      <TableCell className="font-medium">{cc.category?.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{cc.category?.slug}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => handleRemoveCategory(cc.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="space-y-2">
+                {collectionCategories.map((cc) => (
+                  <div key={cc.id} className="flex items-center gap-3 p-3 bg-background rounded-lg border">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium">{cc.category?.name}</p>
+                      <p className="text-sm text-muted-foreground">/{cc.category?.slug}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => handleRemoveCategory(cc.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </TabsContent>
         </Tabs>

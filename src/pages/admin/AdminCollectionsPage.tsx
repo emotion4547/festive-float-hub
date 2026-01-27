@@ -22,14 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +29,9 @@ import { Plus, Pencil, Trash2, Settings2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { SortableList } from "@/components/admin/SortableList";
+import { SortableItem } from "@/components/admin/SortableItem";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 
 interface Collection {
   id: string;
@@ -203,12 +198,31 @@ export default function AdminCollectionsPage() {
     setDeleteId(null);
   };
 
+  const handleReorder = async (reorderedItems: Collection[]) => {
+    setCollections(reorderedItems);
+
+    // Update sort_order for all items
+    const updates = reorderedItems.map((item, index) => ({
+      id: item.id,
+      sort_order: index,
+    }));
+
+    for (const update of updates) {
+      await supabase
+        .from("collections")
+        .update({ sort_order: update.sort_order })
+        .eq("id", update.id);
+    }
+
+    toast({ title: "Порядок сохранен" });
+  };
+
   return (
     <AdminLayout title="Подборки">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <p className="text-muted-foreground">
-            Управление тематическими подборками для праздников
+            Перетащите подборки для изменения порядка
           </p>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
@@ -254,15 +268,14 @@ export default function AdminCollectionsPage() {
                     placeholder="Подборка шаров к 8 марта"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">URL изображения</Label>
-                  <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, image_url: e.target.value }))}
-                    placeholder="https://..."
-                  />
-                </div>
+                
+                <ImageUpload
+                  value={formData.image_url}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, image_url: url }))}
+                  bucket="collection-images"
+                  label="Изображение подборки"
+                />
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="start_date">Дата начала</Label>
@@ -282,15 +295,6 @@ export default function AdminCollectionsPage() {
                       onChange={(e) => setFormData((prev) => ({ ...prev, end_date: e.target.value }))}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sort_order">Порядок сортировки</Label>
-                  <Input
-                    id="sort_order"
-                    type="number"
-                    value={formData.sort_order}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))}
-                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -313,33 +317,35 @@ export default function AdminCollectionsPage() {
         ) : collections.length === 0 ? (
           <p className="text-muted-foreground">Подборок пока нет</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Название</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Даты</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="space-y-2">
+            <SortableList items={collections} onReorder={handleReorder}>
               {collections.map((collection) => (
-                <TableRow key={collection.id}>
-                  <TableCell className="font-medium">{collection.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{collection.slug}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {collection.start_date && collection.end_date
-                      ? `${format(new Date(collection.start_date), "d MMM", { locale: ru })} - ${format(new Date(collection.end_date), "d MMM", { locale: ru })}`
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
+                <SortableItem key={collection.id} id={collection.id} className="p-3">
+                  <div className="flex items-center gap-4 flex-1">
+                    {collection.image_url ? (
+                      <img
+                        src={collection.image_url}
+                        alt={collection.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
+                        Нет
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{collection.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">/{collection.slug}</p>
+                    </div>
+                    <div className="text-sm text-muted-foreground hidden md:block">
+                      {collection.start_date && collection.end_date
+                        ? `${format(new Date(collection.start_date), "d MMM", { locale: ru })} - ${format(new Date(collection.end_date), "d MMM", { locale: ru })}`
+                        : "—"}
+                    </div>
                     <Badge variant={collection.is_active ? "default" : "secondary"}>
                       {collection.is_active ? "Активна" : "Неактивна"}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex gap-1">
                       <Button variant="ghost" size="icon" asChild>
                         <Link to={`/admin/collections/${collection.id}`}>
                           <Settings2 className="h-4 w-4" />
@@ -360,11 +366,11 @@ export default function AdminCollectionsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </SortableItem>
               ))}
-            </TableBody>
-          </Table>
+            </SortableList>
+          </div>
         )}
       </div>
 
