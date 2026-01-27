@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Send, Phone, X } from "lucide-react";
+import { Phone, X } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
 import { cn } from "@/lib/utils";
 import balloonsIcon from "@/assets/balloons-icon.png";
 import whatsappIcon from "@/assets/whatsapp-icon.png";
 import vkIcon from "@/assets/vk-icon.png";
 import instagramIcon from "@/assets/instagram-icon.png";
+import telegramIcon from "@/assets/telegram-icon.png";
+import maxIcon from "@/assets/max-icon.png";
 
 export function FloatingButtons() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +39,7 @@ export function FloatingButtons() {
     {
       name: "Telegram",
       href: telegram,
-      icon: () => <Send className="h-5 w-5" />,
+      icon: () => <img src={telegramIcon} alt="Telegram" className="h-6 w-6 invert" />,
       bgColor: "bg-[#0088cc]",
       hoverColor: "hover:bg-[#0077b3]",
     },
@@ -58,7 +60,7 @@ export function FloatingButtons() {
     {
       name: "MAX",
       href: maxMessenger,
-      icon: () => <span className="font-bold text-xs">MAX</span>,
+      icon: () => <img src={maxIcon} alt="MAX" className="h-6 w-6 invert" />,
       bgColor: "bg-[#FF5722]",
       hoverColor: "hover:bg-[#E64A19]",
     },
