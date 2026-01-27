@@ -2,6 +2,7 @@ import { ReactNode, lazy, Suspense } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { FloatingButtons } from "./FloatingButtons";
+import { CookieConsent } from "./CookieConsent";
 import { PendingSpinHandler } from "@/components/wheel/PendingSpinHandler";
 
 // Lazy load FortuneWheelDialog for performance
@@ -24,6 +25,7 @@ export function Layout({ children }: LayoutProps) {
         <FortuneWheelDialog />
       </Suspense>
       <PendingSpinHandler />
+      <CookieConsent />
     </div>
   );
 }
