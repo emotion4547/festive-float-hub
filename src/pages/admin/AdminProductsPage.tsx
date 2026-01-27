@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Search, Plus, Edit, Trash2, Package } from "lucide-react";
@@ -93,130 +94,144 @@ export default function AdminProductsPage() {
 
   return (
     <AdminLayout title="Товары">
-      <div className="space-y-6">
-        {/* Category Manager */}
-        <CategoryManager />
+      <Tabs defaultValue="products" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="products">Товары</TabsTrigger>
+          <TabsTrigger value="categories">Категории</TabsTrigger>
+          <TabsTrigger value="import">Импорт из Excel</TabsTrigger>
+        </TabsList>
 
-        {/* Excel Import */}
-        <ExcelImport onImportComplete={fetchProducts} />
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск товаров..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button asChild>
-            <Link to="/admin/products/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Добавить товар
-            </Link>
-          </Button>
-        </div>
-
-        {/* Products Table */}
-        {filteredProducts.length === 0 ? (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Товары не найдены</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">Фото</TableHead>
-                    <TableHead>Название</TableHead>
-                    <TableHead>Цена</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead>Метки</TableHead>
-                    <TableHead className="w-24">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
-                          {product.images && product.images[0] ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium max-w-xs truncate">
-                        {product.name}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <span className="font-medium">
-                            {Number(product.price).toLocaleString("ru-RU")} ₽
-                          </span>
-                          {product.old_price && (
-                            <span className="text-sm text-muted-foreground line-through ml-2">
-                              {Number(product.old_price).toLocaleString("ru-RU")} ₽
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={product.in_stock ? "default" : "secondary"}>
-                          {product.in_stock ? "В наличии" : "Нет в наличии"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {product.is_new && (
-                            <Badge variant="outline" className="text-xs">
-                              Новинка
-                            </Badge>
-                          )}
-                          {product.is_hit && (
-                            <Badge variant="outline" className="text-xs">
-                              Хит
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link to={`/admin/products/${product.id}`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        {/* Products Tab */}
+        <TabsContent value="products" className="space-y-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Поиск товаров..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          </Card>
-        )}
-      </div>
+            <Button asChild>
+              <Link to="/admin/products/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить товар
+              </Link>
+            </Button>
+          </div>
+
+          {/* Products Table */}
+          {filteredProducts.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Товары не найдены</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Фото</TableHead>
+                      <TableHead>Название</TableHead>
+                      <TableHead>Цена</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead>Метки</TableHead>
+                      <TableHead className="w-24">Действия</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                            {product.images && product.images[0] ? (
+                              <img
+                                src={product.images[0]}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {product.name}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium">
+                              {Number(product.price).toLocaleString("ru-RU")} ₽
+                            </span>
+                            {product.old_price && (
+                              <span className="text-sm text-muted-foreground line-through ml-2">
+                                {Number(product.old_price).toLocaleString("ru-RU")} ₽
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={product.in_stock ? "default" : "secondary"}>
+                            {product.in_stock ? "В наличии" : "Нет в наличии"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {product.is_new && (
+                              <Badge variant="outline" className="text-xs">
+                                Новинка
+                              </Badge>
+                            )}
+                            {product.is_hit && (
+                              <Badge variant="outline" className="text-xs">
+                                Хит
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link to={`/admin/products/${product.id}`}>
+                                <Edit className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Categories Tab */}
+        <TabsContent value="categories">
+          <CategoryManager />
+        </TabsContent>
+
+        {/* Excel Import Tab */}
+        <TabsContent value="import">
+          <ExcelImport onImportComplete={fetchProducts} />
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }

@@ -116,7 +116,7 @@ export function DynamicFilterSidebar({ filters, onFilterChange, onReset, showCat
       {showCategoryFilter && options.categories.length > 0 && (
         <div className="space-y-3">
           <h4 className="font-heading font-semibold">Категория</h4>
-          <div className="max-h-48 overflow-y-auto space-y-2">
+          <div className="space-y-2">
             {options.categories.map((option) => (
               <label key={option.id} className="flex items-center gap-3 cursor-pointer">
                 <Checkbox

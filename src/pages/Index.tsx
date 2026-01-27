@@ -412,24 +412,22 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {categories.slice(0, 12).map((category) => {
-                const productImage = getCategoryImage(category.id);
-                return (
-                  <Link 
-                    key={category.id} 
-                    to={`/catalog?category=${category.slug}`}
-                    className="group"
+                    const productImage = category.image || getCategoryImage(category.id);
+                    return (
+                      <Link 
+                        key={category.id} 
+                        to={`/catalog?category=${category.slug}`}
+                        className="group"
                   >
                     <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
                       {productImage ? (
                         <img 
                           src={productImage} 
                           alt={category.name}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                      ) : category.image ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-5xl">{category.image}</span>
-                        </div>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <span className="text-5xl">🎈</span>

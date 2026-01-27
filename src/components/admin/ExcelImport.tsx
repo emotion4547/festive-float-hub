@@ -360,14 +360,17 @@ export function ExcelImport({ onImportComplete }: { onImportComplete?: () => voi
                   <XCircle className="h-4 w-4" />
                   <span className="font-medium">Ошибки ({result.errors.length}):</span>
                 </div>
-                <div className="max-h-32 overflow-y-auto text-sm text-muted-foreground space-y-1">
-                  {result.errors.slice(0, 10).map((err, i) => (
-                    <p key={i} className="truncate">{err}</p>
+                <div className="max-h-48 overflow-y-auto text-sm space-y-1 bg-destructive/5 p-3 rounded-lg border border-destructive/20">
+                  {result.errors.map((err, i) => (
+                    <div key={i} className="flex items-start gap-2 py-1 border-b border-destructive/10 last:border-0">
+                      <span className="text-destructive font-medium shrink-0">#{i + 1}</span>
+                      <span className="text-muted-foreground break-words">{err}</span>
+                    </div>
                   ))}
-                  {result.errors.length > 10 && (
-                    <p>...и ещё {result.errors.length - 10} ошибок</p>
-                  )}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Прокрутите для просмотра всех ошибок. Исправьте данные в файле и загрузите снова.
+                </p>
               </div>
             )}
           </div>

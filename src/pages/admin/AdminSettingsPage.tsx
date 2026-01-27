@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Globe, Phone, Share2, Truck, MessageCircle, Send } from "lucide-react";
+import { BrandingSettings } from "@/components/admin/BrandingSettings";
 
 interface Setting {
   id: string;
@@ -163,14 +164,20 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout title="Настройки">
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList>
+      <Tabs defaultValue="branding" className="space-y-6">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="branding">Брендинг</TabsTrigger>
           <TabsTrigger value="general">Общие</TabsTrigger>
           <TabsTrigger value="contacts">Контакты</TabsTrigger>
           <TabsTrigger value="social">Соцсети</TabsTrigger>
           <TabsTrigger value="delivery">Доставка</TabsTrigger>
           <TabsTrigger value="pages">Страницы</TabsTrigger>
         </TabsList>
+
+        {/* Branding Tab */}
+        <TabsContent value="branding">
+          <BrandingSettings />
+        </TabsContent>
 
         {/* General Settings */}
         <TabsContent value="general" className="space-y-6">
