@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -18,9 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Star, Check, X, MessageSquare } from "lucide-react";
+import { Loader2, Star, Check, X, MessageSquare, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -37,11 +47,36 @@ interface Review {
   } | null;
 }
 
+interface Product {
+  id: string;
+  name: string;
+}
+
 export default function AdminReviewsPage() {
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("pending");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    product_id: "",
+    author_name: "",
+    rating: 5,
+    title: "",
+    content: "",
+  });
+
+  const fetchProducts = async () => {
+    const { data } = await supabase
+      .from("products")
+      .select("id, name")
+      .order("name");
+    setProducts(data || []);
+  };
 
   const fetchReviews = async () => {
     try {
@@ -76,6 +111,10 @@ export default function AdminReviewsPage() {
   };
 
   useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
     fetchReviews();
   }, [statusFilter]);
 
@@ -101,6 +140,52 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const handleCreateReview = async () => {
+    if (!formData.product_id || !formData.author_name || !formData.content) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Заполните обязательные поля",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("reviews").insert({
+        product_id: formData.product_id,
+        author_name: formData.author_name.trim(),
+        rating: formData.rating,
+        title: formData.title.trim() || null,
+        content: formData.content.trim(),
+        status: "approved", // Сразу одобряем, т.к. это ручное добавление
+        user_id: null, // Нет привязки к пользователю
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Отзыв добавлен" });
+      setIsDialogOpen(false);
+      setFormData({
+        product_id: "",
+        author_name: "",
+        rating: 5,
+        title: "",
+        content: "",
+      });
+      fetchReviews();
+    } catch (error) {
+      console.error("Error creating review:", error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось добавить отзыв",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Отзывы">
@@ -114,9 +199,9 @@ export default function AdminReviewsPage() {
   return (
     <AdminLayout title="Отзывы">
       <div className="space-y-4">
-        {/* Filter */}
+        {/* Filter & Add Button */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Статус" />
@@ -128,6 +213,114 @@ export default function AdminReviewsPage() {
                 <SelectItem value="rejected">Отклонённые</SelectItem>
               </SelectContent>
             </Select>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить отзыв
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Добавить отзыв вручную</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product">Товар *</Label>
+                    <Select
+                      value={formData.product_id}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, product_id: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите товар" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="author">Имя автора *</Label>
+                    <Input
+                      id="author"
+                      value={formData.author_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, author_name: e.target.value })
+                      }
+                      placeholder="Введите имя"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Рейтинг *</Label>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() =>
+                            setFormData({ ...formData, rating: star })
+                          }
+                          className="p-1 hover:scale-110 transition-transform"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${
+                              star <= formData.rating
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Заголовок</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="Краткий заголовок (необязательно)"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="content">Текст отзыва *</Label>
+                    <Textarea
+                      id="content"
+                      value={formData.content}
+                      onChange={(e) =>
+                        setFormData({ ...formData, content: e.target.value })
+                      }
+                      placeholder="Введите текст отзыва"
+                      rows={4}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleCreateReview}
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
+                    {isSubmitting && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
+                    Добавить отзыв
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
