@@ -27,10 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Edit, Trash2, RotateCcw } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, RotateCcw, Ticket, Gift, TrendingUp, Users } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
+// === Segments Types ===
 interface WheelSegment {
   id: string;
   label: string;
@@ -47,6 +51,27 @@ interface WheelSegment {
 interface Product {
   id: string;
   name: string;
+}
+
+// === Stats Types ===
+interface WheelStats {
+  totalSpins: number;
+  uniqueUsers: number;
+  totalCoupons: number;
+  usedCoupons: number;
+  expiredCoupons: number;
+  giftCoupons: number;
+  discountCoupons: number;
+}
+
+interface RecentSpin {
+  id: string;
+  spun_at: string;
+  user_id: string;
+  segment_label: string;
+  coupon_code: string;
+  is_used: boolean;
+  prize_type: string;
 }
 
 const COLORS = [
@@ -68,14 +93,22 @@ const emptySegment = {
 
 export default function AdminWheelPage() {
   const { toast } = useToast();
+  
+  // === Segments State ===
   const [segments, setSegments] = useState<WheelSegment[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [segmentsLoading, setSegmentsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingSegment, setEditingSegment] = useState<WheelSegment | null>(null);
   const [formData, setFormData] = useState(emptySegment);
 
+  // === Stats State ===
+  const [stats, setStats] = useState<WheelStats | null>(null);
+  const [recentSpins, setRecentSpins] = useState<RecentSpin[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // === Segments Logic ===
   const fetchSegments = async () => {
     try {
       const { data, error } = await supabase
@@ -88,7 +121,7 @@ export default function AdminWheelPage() {
     } catch (error) {
       console.error("Error fetching segments:", error);
     } finally {
-      setLoading(false);
+      setSegmentsLoading(false);
     }
   };
 
@@ -210,7 +243,76 @@ export default function AdminWheelPage() {
     }
   };
 
-  if (loading) {
+  // === Stats Logic ===
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { count: totalSpins } = await supabase
+          .from("user_wheel_spins")
+          .select("*", { count: "exact", head: true });
+
+        const { data: uniqueUsersData } = await supabase
+          .from("user_wheel_spins")
+          .select("user_id");
+        const uniqueUsers = new Set(uniqueUsersData?.map(s => s.user_id)).size;
+
+        const { data: couponsData } = await supabase
+          .from("user_coupons")
+          .select("is_used, expires_at, prize_type");
+
+        const now = new Date().toISOString();
+        const totalCoupons = couponsData?.length || 0;
+        const usedCoupons = couponsData?.filter(c => c.is_used).length || 0;
+        const expiredCoupons = couponsData?.filter(c => !c.is_used && c.expires_at < now).length || 0;
+        const giftCoupons = couponsData?.filter(c => c.prize_type === "gift").length || 0;
+        const discountCoupons = couponsData?.filter(c => c.prize_type === "discount").length || 0;
+
+        setStats({
+          totalSpins: totalSpins || 0,
+          uniqueUsers,
+          totalCoupons,
+          usedCoupons,
+          expiredCoupons,
+          giftCoupons,
+          discountCoupons,
+        });
+
+        const { data: spinsData } = await supabase
+          .from("user_wheel_spins")
+          .select(`
+            id,
+            spun_at,
+            user_id,
+            segment:wheel_segments(label),
+            coupon:user_coupons(code, is_used, prize_type)
+          `)
+          .order("spun_at", { ascending: false })
+          .limit(20);
+
+        if (spinsData) {
+          setRecentSpins(spinsData.map((spin: any) => ({
+            id: spin.id,
+            spun_at: spin.spun_at,
+            user_id: spin.user_id,
+            segment_label: spin.segment?.label || "—",
+            coupon_code: spin.coupon?.code || "—",
+            is_used: spin.coupon?.is_used || false,
+            prize_type: spin.coupon?.prize_type || "discount",
+          })));
+        }
+      } catch (error) {
+        console.error("Error fetching wheel stats:", error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const isLoading = segmentsLoading || statsLoading;
+
+  if (isLoading) {
     return (
       <AdminLayout title="Колесо фортуны">
         <div className="flex items-center justify-center h-64">
@@ -222,265 +324,424 @@ export default function AdminWheelPage() {
 
   return (
     <AdminLayout title="Колесо фортуны">
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-muted-foreground">
-            Настройте призы колеса фортуны. Вероятность определяет шанс выпадения (больше = чаще).
-          </p>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить сегмент
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingSegment ? "Редактировать сегмент" : "Новый сегмент"}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="label">Название (отображается на колесе)</Label>
-                  <Input
-                    id="label"
-                    value={formData.label}
-                    onChange={(e) =>
-                      setFormData({ ...formData, label: e.target.value })
-                    }
-                    placeholder="10%"
-                  />
-                </div>
+      <Tabs defaultValue="segments" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="segments">Сегменты</TabsTrigger>
+          <TabsTrigger value="stats">Статистика</TabsTrigger>
+        </TabsList>
 
-                {/* Prize type selector */}
-                <div className="space-y-2">
-                  <Label>Тип приза</Label>
-                  <Select
-                    value={formData.prize_type}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, prize_type: value, gift_product_id: value === "discount" ? null : formData.gift_product_id })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="discount">Скидка</SelectItem>
-                      <SelectItem value="gift">Подарок</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.prize_type === "discount" ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Тип скидки</Label>
-                      <Select
-                        value={formData.discount_type}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, discount_type: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Процент</SelectItem>
-                          <SelectItem value="fixed">Фиксированная (₽)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="discount_value">
-                        Размер {formData.discount_type === "percentage" ? "(%)" : "(₽)"}
-                      </Label>
-                      <Input
-                        id="discount_value"
-                        type="number"
-                        value={formData.discount_value}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            discount_value: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                ) : (
+        {/* Segments Tab */}
+        <TabsContent value="segments" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-muted-foreground">
+              Настройте призы колеса фортуны. Вероятность определяет шанс выпадения (больше = чаще).
+            </p>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить сегмент
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingSegment ? "Редактировать сегмент" : "Новый сегмент"}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label>Товар-подарок</Label>
+                    <Label htmlFor="label">Название (отображается на колесе)</Label>
+                    <Input
+                      id="label"
+                      value={formData.label}
+                      onChange={(e) =>
+                        setFormData({ ...formData, label: e.target.value })
+                      }
+                      placeholder="10%"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Тип приза</Label>
                     <Select
-                      value={formData.gift_product_id || ""}
+                      value={formData.prize_type}
                       onValueChange={(value) =>
-                        setFormData({ ...formData, gift_product_id: value || null })
+                        setFormData({ ...formData, prize_type: value, gift_product_id: value === "discount" ? null : formData.gift_product_id })
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Выберите товар" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="discount">Скидка</SelectItem>
+                        <SelectItem value="gift">Подарок</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {formData.prize_type === "discount" ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Тип скидки</Label>
+                        <Select
+                          value={formData.discount_type}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, discount_type: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">Процент</SelectItem>
+                            <SelectItem value="fixed">Фиксированная (₽)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="discount_value">
+                          Размер {formData.discount_type === "percentage" ? "(%)" : "(₽)"}
+                        </Label>
+                        <Input
+                          id="discount_value"
+                          type="number"
+                          value={formData.discount_value}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              discount_value: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Товар-подарок</Label>
+                      <Select
+                        value={formData.gift_product_id || ""}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, gift_product_id: value || null })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите товар" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        При активации промокода товар добавляется в корзину бесплатно
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="probability">Вероятность (вес)</Label>
+                    <Input
+                      id="probability"
+                      type="number"
+                      value={formData.probability}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          probability: Number(e.target.value),
+                        })
+                      }
+                    />
                     <p className="text-xs text-muted-foreground">
-                      При активации промокода товар добавляется в корзину бесплатно
+                      Чем больше значение, тем чаще выпадает этот приз
                     </p>
                   </div>
-                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="probability">Вероятность (вес)</Label>
-                  <Input
-                    id="probability"
-                    type="number"
-                    value={formData.probability}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        probability: Number(e.target.value),
-                      })
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Чем больше значение, тем чаще выпадает этот приз
-                  </p>
-                </div>
+                  <div className="space-y-2">
+                    <Label>Цвет сегмента</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                            formData.color === color
+                              ? "border-primary ring-2 ring-primary ring-offset-2"
+                              : "border-transparent"
+                          }`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setFormData({ ...formData, color })}
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Цвет сегмента</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                          formData.color === color
-                            ? "border-primary ring-2 ring-primary ring-offset-2"
-                            : "border-transparent"
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setFormData({ ...formData, color })}
-                      />
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="is_active">Активен</Label>
+                    <Switch
+                      id="is_active"
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_active: checked })
+                      }
+                    />
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="is_active">Активен</Label>
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_active: checked })
-                    }
-                  />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                    Отмена
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Сохранить"}
+                  </Button>
                 </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Отмена
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Сохранить"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-        {segments.length === 0 ? (
+          {segments.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <RotateCcw className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Сегменты не найдены</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Цвет</TableHead>
+                      <TableHead>Название</TableHead>
+                      <TableHead>Тип приза</TableHead>
+                      <TableHead>Значение</TableHead>
+                      <TableHead>Вероятность</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead className="w-24">Действия</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {segments.map((segment) => (
+                      <TableRow key={segment.id}>
+                        <TableCell>
+                          <div
+                            className="w-6 h-6 rounded-full border"
+                            style={{ backgroundColor: segment.color }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{segment.label}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            segment.prize_type === "gift"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}>
+                            {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {segment.prize_type === "gift"
+                            ? "Товар"
+                            : segment.discount_type === "percentage"
+                              ? `${segment.discount_value}%`
+                              : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
+                        </TableCell>
+                        <TableCell>{segment.probability}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded text-xs ${
+                              segment.is_active
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {segment.is_active ? "Активен" : "Неактивен"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(segment)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(segment.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Stats Tab */}
+        <TabsContent value="stats" className="space-y-6">
+          {/* Stats cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Всего прокруток</CardTitle>
+                <RotateCcw className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalSpins || 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Уникальных пользователей</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.uniqueUsers || 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Использовано промокодов</CardTitle>
+                <Ticket className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {stats?.usedCoupons || 0}
+                  <span className="text-sm text-muted-foreground ml-1">
+                    / {stats?.totalCoupons || 0}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Истекших: {stats?.expiredCoupons || 0}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">По типам призов</CardTitle>
+                <Gift className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm">
+                  <div className="flex justify-between">
+                    <span>Скидки:</span>
+                    <span className="font-bold">{stats?.discountCoupons || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Подарки:</span>
+                    <span className="font-bold">{stats?.giftCoupons || 0}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Conversion rate */}
+          {stats && stats.totalCoupons > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Конверсия
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${Math.round((stats.usedCoupons / stats.totalCoupons) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="font-bold text-lg">
+                    {Math.round((stats.usedCoupons / stats.totalCoupons) * 100)}%
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Процент использованных промокодов от общего числа
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recent spins */}
           <Card>
-            <CardContent className="py-16 text-center">
-              <RotateCcw className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Сегменты не найдены</p>
+            <CardHeader>
+              <CardTitle>Последние прокрутки</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentSpins.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Прокруток пока нет
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Дата</TableHead>
+                      <TableHead>Приз</TableHead>
+                      <TableHead>Тип</TableHead>
+                      <TableHead>Промокод</TableHead>
+                      <TableHead>Статус</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSpins.map((spin) => (
+                      <TableRow key={spin.id}>
+                        <TableCell>
+                          {format(new Date(spin.spun_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                        </TableCell>
+                        <TableCell>{spin.segment_label}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            spin.prize_type === "gift"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}>
+                            {spin.prize_type === "gift" ? "Подарок" : "Скидка"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <code className="bg-muted px-2 py-1 rounded text-sm">
+                            {spin.coupon_code}
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            spin.is_used
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}>
+                            {spin.is_used ? "Использован" : "Активен"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
-        ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Цвет</TableHead>
-                    <TableHead>Название</TableHead>
-                    <TableHead>Тип приза</TableHead>
-                    <TableHead>Значение</TableHead>
-                    <TableHead>Вероятность</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead className="w-24">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {segments.map((segment) => (
-                    <TableRow key={segment.id}>
-                      <TableCell>
-                        <div
-                          className="w-6 h-6 rounded-full border"
-                          style={{ backgroundColor: segment.color }}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{segment.label}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          segment.prize_type === "gift"
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}>
-                          {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {segment.prize_type === "gift"
-                          ? "Товар"
-                          : segment.discount_type === "percentage"
-                            ? `${segment.discount_value}%`
-                            : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
-                      </TableCell>
-                      <TableCell>{segment.probability}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            segment.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {segment.is_active ? "Активен" : "Неактивен"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(segment)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(segment.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }

@@ -39,16 +39,12 @@ import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 import AdminWheelPage from "./pages/admin/AdminWheelPage";
-import AdminWheelStatsPage from "./pages/admin/AdminWheelStatsPage";
-import AdminPagesPage from "./pages/admin/AdminPagesPage";
-import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import AdminNewsPage from "./pages/admin/AdminNewsPage";
-import AdminBannersPage from "./pages/admin/AdminBannersPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AccountCouponsPage from "./pages/account/AccountCouponsPage";
-import AdminCollectionsPage from "./pages/admin/AdminCollectionsPage";
+import AdminShowcasePage from "./pages/admin/AdminShowcasePage";
 import AdminCollectionEditPage from "./pages/admin/AdminCollectionEditPage";
+import AccountCouponsPage from "./pages/account/AccountCouponsPage";
 import CollectionPage from "./pages/CollectionPage";
 import NotFound from "./pages/NotFound";
 
@@ -97,17 +93,13 @@ const App = () => (
               <Route path="/admin/products" element={<ProtectedRoute requireAdmin><AdminProductsPage /></ProtectedRoute>} />
               <Route path="/admin/products/:id" element={<ProtectedRoute requireAdmin><AdminProductEditPage /></ProtectedRoute>} />
               <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><AdminOrdersPage /></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
               <Route path="/admin/reviews" element={<ProtectedRoute requireAdmin><AdminReviewsPage /></ProtectedRoute>} />
               <Route path="/admin/coupons" element={<ProtectedRoute requireAdmin><AdminCouponsPage /></ProtectedRoute>} />
               <Route path="/admin/wheel" element={<ProtectedRoute requireAdmin><AdminWheelPage /></ProtectedRoute>} />
-              <Route path="/admin/wheel/stats" element={<ProtectedRoute requireAdmin><AdminWheelStatsPage /></ProtectedRoute>} />
-              <Route path="/admin/pages" element={<ProtectedRoute requireAdmin><AdminPagesPage /></ProtectedRoute>} />
-              <Route path="/admin/customers" element={<ProtectedRoute requireAdmin><AdminCustomersPage /></ProtectedRoute>} />
-              <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
-              <Route path="/admin/news" element={<ProtectedRoute requireAdmin><AdminNewsPage /></ProtectedRoute>} />
-              <Route path="/admin/banners" element={<ProtectedRoute requireAdmin><AdminBannersPage /></ProtectedRoute>} />
-              <Route path="/admin/collections" element={<ProtectedRoute requireAdmin><AdminCollectionsPage /></ProtectedRoute>} />
+              <Route path="/admin/showcase" element={<ProtectedRoute requireAdmin><AdminShowcasePage /></ProtectedRoute>} />
               <Route path="/admin/collections/:id" element={<ProtectedRoute requireAdmin><AdminCollectionEditPage /></ProtectedRoute>} />
+              <Route path="/admin/news" element={<ProtectedRoute requireAdmin><AdminNewsPage /></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettingsPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
