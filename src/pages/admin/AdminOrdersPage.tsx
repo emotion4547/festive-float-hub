@@ -19,11 +19,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Eye, Package } from "lucide-react";
+import { Loader2, Search, Eye, Package, MapPin, Phone, Mail, Calendar, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+
+interface OrderItem {
+  id: string;
+  product_name: string;
+  product_image: string | null;
+  price: number;
+  quantity: number;
+}
+
+interface OrderDetails {
+  id: string;
+  order_number: string;
+  status: string;
+  total: number;
+  delivery_cost: number;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  delivery_method: string;
+  delivery_address: string | null;
+  delivery_date: string | null;
+  delivery_time: string | null;
+  payment_method: string;
+  comment: string | null;
+  created_at: string;
+  order_items: OrderItem[];
+}
 
 interface Order {
   id: string;
@@ -46,12 +79,26 @@ const statusOptions = [
   { value: "cancelled", label: "Отменён", variant: "destructive" as const },
 ];
 
+const paymentMethods: Record<string, string> = {
+  card: "Банковская карта",
+  sbp: "СБП",
+  cash: "Наличными",
+};
+
+const deliveryMethods: Record<string, string> = {
+  courier: "Курьер",
+  pickup: "Самовывоз",
+};
+
 export default function AdminOrdersPage() {
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -89,6 +136,54 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, [statusFilter]);
+
+  const fetchOrderDetails = async (orderId: string) => {
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          order_number,
+          status,
+          total,
+          delivery_cost,
+          customer_name,
+          customer_phone,
+          customer_email,
+          delivery_method,
+          delivery_address,
+          delivery_date,
+          delivery_time,
+          payment_method,
+          comment,
+          created_at,
+          order_items (
+            id,
+            product_name,
+            product_image,
+            price,
+            quantity
+          )
+        `)
+        .eq("id", orderId)
+        .single();
+
+      if (error) throw error;
+
+      setSelectedOrder(data);
+      setOrderDetailsOpen(true);
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось загрузить данные заказа",
+      });
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
@@ -236,8 +331,17 @@ export default function AdminOrdersPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => fetchOrderDetails(order.id)}
+                            disabled={loadingDetails}
+                          >
+                            {loadingDetails ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -249,6 +353,147 @@ export default function AdminOrdersPage() {
           </Card>
         )}
       </div>
+
+      {/* Order Details Dialog */}
+      <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Заказ {selectedOrder?.order_number}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Order Status */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Статус:</span>
+                <Badge variant={statusOptions.find(s => s.value === selectedOrder.status)?.variant}>
+                  {statusOptions.find(s => s.value === selectedOrder.status)?.label}
+                </Badge>
+              </div>
+
+              {/* Customer Info */}
+              <div className="space-y-3">
+                <h3 className="font-semibold">Клиент</h3>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground w-24">Имя:</span>
+                    <span>{selectedOrder.customer_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <a href={`tel:${selectedOrder.customer_phone}`} className="text-primary hover:underline">
+                      {selectedOrder.customer_phone}
+                    </a>
+                  </div>
+                  {selectedOrder.customer_email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a href={`mailto:${selectedOrder.customer_email}`} className="text-primary hover:underline">
+                        {selectedOrder.customer_email}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Delivery Info */}
+              <div className="space-y-3">
+                <h3 className="font-semibold">Доставка</h3>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    <span>{deliveryMethods[selectedOrder.delivery_method] || selectedOrder.delivery_method}</span>
+                  </div>
+                  {selectedOrder.delivery_address && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <span>{selectedOrder.delivery_address}</span>
+                    </div>
+                  )}
+                  {(selectedOrder.delivery_date || selectedOrder.delivery_time) && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {selectedOrder.delivery_date && format(new Date(selectedOrder.delivery_date), "dd.MM.yyyy", { locale: ru })}
+                        {selectedOrder.delivery_time && ` в ${selectedOrder.delivery_time}`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground w-24">Оплата:</span>
+                    <span>{paymentMethods[selectedOrder.payment_method] || selectedOrder.payment_method}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comment */}
+              {selectedOrder.comment && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Комментарий</h3>
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                    {selectedOrder.comment}
+                  </p>
+                </div>
+              )}
+
+              {/* Order Items */}
+              <div className="space-y-3">
+                <h3 className="font-semibold">Товары</h3>
+                <div className="space-y-2">
+                  {selectedOrder.order_items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 p-2 border rounded-lg">
+                      <img
+                        src={item.product_image || "/placeholder.svg"}
+                        alt={item.product_name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{item.product_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.quantity} × {Number(item.price).toLocaleString("ru-RU")} ₽
+                        </p>
+                      </div>
+                      <span className="font-medium text-sm">
+                        {(item.quantity * Number(item.price)).toLocaleString("ru-RU")} ₽
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Товары:</span>
+                  <span>{Number(selectedOrder.total).toLocaleString("ru-RU")} ₽</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Доставка:</span>
+                  <span>
+                    {Number(selectedOrder.delivery_cost) === 0 
+                      ? "Бесплатно" 
+                      : `${Number(selectedOrder.delivery_cost).toLocaleString("ru-RU")} ₽`}
+                  </span>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                  <span>Итого:</span>
+                  <span className="text-primary">
+                    {(Number(selectedOrder.total) + Number(selectedOrder.delivery_cost)).toLocaleString("ru-RU")} ₽
+                  </span>
+                </div>
+              </div>
+
+              {/* Order Date */}
+              <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                Заказ создан: {format(new Date(selectedOrder.created_at), "dd.MM.yyyy в HH:mm", { locale: ru })}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
