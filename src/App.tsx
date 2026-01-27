@@ -47,6 +47,9 @@ import AdminBannersPage from "./pages/admin/AdminBannersPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AccountCouponsPage from "./pages/account/AccountCouponsPage";
+import AdminCollectionsPage from "./pages/admin/AdminCollectionsPage";
+import AdminCollectionEditPage from "./pages/admin/AdminCollectionEditPage";
+import CollectionPage from "./pages/CollectionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +84,7 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/about/details" element={<AboutDetailsPage />} />
               <Route path="/about/mailing" element={<MailingConsentPage />} />
+              <Route path="/collection/:slug" element={<CollectionPage />} />
               {/* Protected Account Routes */}
               <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
               <Route path="/account/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
@@ -102,6 +106,8 @@ const App = () => (
               <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
               <Route path="/admin/news" element={<ProtectedRoute requireAdmin><AdminNewsPage /></ProtectedRoute>} />
               <Route path="/admin/banners" element={<ProtectedRoute requireAdmin><AdminBannersPage /></ProtectedRoute>} />
+              <Route path="/admin/collections" element={<ProtectedRoute requireAdmin><AdminCollectionsPage /></ProtectedRoute>} />
+              <Route path="/admin/collections/:id" element={<ProtectedRoute requireAdmin><AdminCollectionEditPage /></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettingsPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

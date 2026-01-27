@@ -33,6 +33,8 @@ import { UserCog } from "lucide-react";
 
 import { BarChart3 } from "lucide-react";
 
+import { Layers } from "lucide-react";
+
 const menuItems = [
   { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
   { href: "/admin/products", label: "Товары", icon: Package },
@@ -43,6 +45,7 @@ const menuItems = [
   { href: "/admin/coupons", label: "Промокоды", icon: Tag },
   { href: "/admin/wheel", label: "Колесо фортуны", icon: RotateCcw },
   { href: "/admin/wheel/stats", label: "Статистика колеса", icon: BarChart3 },
+  { href: "/admin/collections", label: "Подборки", icon: Layers },
   { href: "/admin/banners", label: "Баннеры", icon: FileText },
   { href: "/admin/news", label: "Новости", icon: FileText },
   { href: "/admin/pages", label: "Страницы", icon: FileText },

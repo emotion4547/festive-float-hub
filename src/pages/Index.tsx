@@ -35,6 +35,7 @@ import { useProducts, useCategories } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { AgendaSection } from "@/components/home/AgendaSection";
 
 // Lazy load ShaderGradient for performance
 const ShaderGradientCanvas = lazy(() => 
@@ -279,92 +280,104 @@ const Index = () => {
           )}
         </div>
 
-        <div className="container py-16 md:py-24 relative z-10">
-          {currentBanner ? (
-            <div className="relative">
-              {/* Semi-transparent content container */}
-              <div className="max-w-2xl space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg">
-                <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  {currentBanner.title}
-                </h1>
-                {currentBanner.subtitle && (
-                  <p className="text-lg md:text-xl text-muted-foreground">
-                    {currentBanner.subtitle}
+        <div className="container py-12 md:py-20 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left section - Offer (2/3) */}
+            <div className="lg:col-span-2">
+              {currentBanner ? (
+                <div className="relative h-full">
+                  {/* Semi-transparent content container */}
+                  <div className="h-full space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-lg flex flex-col justify-center">
+                    <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+                      {currentBanner.title}
+                    </h1>
+                    {currentBanner.subtitle && (
+                      <p className="text-base md:text-lg text-muted-foreground">
+                        {currentBanner.subtitle}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-3">
+                      {currentBanner.link_url && (
+                        <Button size="lg" className="btn-primary text-base px-6" asChild>
+                          <Link to={currentBanner.link_url} className="flex items-center gap-2">
+                            {currentBanner.link_text || "Подробнее"}
+                            <ArrowRight className="h-5 w-5" />
+                          </Link>
+                        </Button>
+                      )}
+                      <Button size="lg" variant="outline" className="text-base px-6" asChild>
+                        <Link to="/contacts">Связаться с нами</Link>
+                      </Button>
+                    </div>
+                    {/* Banner navigation */}
+                    {banners.length > 1 && (
+                      <div className="flex items-center gap-2 pt-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                          onClick={() => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <div className="flex gap-2">
+                          {banners.map((_, index) => (
+                            <button
+                              key={index}
+                              className={`h-2 w-2 rounded-full transition-colors ${
+                                index === currentBannerIndex ? "bg-primary" : "bg-background/60"
+                              }`}
+                              onClick={() => setCurrentBannerIndex(index)}
+                            />
+                          ))}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                          onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-lg flex flex-col justify-center">
+                  <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+                    <span className="block">Воздушные шары</span>
+                    <span className="gradient-text">с доставкой</span> по&nbsp;Краснодару
+                  </h1>
+                  <p className="text-base md:text-lg text-muted-foreground">
+                    Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!
                   </p>
-                )}
-                <div className="flex flex-wrap gap-4">
-                  {currentBanner.link_url && (
-                    <Button size="lg" className="btn-primary text-lg px-8" asChild>
-                      <Link to={currentBanner.link_url} className="flex items-center gap-2">
-                        {currentBanner.link_text || "Подробнее"}
+                  <div className="flex flex-wrap gap-3">
+                    <Button size="lg" className="btn-primary text-base px-6" asChild>
+                      <Link to="/catalog" className="flex items-center gap-2">
+                        Выбрать шары
                         <ArrowRight className="h-5 w-5" />
                       </Link>
                     </Button>
-                  )}
-                  <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-                    <Link to="/contacts">Связаться с нами</Link>
-                  </Button>
-                </div>
-              </div>
-              {/* Banner navigation */}
-              {banners.length > 1 && (
-                <div className="flex items-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="bg-background/80 backdrop-blur-sm"
-                    onClick={() => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="flex gap-2">
-                    {banners.map((_, index) => (
-                      <button
-                        key={index}
-                        className={`h-2 w-2 rounded-full transition-colors ${
-                          index === currentBannerIndex ? "bg-primary" : "bg-background/60"
-                        }`}
-                        onClick={() => setCurrentBannerIndex(index)}
-                      />
-                    ))}
+                    <CallbackFormDialog
+                      trigger={
+                        <Button size="lg" variant="outline" className="text-base px-6">
+                          Заказать звонок
+                        </Button>
+                      }
+                    />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="bg-background/80 backdrop-blur-sm"
-                    onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="max-w-2xl lg:mx-auto space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-8 shadow-lg lg:text-center">
-              <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="block">Воздушные шары</span>
-                <span className="gradient-text">с доставкой</span> по&nbsp;Краснодару
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
-                Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!
-              </p>
-              <div className="flex flex-wrap gap-4 lg:justify-center">
-                <Button size="lg" className="btn-primary text-lg px-8" asChild>
-                  <Link to="/catalog" className="flex items-center gap-2">
-                    Выбрать шары
-                    <ArrowRight className="h-5 w-5" />
-                  </Link>
-                </Button>
-                <CallbackFormDialog
-                  trigger={
-                    <Button size="lg" variant="outline" className="text-lg px-8">
-                      Заказать звонок
-                    </Button>
-                  }
-                />
+
+            {/* Right section - Agenda (1/3) */}
+            <div className="lg:col-span-1">
+              <div className="h-full bg-background/80 backdrop-blur-md rounded-2xl p-5 shadow-lg">
+                <AgendaSection />
               </div>
             </div>
-          )}
+          </div>
         </div>
         
       </section>
