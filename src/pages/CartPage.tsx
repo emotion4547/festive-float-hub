@@ -20,13 +20,14 @@ const CartPage = () => {
   const { addFavorite } = useFavorites();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { coupon, isLoading: couponLoading, error: couponError, applyCoupon, removeCoupon, calculateDiscount } = useCoupon();
+  const { coupon, userCouponMatch, isLoading: couponLoading, error: couponError, applyCoupon, removeCoupon, calculateDiscount } = useCoupon();
   const { 
     coupons: userCoupons, 
     selectedCoupon: selectedUserCoupon, 
     selectCoupon: selectUserCoupon,
     calculateDiscount: calculateUserCouponDiscount,
-    applyGiftToCart 
+    applyGiftToCart,
+    refetch: refetchUserCoupons
   } = useUserCoupons();
   const [promoCode, setPromoCode] = useState("");
   const [showUserCoupons, setShowUserCoupons] = useState(false);
@@ -60,9 +61,11 @@ const CartPage = () => {
   }, [user, userCoupons, items.length, couponNotificationShown, toast]);
 
   // Calculate discounts
-  const adminCouponDiscount = coupon ? calculateDiscount(total) : 0;
-  const userCouponDiscount = selectedUserCoupon ? calculateUserCouponDiscount(total) : 0;
-  const discount = adminCouponDiscount + userCouponDiscount;
+  // Admin coupon or manually entered user coupon discount
+  const manualCouponDiscount = (coupon || userCouponMatch) ? calculateDiscount(total) : 0;
+  // Selected user coupon from list (only if no manually entered user coupon)
+  const selectedCouponDiscount = (selectedUserCoupon && !userCouponMatch) ? calculateUserCouponDiscount(total) : 0;
+  const discount = manualCouponDiscount + selectedCouponDiscount;
   
   const deliveryCost = total >= 5000 ? 0 : 200;
   const finalTotal = total - discount + deliveryCost;
@@ -78,9 +81,13 @@ const CartPage = () => {
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
-    const success = await applyCoupon(promoCode, total);
-    if (success) {
+    const result = await applyCoupon(promoCode, total, user?.id);
+    if (result.success) {
       setPromoCode("");
+      // If user coupon was matched, deselect any previously selected user coupon from list
+      if (result.isUserCoupon) {
+        selectUserCoupon(null);
+      }
     }
   };
 
@@ -312,16 +319,16 @@ const CartPage = () => {
                     </span>
                   </p>
                 )}
-                {adminCouponDiscount > 0 && coupon && (
+                {manualCouponDiscount > 0 && (coupon || userCouponMatch) && (
                   <div className="flex justify-between text-success">
-                    <span>Промокод ({coupon.code}):</span>
-                    <span className="font-medium">−{adminCouponDiscount.toLocaleString("ru-RU")} ₽</span>
+                    <span>Промокод ({(coupon || userCouponMatch)?.code}):</span>
+                    <span className="font-medium">−{manualCouponDiscount.toLocaleString("ru-RU")} ₽</span>
                   </div>
                 )}
-                {userCouponDiscount > 0 && selectedUserCoupon && (
+                {selectedCouponDiscount > 0 && selectedUserCoupon && !userCouponMatch && (
                   <div className="flex justify-between text-success">
                     <span>Личный купон ({selectedUserCoupon.code}):</span>
-                    <span className="font-medium">−{userCouponDiscount.toLocaleString("ru-RU")} ₽</span>
+                    <span className="font-medium">−{selectedCouponDiscount.toLocaleString("ru-RU")} ₽</span>
                   </div>
                 )}
                 <div className="border-t pt-3">
@@ -340,14 +347,14 @@ const CartPage = () => {
                   <Tag className="h-4 w-4" />
                   Промокод
                 </label>
-                {coupon ? (
+                {coupon || userCouponMatch ? (
                   <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
                     <div>
-                      <span className="font-medium text-success">{coupon.code}</span>
+                      <span className="font-medium text-success">{(coupon || userCouponMatch)?.code}</span>
                       <p className="text-sm text-muted-foreground">
-                        {coupon.discount_type === "percentage" 
-                          ? `Скидка ${coupon.discount_value}%`
-                          : `Скидка ${coupon.discount_value.toLocaleString("ru-RU")} ₽`
+                        {(coupon || userCouponMatch)?.discount_type === "percentage" 
+                          ? `Скидка ${(coupon || userCouponMatch)?.discount_value}%`
+                          : `Скидка ${Number((coupon || userCouponMatch)?.discount_value || 0).toLocaleString("ru-RU")} ₽`
                         }
                       </p>
                     </div>
@@ -477,7 +484,7 @@ const CartPage = () => {
               )}
 
               <Button asChild size="lg" className="w-full btn-primary text-lg">
-                <Link to="/checkout" state={{ coupon, selectedUserCoupon }}>Оформить заказ</Link>
+                <Link to="/checkout" state={{ coupon, userCouponMatch, selectedUserCoupon: !userCouponMatch ? selectedUserCoupon : null }}>Оформить заказ</Link>
               </Button>
 
               {/* Info */}
