@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { MessageCircle, Send, Phone, X } from "lucide-react";
+import { Send, Phone, X } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
 import { cn } from "@/lib/utils";
 import balloonsIcon from "@/assets/balloons-icon.png";
+import whatsappIcon from "@/assets/whatsapp-icon.png";
+import vkIcon from "@/assets/vk-icon.png";
+import instagramIcon from "@/assets/instagram-icon.png";
 
 export function FloatingButtons() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,35 +23,35 @@ export function FloatingButtons() {
     {
       name: "Телефон",
       href: `tel:${cleanPhone}`,
-      icon: Phone,
+      icon: () => <Phone className="h-5 w-5" />,
       bgColor: "bg-primary",
       hoverColor: "hover:bg-primary/90",
     },
     {
       name: "WhatsApp",
       href: whatsapp,
-      icon: MessageCircle,
+      icon: () => <img src={whatsappIcon} alt="WhatsApp" className="h-6 w-6 invert" />,
       bgColor: "bg-[#25D366]",
       hoverColor: "hover:bg-[#20BD5A]",
     },
     {
       name: "Telegram",
       href: telegram,
-      icon: Send,
+      icon: () => <Send className="h-5 w-5" />,
       bgColor: "bg-[#0088cc]",
       hoverColor: "hover:bg-[#0077b3]",
     },
     {
       name: "VK",
       href: vk,
-      icon: () => <span className="font-bold text-sm">VK</span>,
+      icon: () => <img src={vkIcon} alt="VK" className="h-6 w-6 invert" />,
       bgColor: "bg-[#0077FF]",
       hoverColor: "hover:bg-[#0066DD]",
     },
     {
       name: "Instagram",
       href: instagram,
-      icon: () => <span className="font-bold text-sm">IG</span>,
+      icon: () => <img src={instagramIcon} alt="Instagram" className="h-6 w-6 invert" />,
       bgColor: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]",
       hoverColor: "hover:opacity-90",
     },
@@ -110,7 +113,7 @@ export function FloatingButtons() {
                 }}
                 aria-label={link.name}
               >
-                <IconComponent className="h-5 w-5" />
+                <IconComponent />
               </a>
             );
           })}
