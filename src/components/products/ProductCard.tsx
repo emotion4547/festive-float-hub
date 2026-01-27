@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const isProductFavorite = isFavorite(product.id);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLAnchorElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Normalize product fields for both DB and static data
   const inStock = product.in_stock ?? product.inStock ?? true;
@@ -53,6 +55,36 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const images = product.images || [];
   const imageUrl = images[0] || "https://placehold.co/400x400?text=🎈";
   const liveCoverUrl = product.live_cover_url;
+
+  // Intersection Observer for lazy loading videos
+  useEffect(() => {
+    if (!liveCoverUrl || !cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsVisible(entry.isIntersecting);
+          
+          // Play/pause video based on visibility
+          if (videoRef.current) {
+            if (entry.isIntersecting) {
+              videoRef.current.play().catch(() => {});
+            } else {
+              videoRef.current.pause();
+            }
+          }
+        });
+      },
+      {
+        rootMargin: "50px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, [liveCoverUrl]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,6 +127,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     <Link 
       to={`/product/${product.id}`} 
       className="group h-full"
+      ref={cardRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -103,16 +136,26 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         <div className="relative aspect-square overflow-hidden bg-muted">
           {liveCoverUrl ? (
             <>
-              {/* Video is always visible and playing for live covers */}
-              <video
-                ref={videoRef}
-                src={liveCoverUrl}
-                className="w-full h-full object-cover"
-                loop
-                muted={isMuted}
-                playsInline
-                autoPlay
-              />
+              {/* Show placeholder until visible */}
+              {!isVisible && (
+                <img
+                  src={imageUrl}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
+              {/* Video - only renders when visible */}
+              {isVisible && (
+                <video
+                  ref={videoRef}
+                  src={liveCoverUrl}
+                  className="w-full h-full object-cover"
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  autoPlay
+                />
+              )}
               {/* Sound toggle button */}
               <button
                 onClick={handleToggleMute}

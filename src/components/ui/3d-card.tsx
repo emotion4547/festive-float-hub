@@ -7,6 +7,7 @@ import React, {
   useContext,
   useRef,
   useEffect,
+  useCallback,
 } from "react";
 
 const MouseEnterContext = createContext<
@@ -17,32 +18,68 @@ export const CardContainer = ({
   children,
   className,
   containerClassName,
+  disabled = false,
 }: {
   children?: React.ReactNode;
   className?: string;
   containerClassName?: string;
+  disabled?: boolean;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMouseEntered, setIsMouseEntered] = useState(false);
+  const rafRef = useRef<number | null>(null);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const { left, top, width, height } =
-      containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - left - width / 2) / 25;
-    const y = (e.clientY - top - height / 2) / 25;
-    containerRef.current.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
-  };
+  // Throttled mouse move handler using requestAnimationFrame
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (disabled || !containerRef.current) return;
+    
+    // Cancel any pending animation frame
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    
+    rafRef.current = requestAnimationFrame(() => {
+      if (!containerRef.current) return;
+      const { left, top, width, height } =
+        containerRef.current.getBoundingClientRect();
+      const x = (e.clientX - left - width / 2) / 25;
+      const y = (e.clientY - top - height / 2) / 25;
+      containerRef.current.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+    });
+  }, [disabled]);
 
-  const handleMouseEnter = () => {
-    setIsMouseEntered(true);
-  };
+  const handleMouseEnter = useCallback(() => {
+    if (!disabled) {
+      setIsMouseEntered(true);
+    }
+  }, [disabled]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (!containerRef.current) return;
     setIsMouseEntered(false);
+    
+    // Cancel any pending animation frame
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    
     containerRef.current.style.transform = `rotateY(0deg) rotateX(0deg)`;
-  };
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  // If disabled, just render children without 3D effect
+  if (disabled) {
+    return <div className={containerClassName}>{children}</div>;
+  }
 
   return (
     <MouseEnterContext.Provider value={[isMouseEntered, setIsMouseEntered]}>

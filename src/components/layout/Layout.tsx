@@ -1,9 +1,13 @@
-import { ReactNode } from "react";
+import { ReactNode, lazy, Suspense } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { FloatingButtons } from "./FloatingButtons";
-import { FortuneWheelDialog } from "@/components/wheel/FortuneWheelDialog";
 import { PendingSpinHandler } from "@/components/wheel/PendingSpinHandler";
+
+// Lazy load FortuneWheelDialog for performance
+const FortuneWheelDialog = lazy(() => 
+  import("@/components/wheel/FortuneWheelDialog").then(mod => ({ default: mod.FortuneWheelDialog }))
+);
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,7 +20,9 @@ export function Layout({ children }: LayoutProps) {
       <main className="flex-1">{children}</main>
       <Footer />
       <FloatingButtons />
-      <FortuneWheelDialog />
+      <Suspense fallback={null}>
+        <FortuneWheelDialog />
+      </Suspense>
       <PendingSpinHandler />
     </div>
   );
