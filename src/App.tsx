@@ -25,6 +25,8 @@ import WarrantyPage from "./pages/WarrantyPage";
 import PaymentPage from "./pages/PaymentPage";
 import ContactsPage from "./pages/ContactsPage";
 import AuthPage from "./pages/AuthPage";
+import AboutDetailsPage from "./pages/AboutDetailsPage";
+import MailingConsentPage from "./pages/MailingConsentPage";
 import AccountPage from "./pages/account/AccountPage";
 import OrdersPage from "./pages/account/OrdersPage";
 import AddressesPage from "./pages/account/AddressesPage";
@@ -77,6 +79,8 @@ const App = () => (
               <Route path="/payment" element={<PaymentPage />} />
               <Route path="/contacts" element={<ContactsPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/about/details" element={<AboutDetailsPage />} />
+              <Route path="/about/mailing" element={<MailingConsentPage />} />
               {/* Protected Account Routes */}
               <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
               <Route path="/account/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />

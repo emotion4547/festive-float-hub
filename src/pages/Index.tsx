@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense, lazy } from "react";
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   SlidersHorizontal
 } from "lucide-react";
-import { ShaderGradientCanvas, ShaderGradient } from "shadergradient";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -26,6 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
@@ -34,6 +34,15 @@ import { DynamicFilterSidebar, FilterState } from "@/components/products/Dynamic
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+
+// Lazy load ShaderGradient for performance
+const ShaderGradientCanvas = lazy(() => 
+  import("shadergradient").then(mod => ({ default: mod.ShaderGradientCanvas }))
+);
+const ShaderGradient = lazy(() => 
+  import("shadergradient").then(mod => ({ default: mod.ShaderGradient }))
+);
 
 const features = [
   {
@@ -111,10 +120,24 @@ const Index = () => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const { toast } = useToast();
   
   // Load products from database
   const { products, loading: productsLoading } = useProducts({});
   const { categories, loading: categoriesLoading } = useCategories();
+
+  // Check for reduced motion preference
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
   // Load banners
   useEffect(() => {
@@ -209,47 +232,51 @@ const Index = () => {
     <Layout>
       {/* Hero Section with Animated Gradient */}
       <section className="relative overflow-hidden min-h-[400px] md:min-h-[480px]">
-        {/* Shader Gradient Background */}
+        {/* Shader Gradient Background - or static gradient if reduced motion */}
         <div className="absolute inset-0 z-0">
-          <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
-            <ShaderGradientCanvas
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-              }}
-            >
-              <ShaderGradient
-                animate="on"
-                brightness={1.1}
-                cAzimuthAngle={180}
-                cDistance={3.6}
-                cPolarAngle={90}
-                cameraZoom={1}
-                color1="#F9A8D4"
-                color2="#5BC5C8"
-                color3="#abfffc"
-                envPreset="city"
-                grain="on"
-                lightType="3d"
-                positionX={-1.4}
-                positionY={0}
-                positionZ={0}
-                reflection={0.1}
-                rotationX={0}
-                rotationY={10}
-                rotationZ={50}
-                type="plane"
-                uAmplitude={1}
-                uDensity={1.3}
-                uFrequency={5.5}
-                uSpeed={0.2}
-                uStrength={4}
-              />
-            </ShaderGradientCanvas>
-          </Suspense>
+          {prefersReducedMotion ? (
+            <div className="absolute inset-0 gradient-hero" />
+          ) : (
+            <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
+              <ShaderGradientCanvas
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <ShaderGradient
+                  animate="on"
+                  brightness={1.1}
+                  cAzimuthAngle={180}
+                  cDistance={3.6}
+                  cPolarAngle={90}
+                  cameraZoom={1}
+                  color1="#F9A8D4"
+                  color2="#5BC5C8"
+                  color3="#abfffc"
+                  envPreset="city"
+                  grain="on"
+                  lightType="3d"
+                  positionX={-1.4}
+                  positionY={0}
+                  positionZ={0}
+                  reflection={0.1}
+                  rotationX={0}
+                  rotationY={10}
+                  rotationZ={50}
+                  type="plane"
+                  uAmplitude={1}
+                  uDensity={1.0}
+                  uFrequency={4.5}
+                  uSpeed={0.15}
+                  uStrength={3.5}
+                />
+              </ShaderGradientCanvas>
+            </Suspense>
+          )}
         </div>
 
         <div className="container py-16 md:py-24 relative z-10">
@@ -590,14 +617,77 @@ const Index = () => {
             <p className="text-muted-foreground mb-8">
               Получайте информацию о новых товарах и специальных предложениях первыми
             </p>
-            <form className="flex gap-4 max-w-md mx-auto">
-              <input
+            <form 
+              className="flex gap-4 max-w-md mx-auto"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newsletterEmail.trim()) {
+                  toast({
+                    title: "Введите email",
+                    description: "Пожалуйста, введите ваш email адрес",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                // Email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(newsletterEmail)) {
+                  toast({
+                    title: "Некорректный email",
+                    description: "Пожалуйста, введите корректный email адрес",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                
+                setNewsletterLoading(true);
+                try {
+                  const { error } = await supabase
+                    .from("newsletter_subscribers")
+                    .insert({ email: newsletterEmail.trim().toLowerCase() });
+                  
+                  if (error) {
+                    if (error.code === "23505") {
+                      toast({
+                        title: "Вы уже подписаны",
+                        description: "Этот email уже есть в нашей базе подписчиков",
+                      });
+                    } else {
+                      throw error;
+                    }
+                  } else {
+                    toast({
+                      title: "Успешно!",
+                      description: "Вы подписались на нашу рассылку",
+                    });
+                    setNewsletterEmail("");
+                  }
+                } catch (err) {
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось подписаться. Попробуйте позже.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setNewsletterLoading(false);
+                }
+              }}
+            >
+              <Input
                 type="email"
                 placeholder="Ваш email"
-                className="flex-1 px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                className="flex-1"
+                disabled={newsletterLoading}
               />
-              <Button type="submit" className="btn-primary px-6">
-                Подписаться
+              <Button 
+                type="submit" 
+                className="btn-primary px-6"
+                disabled={newsletterLoading}
+              >
+                {newsletterLoading ? "..." : "Подписаться"}
               </Button>
             </form>
           </div>

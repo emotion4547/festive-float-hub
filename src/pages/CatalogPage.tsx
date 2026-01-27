@@ -47,6 +47,7 @@ const defaultFilters: FilterState = {
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get("category");
+  const filterParam = searchParams.get("filter");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [sortBy, setSortBy] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,8 +59,31 @@ const CatalogPage = () => {
   // Find current category
   const currentCategory = categories.find(c => c.slug === categorySlug);
 
+  // Get page title based on filter
+  const getPageTitle = () => {
+    if (currentCategory) return currentCategory.name;
+    switch (filterParam) {
+      case "hits": return "Хиты продаж";
+      case "sale": return "Товары со скидкой";
+      case "new": return "Новинки";
+      case "budget": return "Бюджетные варианты";
+      default: return "Каталог товаров";
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
+
+    // Apply quick filter from URL parameter
+    if (filterParam === "hits") {
+      result = result.filter(p => p.is_hit);
+    } else if (filterParam === "sale") {
+      result = result.filter(p => p.discount && p.discount > 0);
+    } else if (filterParam === "new") {
+      result = result.filter(p => p.is_new);
+    } else if (filterParam === "budget") {
+      result = result.filter(p => p.price <= 3000);
+    }
 
     // Filter by category from URL or filter panel
     if (categorySlug) {
@@ -121,7 +145,7 @@ const CatalogPage = () => {
     }
 
     return result;
-  }, [products, filters, sortBy, categorySlug]);
+  }, [products, filters, sortBy, categorySlug, filterParam]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -172,7 +196,7 @@ const CatalogPage = () => {
             </Link>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
             <span className="text-foreground font-medium">
-              {currentCategory ? currentCategory.name : "Каталог"}
+              {getPageTitle()}
             </span>
           </nav>
         </div>
@@ -182,7 +206,7 @@ const CatalogPage = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-heading text-2xl md:text-3xl font-bold">
-              {currentCategory ? currentCategory.name : "Каталог товаров"}
+              {getPageTitle()}
             </h1>
             <p className="text-muted-foreground mt-1">{filteredProducts.length} товаров</p>
           </div>
