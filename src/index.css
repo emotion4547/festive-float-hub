@@ -19,15 +19,15 @@ html, body {
     /* Section backgrounds */
     --section-alt: 340 100% 97%;
     
-    /* Primary - Turquoise */
-    --primary: 177 52% 58%;
+    /* Primary - Pink */
+    --primary: 336 97% 70%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 177 52% 50%;
+    --primary-hover: 336 97% 60%;
     
-    /* Secondary - Pink */
-    --secondary: 336 97% 80%;
-    --secondary-foreground: 0 0% 20%;
-    --secondary-hover: 336 97% 70%;
+    /* Secondary - Turquoise */
+    --secondary: 177 52% 58%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-hover: 177 52% 50%;
     
     /* Accents */
     --accent-yellow: 46 95% 76%;
@@ -60,7 +60,7 @@ html, body {
     /* Borders and inputs */
     --border: 0 0% 91%;
     --input: 0 0% 91%;
-    --ring: 177 52% 58%;
+    --ring: 336 97% 70%;
     
     --radius: 0.75rem;
     
@@ -74,21 +74,21 @@ html, body {
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 177 52% 58%;
+    --sidebar-primary: 336 97% 70%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 340 100% 97%;
     --sidebar-accent-foreground: 0 0% 20%;
     --sidebar-border: 0 0% 91%;
-    --sidebar-ring: 177 52% 58%;
+    --sidebar-ring: 336 97% 70%;
   }
 
   .dark {
     --background: 0 0% 7%;
     --foreground: 0 0% 95%;
     --section-alt: 0 0% 10%;
-    --primary: 177 52% 58%;
+    --primary: 336 97% 70%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 336 97% 80%;
+    --secondary: 177 52% 58%;
     --secondary-foreground: 0 0% 20%;
     --card: 0 0% 10%;
     --card-foreground: 0 0% 95%;
@@ -100,7 +100,7 @@ html, body {
     --accent-foreground: 0 0% 95%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 177 52% 58%;
+    --ring: 336 97% 70%;
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
