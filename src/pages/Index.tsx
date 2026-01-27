@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   SlidersHorizontal
 } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -231,6 +232,12 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Воздушные шары с доставкой"
+        description="Радуга Праздника — воздушные шары с доставкой по Краснодару. Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!"
+        keywords="воздушные шары Краснодар, шары с доставкой, шарики на праздник, гелиевые шары, фольгированные шары"
+        canonicalPath="/"
+      />
       {/* Hero Section with Animated Gradient */}
       <section className="relative overflow-hidden min-h-[400px] md:min-h-[480px]">
         {/* Shader Gradient Background - or static gradient if reduced motion */}

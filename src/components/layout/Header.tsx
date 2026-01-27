@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, ShoppingCart, Heart, Menu, X, ChevronDown, Phone, User, LogOut, Settings } from "lucide-react";
 import whatsappIcon from "@/assets/whatsapp-icon.png";
 import telegramIcon from "@/assets/telegram-icon.png";
+import vkIcon from "@/assets/vk-icon-new.png";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -131,6 +132,15 @@ export function Header() {
                 aria-label="Telegram"
               >
                 <img src={telegramIcon} alt="Telegram" className="h-full w-full object-cover" />
+              </a>
+              <a 
+                href="https://vk.com/radugaprazdnika" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="h-8 w-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity"
+                aria-label="VK"
+              >
+                <img src={vkIcon} alt="VK" className="h-full w-full object-cover" />
               </a>
             </div>
             <div className="text-right">
