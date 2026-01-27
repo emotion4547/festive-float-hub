@@ -100,8 +100,8 @@ interface Banner {
 }
 
 // Number of products per row and max rows on homepage
-const PRODUCTS_PER_ROW = 3;
-const MAX_ROWS = 3;
+const PRODUCTS_PER_ROW = 4;
+const MAX_ROWS = 2;
 const MAX_PRODUCTS = PRODUCTS_PER_ROW * MAX_ROWS;
 
 const defaultFilters: FilterState = {

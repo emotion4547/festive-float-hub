@@ -1,10 +1,10 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Button } from "@/components/ui/button";
 import { usePageContent } from "@/contexts/SiteDataContext";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { Phone } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 const CorporatePage = () => {
   const pageContent = usePageContent("corporate");
@@ -20,6 +20,12 @@ const CorporatePage = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Корпоративное оформление шарами"
+        description="Оформление корпоративных мероприятий воздушными шарами в Краснодаре. Входные группы, фотозоны, брендирование. Заказать оформление."
+        keywords="корпоративное оформление шарами, оформление мероприятий, шары на корпоратив, входные группы шарами, брендирование шаров"
+        canonicalPath="/corporate"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

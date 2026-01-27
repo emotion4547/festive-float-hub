@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { SEOHead } from "@/components/SEOHead";
 
 interface NewsArticle {
   id: string;
@@ -48,6 +48,12 @@ const NewsPage = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title="Новости"
+        description="Новости магазина воздушных шаров Радуга Праздника. Акции, новые поступления, полезные советы по оформлению праздников."
+        keywords="новости магазина шаров, акции на шары, новинки воздушных шаров"
+        canonicalPath="/news"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           

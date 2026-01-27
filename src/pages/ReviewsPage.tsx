@@ -1,9 +1,9 @@
 import { Layout } from "@/components/layout/Layout";
-
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
 import { Star, ThumbsUp, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SEOHead } from "@/components/SEOHead";
 
 const reviews = [
   {
@@ -91,6 +91,12 @@ const reviews = [
 const ReviewsPage = () => {
   return (
     <Layout>
+      <SEOHead
+        title="Отзывы клиентов"
+        description="Отзывы клиентов о магазине воздушных шаров Радуга Праздника. Читайте реальные отзывы покупателей из Яндекс, 2ГИС и Google."
+        keywords="отзывы о магазине шаров, отзывы Радуга Праздника, отзывы о доставке шаров Краснодар"
+        canonicalPath="/reviews"
+      />
       <div className="container py-8">
         <div className="flex gap-8">
           
