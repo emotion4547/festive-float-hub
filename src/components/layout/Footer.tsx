@@ -4,6 +4,8 @@ import { useSetting } from "@/contexts/SiteDataContext";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { Button } from "@/components/ui/button";
 
+const DEFAULT_LOGO = "/assets/logo.png";
+
 export function Footer() {
   const phone = useSetting("phone", "+7 (918) 179-00-56");
   const address = useSetting("address", "г. Краснодар, ул. Красная, 123");
@@ -11,6 +13,9 @@ export function Footer() {
   const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
   const telegram = useSetting("telegram", "https://t.me/+79181790056");
   const vk = useSetting("vk", "https://vk.com/radugaprazdnika");
+  const siteLogo = useSetting("site_logo", "");
+  
+  const logoSrc = siteLogo || DEFAULT_LOGO;
 
   return (
     <footer className="bg-foreground text-background">
@@ -168,7 +173,14 @@ export function Footer() {
         <div className="border-t border-background/10 mt-10 pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img src="/assets/logo.png" alt="Радуга Праздника" className="h-8 w-auto" />
+              <img 
+                src={logoSrc} 
+                alt="Радуга Праздника" 
+                className="h-8 w-auto" 
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_LOGO;
+                }}
+              />
               <p className="text-muted-foreground text-sm">
                 © 2026 Все права защищены.
               </p>
