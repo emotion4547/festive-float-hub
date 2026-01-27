@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2, Heart, ShoppingBag, ChevronRight, Truck, CreditCard, RefreshCw, X, Tag, Loader2, Ticket, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCoupon } from "@/hooks/useCoupon";
 import { useUserCoupons } from "@/hooks/useUserCoupons";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { products } from "@/data/products";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +19,7 @@ const CartPage = () => {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
   const { addFavorite } = useFavorites();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { coupon, isLoading: couponLoading, error: couponError, applyCoupon, removeCoupon, calculateDiscount } = useCoupon();
   const { 
     coupons: userCoupons, 
@@ -27,6 +30,34 @@ const CartPage = () => {
   } = useUserCoupons();
   const [promoCode, setPromoCode] = useState("");
   const [showUserCoupons, setShowUserCoupons] = useState(false);
+  const [couponNotificationShown, setCouponNotificationShown] = useState(false);
+
+  // Show notification about unused coupons when entering cart
+  useEffect(() => {
+    if (user && userCoupons.length > 0 && items.length > 0 && !couponNotificationShown) {
+      const discountCouponsCount = userCoupons.filter(c => c.prize_type === "discount").length;
+      const giftCouponsCount = userCoupons.filter(c => c.prize_type === "gift").length;
+      
+      let description = "";
+      if (discountCouponsCount > 0 && giftCouponsCount > 0) {
+        description = `У вас ${discountCouponsCount} скидочных купона и ${giftCouponsCount} подарка. Не забудьте применить их!`;
+      } else if (discountCouponsCount > 0) {
+        description = `У вас ${discountCouponsCount} неиспользованных купона на скидку. Примените их к заказу!`;
+      } else if (giftCouponsCount > 0) {
+        description = `У вас ${giftCouponsCount} подарка от Колеса Фортуны! Добавьте их в корзину.`;
+      }
+
+      if (description) {
+        toast({
+          title: "🎁 У вас есть купоны!",
+          description,
+          duration: 7000,
+        });
+        setCouponNotificationShown(true);
+        setShowUserCoupons(true);
+      }
+    }
+  }, [user, userCoupons, items.length, couponNotificationShown, toast]);
 
   // Calculate discounts
   const adminCouponDiscount = coupon ? calculateDiscount(total) : 0;

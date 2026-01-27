@@ -21,6 +21,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 
+const DEFAULT_LOGO = "/assets/logo.png";
 
 const mainNavLinks = [
   { name: "ГЛАВНАЯ", href: "/" },
@@ -52,7 +53,10 @@ export function Header() {
   const phone = useSetting("phone", "+7 (918) 179-00-56");
   const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
   const telegram = useSetting("telegram", "https://t.me/+79181790056");
+  const siteLogo = useSetting("site_logo", "");
   const cleanPhone = phone.replace(/[^\d+]/g, "");
+  
+  const logoSrc = siteLogo || DEFAULT_LOGO;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
@@ -77,9 +81,12 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center shrink-0">
             <img 
-              src="/assets/logo.png" 
+              src={logoSrc} 
               alt="Радуга Праздника" 
               className="h-10 sm:h-12 w-auto"
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_LOGO;
+              }}
             />
           </Link>
 
