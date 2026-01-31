@@ -86,35 +86,12 @@ const AboutDetailsPage = () => {
               <div>
                 <h2 className="font-heading font-semibold text-lg mb-2">Email</h2>
                 <a 
-                  href="mailto:info@radugaprazdnika.ru" 
+                  href="mailto:9181790056@mail.ru" 
                   className="text-primary hover:text-primary-hover transition-colors"
                 >
-                  info@radugaprazdnika.ru
+                  9181790056@mail.ru
                 </a>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bank Details */}
-        <div className="mt-8 bg-background rounded-xl p-6 shadow-sm border">
-          <h2 className="font-heading font-semibold text-xl mb-4">Банковские реквизиты</h2>
-          <div className="grid md:grid-cols-2 gap-4 text-muted-foreground">
-            <div>
-              <p className="font-medium text-foreground">Банк:</p>
-              <p>ПАО Сбербанк</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">БИК:</p>
-              <p>044525225</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Расчётный счёт:</p>
-              <p>40802810000000000000</p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Корр. счёт:</p>
-              <p>30101810400000000225</p>
             </div>
           </div>
         </div>
