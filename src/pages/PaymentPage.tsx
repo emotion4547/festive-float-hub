@@ -79,19 +79,16 @@ const PaymentPage = () => {
                 </p>
               </div>
 
-              {/* Online Banking */}
+              {/* Corporate Payment */}
               <div className="bg-background rounded-xl p-6 shadow-sm border">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Shield className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="font-heading text-xl font-bold">Онлайн-банкинг</h3>
+                  <h3 className="font-heading text-xl font-bold">Работаем с юр.лицами</h3>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Оплата через Сбербанк Онлайн, Тинькофф, Альфа-Клик и другие системы интернет-банкинга.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Моментальное зачисление средств
+                  Оплата по счету (полный пакет для бухгалтерии)
                 </p>
               </div>
             </div>
