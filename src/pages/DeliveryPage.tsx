@@ -129,16 +129,6 @@ const DeliveryPage = () => {
               </p>
             </div>
 
-            {/* Map */}
-            <h2 className="font-heading text-2xl font-bold mb-4">Карта доставки</h2>
-            <p className="mb-4 text-muted-foreground">Стоимость доставки можно посмотреть по Карте доставок.</p>
-            
-            <div className="rounded-xl overflow-hidden border h-96 mb-8 flex items-center justify-center bg-muted">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-primary mx-auto mb-2" />
-                <p className="text-muted-foreground">Карта зон доставки по Краснодару</p>
-              </div>
-            </div>
           </main>
 
           {/* Right Sidebar */}
