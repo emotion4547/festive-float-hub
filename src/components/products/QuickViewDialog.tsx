@@ -216,7 +216,7 @@ export function QuickViewDialog({ product, open, onOpenChange }: QuickViewDialog
 
             {/* Description */}
             {product.description && (
-              <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
+              <p className="text-muted-foreground text-sm mb-4 line-clamp-3 whitespace-pre-line">
                 {product.description}
               </p>
             )}
