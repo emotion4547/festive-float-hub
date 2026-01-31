@@ -6,12 +6,11 @@ import { usePageContent, useSetting } from "@/contexts/SiteDataContext";
 import { SEOHead } from "@/components/SEOHead";
 
 const deliveryZones = [
-  { zone: "Центральный район", price: "от 300 ₽", time: "1-2 часа" },
-  { zone: "Прикубанский район", price: "от 350 ₽", time: "1-3 часа" },
-  { zone: "Карасунский район", price: "от 350 ₽", time: "1-3 часа" },
-  { zone: "Западный округ", price: "от 400 ₽", time: "2-3 часа" },
-  { zone: "Пригород (до 10 км)", price: "от 500 ₽", time: "2-4 часа" },
-  { zone: "Пригород (10-30 км)", price: "от 800 ₽", time: "по договорённости" },
+  { zone: "Центральный район", price: "от 300 ₽", time: "1-2 ч" },
+  { zone: "Прикубанский район", price: "от 300 ₽", time: "1-2 ч" },
+  { zone: "Карасунский район", price: "от 500 ₽", time: "1-3 ч" },
+  { zone: "Западный округ", price: "от 500 ₽", time: "1-3 ч" },
+  { zone: "Пригород", price: "от 800 ₽", time: "от 1 ч" },
 ];
 
 const DeliveryPage = () => {
@@ -73,7 +72,7 @@ const DeliveryPage = () => {
             </div>
 
             {/* Delivery Tariffs */}
-            <h2 className="font-heading text-2xl font-bold mb-4">Стандартный тариф доставки с 9:00 до 21:00</h2>
+            <h2 className="font-heading text-2xl font-bold mb-4">Доставляем 24/7</h2>
             
             {/* Delivery Zones */}
             <h2 className="font-heading text-2xl font-bold mb-4">
