@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Globe, Phone, Share2, Truck, MessageCircle, Send } from "lucide-react";
 import { BrandingSettings } from "@/components/admin/BrandingSettings";
+import { SocialLinksManager } from "@/components/admin/SocialLinksManager";
 
 interface Setting {
   id: string;
@@ -270,68 +271,7 @@ export default function AdminSettingsPage() {
 
         {/* Social Settings */}
         <TabsContent value="social" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Share2 className="h-5 w-5" />
-                Социальные сети и мессенджеры
-              </CardTitle>
-              <CardDescription>
-                Ссылки на социальные сети и мессенджеры
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp" className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4" style={{ color: "#25D366" }} />
-                  WhatsApp
-                </Label>
-                <Input
-                  id="whatsapp"
-                  value={settings.find(s => s.key === 'whatsapp')?.value || ""}
-                  onChange={(e) => handleSettingChange("whatsapp", e.target.value)}
-                  placeholder="https://wa.me/79181790056"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Формат: https://wa.me/79181790056 (без +)
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telegram" className="flex items-center gap-2">
-                  <Send className="h-4 w-4" style={{ color: "#0088cc" }} />
-                  Telegram
-                </Label>
-                <Input
-                  id="telegram"
-                  value={settings.find(s => s.key === 'telegram')?.value || ""}
-                  onChange={(e) => handleSettingChange("telegram", e.target.value)}
-                  placeholder="https://t.me/+79181790056"
-                />
-              </div>
-              {settingsByCategory.social?.filter(s => !['whatsapp', 'telegram'].includes(s.key)).map((s) => (
-                <div key={s.key} className="space-y-2">
-                  <Label htmlFor={s.key}>{s.label}</Label>
-                  <Input
-                    id={s.key}
-                    value={s.value || ""}
-                    onChange={(e) => handleSettingChange(s.key, e.target.value)}
-                    placeholder="https://"
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveSettings} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Сохранить настройки
-            </Button>
-          </div>
+          <SocialLinksManager />
         </TabsContent>
 
         {/* Delivery Settings */}

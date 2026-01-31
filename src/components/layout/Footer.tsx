@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Phone, MapPin, Clock, Youtube, MessageCircle, Send } from "lucide-react";
+import { Phone, MapPin, Clock, ExternalLink } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { Button } from "@/components/ui/button";
 
@@ -10,10 +11,8 @@ export function Footer() {
   const phone = useSetting("phone", "+7 (918) 179-00-56");
   const address = useSetting("address", "г. Краснодар, ул. Красная, 123");
   const workHours = useSetting("work_hours", "Пн-Вс: 09:00 - 21:00");
-  const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
-  const telegram = useSetting("telegram", "https://t.me/+79181790056");
-  const vk = useSetting("vk", "https://vk.com/radugaprazdnika");
   const siteLogo = useSetting("site_logo", "");
+  const { data: socialLinks } = useSocialLinks({ footer: true });
   
   const logoSrc = siteLogo || DEFAULT_LOGO;
 
@@ -130,39 +129,22 @@ export function Footer() {
                 <span className="text-primary">Подписывайтесь:</span>
               </div>
               <div className="flex items-center gap-3">
-                {whatsapp && (
+                {socialLinks?.map((link) => (
                   <a
-                    href={whatsapp}
+                    key={link.id}
+                    href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full bg-[#25D366] flex items-center justify-center hover:opacity-80 transition-opacity"
-                    aria-label="WhatsApp"
+                    className="h-8 w-8 rounded-full bg-primary flex items-center justify-center hover:opacity-80 transition-opacity overflow-hidden"
+                    aria-label={link.name}
                   >
-                    <MessageCircle className="h-4 w-4 text-white" />
+                    {link.icon_url ? (
+                      <img src={link.icon_url} alt={link.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 text-primary-foreground" />
+                    )}
                   </a>
-                )}
-                {telegram && (
-                  <a
-                    href={telegram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full bg-[#0088cc] flex items-center justify-center hover:opacity-80 transition-opacity"
-                    aria-label="Telegram"
-                  >
-                    <Send className="h-4 w-4 text-white" />
-                  </a>
-                )}
-                {vk && (
-                  <a
-                    href={vk}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-8 w-8 rounded-full bg-[#0077FF] flex items-center justify-center hover:opacity-80 transition-opacity"
-                    aria-label="VK"
-                  >
-                    <span className="font-bold text-xs text-white">VK</span>
-                  </a>
-                )}
+                ))}
               </div>
             </div>
           </div>

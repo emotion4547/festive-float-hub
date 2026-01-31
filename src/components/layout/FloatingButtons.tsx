@@ -1,70 +1,17 @@
 import { useState } from "react";
-import { Phone, X } from "lucide-react";
+import { Phone, X, ExternalLink } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { cn } from "@/lib/utils";
 import balloonsIcon from "@/assets/balloons-icon.png";
-import whatsappIcon from "@/assets/whatsapp-icon.png";
-import vkIcon from "@/assets/vk-icon.png";
-import instagramIcon from "@/assets/instagram-icon.png";
-import telegramIcon from "@/assets/telegram-icon.png";
-import maxIcon from "@/assets/max-icon.png";
 
 export function FloatingButtons() {
   const [isOpen, setIsOpen] = useState(false);
   
   const phone = useSetting("phone", "+7 (918) 179-00-56");
-  const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
-  const telegram = useSetting("telegram", "https://t.me/+79181790056");
-  const vk = useSetting("vk", "https://vk.com/radugaprazdnika");
-  const instagram = useSetting("instagram", "https://www.instagram.com/radugaprazdnika");
-  const maxMessenger = "https://max.ru/u/f9LHodD0cOJyOl9ZhpnjXvXzcCrAHRnvR1db1geUrXBMFSftkGJgT2yukZoT";
+  const { data: socialLinks } = useSocialLinks({ floating: true });
 
   const cleanPhone = phone.replace(/[^\d+]/g, "");
-
-  const contactLinks = [
-    {
-      name: "Телефон",
-      href: `tel:${cleanPhone}`,
-      icon: () => <Phone className="h-5 w-5" />,
-      bgColor: "bg-primary",
-      hoverColor: "hover:bg-primary/90",
-    },
-    {
-      name: "WhatsApp",
-      href: whatsapp,
-      icon: () => <img src={whatsappIcon} alt="WhatsApp" className="h-6 w-6 invert" />,
-      bgColor: "bg-[#25D366]",
-      hoverColor: "hover:bg-[#20BD5A]",
-    },
-    {
-      name: "Telegram",
-      href: telegram,
-      icon: () => <img src={telegramIcon} alt="Telegram" className="h-6 w-6 invert" />,
-      bgColor: "bg-[#0088cc]",
-      hoverColor: "hover:bg-[#0077b3]",
-    },
-    {
-      name: "VK",
-      href: vk,
-      icon: () => <img src={vkIcon} alt="VK" className="h-6 w-6 invert" />,
-      bgColor: "bg-[#0077FF]",
-      hoverColor: "hover:bg-[#0066DD]",
-    },
-    {
-      name: "Instagram",
-      href: instagram,
-      icon: () => <img src={instagramIcon} alt="Instagram" className="h-6 w-6 invert" />,
-      bgColor: "bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]",
-      hoverColor: "hover:opacity-90",
-    },
-    {
-      name: "MAX",
-      href: maxMessenger,
-      icon: () => <img src={maxIcon} alt="MAX" className="h-6 w-6 invert" />,
-      bgColor: "bg-[#FF5722]",
-      hoverColor: "hover:bg-[#E64A19]",
-    },
-  ];
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col-reverse items-end gap-3">
@@ -96,29 +43,41 @@ export function FloatingButtons() {
       {/* Contact links */}
       {isOpen && (
         <div className="flex flex-col gap-3 animate-fade-in">
-          {contactLinks.map((link, index) => {
-            const IconComponent = link.icon;
-            return (
-              <a
-                key={link.name}
-                href={link.href}
-                target={link.href.startsWith("tel:") ? undefined : "_blank"}
-                rel={link.href.startsWith("tel:") ? undefined : "noopener noreferrer"}
-                className={cn(
-                  "h-12 w-12 rounded-full text-white flex items-center justify-center shadow-lg transition-all duration-200",
-                  link.bgColor,
-                  link.hoverColor,
-                  "hover:scale-110"
-                )}
-                style={{ 
-                  animationDelay: `${index * 50}ms`,
-                }}
-                aria-label={link.name}
-              >
-                <IconComponent />
-              </a>
-            );
-          })}
+          {/* Phone button */}
+          <a
+            href={`tel:${cleanPhone}`}
+            className={cn(
+              "h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg transition-all duration-200",
+              "hover:bg-primary/90 hover:scale-110"
+            )}
+            aria-label="Телефон"
+          >
+            <Phone className="h-5 w-5" />
+          </a>
+          
+          {/* Dynamic social links */}
+          {socialLinks?.map((link, index) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "h-12 w-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg transition-all duration-200 overflow-hidden",
+                "hover:opacity-90 hover:scale-110"
+              )}
+              style={{ 
+                animationDelay: `${(index + 1) * 50}ms`,
+              }}
+              aria-label={link.name}
+            >
+              {link.icon_url ? (
+                <img src={link.icon_url} alt={link.name} className="h-full w-full object-cover" />
+              ) : (
+                <ExternalLink className="h-5 w-5" />
+              )}
+            </a>
+          ))}
         </div>
       )}
     </div>
