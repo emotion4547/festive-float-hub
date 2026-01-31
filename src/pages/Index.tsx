@@ -62,11 +62,6 @@ const features = [
     title: "Работаем ежедневно",
     description: "Принимаем заказы 7 дней в неделю",
   },
-  {
-    icon: Shield,
-    title: "Гарантия возврата",
-    description: "Вернем деньги если что-то пойдет не так",
-  },
 ];
 
 const faqItems = [
@@ -546,7 +541,7 @@ const Index = () => {
       {/* Features */}
       <section className="py-12 bg-muted/30">
         <div className="container">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <div
                 key={index}
