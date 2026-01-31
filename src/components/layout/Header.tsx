@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, Heart, Menu, X, ChevronDown, Phone, User, LogOut, Settings } from "lucide-react";
-import whatsappIcon from "@/assets/whatsapp-icon.png";
-import telegramIcon from "@/assets/telegram-icon.png";
-import vkIcon from "@/assets/vk-icon-new.png";
+import { Search, ShoppingCart, Heart, Menu, X, ChevronDown, Phone, User, LogOut, Settings, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +14,7 @@ import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSetting } from "@/contexts/SiteDataContext";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { SearchDropdown } from "./SearchDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
@@ -51,10 +49,9 @@ export function Header() {
   const { user, isAdmin, signOut } = useAuth();
   
   const phone = useSetting("phone", "+7 (918) 179-00-56");
-  const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
-  const telegram = useSetting("telegram", "https://t.me/+79181790056");
   const siteLogo = useSetting("site_logo", "");
   const cleanPhone = phone.replace(/[^\d+]/g, "");
+  const { data: socialLinks } = useSocialLinks({ header: true });
   
   const logoSrc = siteLogo || DEFAULT_LOGO;
 
@@ -122,33 +119,22 @@ export function Header() {
           {/* Contacts & Messengers */}
           <div className="hidden lg:flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <a 
-                href={whatsapp} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity"
-                aria-label="WhatsApp"
-              >
-                <img src={whatsappIcon} alt="WhatsApp" className="h-full w-full object-cover" />
-              </a>
-              <a 
-                href={telegram} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity"
-                aria-label="Telegram"
-              >
-                <img src={telegramIcon} alt="Telegram" className="h-full w-full object-cover" />
-              </a>
-              <a 
-                href="https://vk.com/radugaprazdnika" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="h-8 w-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity"
-                aria-label="VK"
-              >
-                <img src={vkIcon} alt="VK" className="h-full w-full object-cover" />
-              </a>
+              {socialLinks?.map((link) => (
+                <a 
+                  key={link.id}
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="h-8 w-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center bg-muted"
+                  aria-label={link.name}
+                >
+                  {link.icon_url ? (
+                    <img src={link.icon_url} alt={link.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ExternalLink className="h-4 w-4" />
+                  )}
+                </a>
+              ))}
             </div>
             <div className="text-right">
               <a href={`tel:${cleanPhone}`} className="font-bold text-lg hover:text-primary transition-colors">

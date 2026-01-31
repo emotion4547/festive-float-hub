@@ -858,6 +858,48 @@ export type Database = {
         }
         Relationships: []
       }
+      social_links: {
+        Row: {
+          created_at: string
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          show_in_floating: boolean | null
+          show_in_footer: boolean | null
+          show_in_header: boolean | null
+          sort_order: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          show_in_floating?: boolean | null
+          show_in_footer?: boolean | null
+          show_in_header?: boolean | null
+          sort_order?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          show_in_floating?: boolean | null
+          show_in_footer?: boolean | null
+          show_in_header?: boolean | null
+          sort_order?: number | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       user_coupons: {
         Row: {
           code: string
