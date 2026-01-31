@@ -112,7 +112,13 @@ export function Footer() {
               </a>
               <div className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <span>Приходите к нам в магазин:<br />{address}</span>
+                <div>
+                  <span>Наши магазины:</span>
+                  <ul className="mt-1 space-y-1">
+                    <li>ул. Российская 72/1к1, торговая галерея Опера, 5 павильон</li>
+                    <li>ул. Краеведа Соловьёва 2к1, магазин «Воздушные шары»</li>
+                  </ul>
+                </div>
               </div>
               
               {/* Callback button */}
