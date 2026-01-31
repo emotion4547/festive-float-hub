@@ -27,6 +27,7 @@ import ContactsPage from "./pages/ContactsPage";
 import AuthPage from "./pages/AuthPage";
 import AboutDetailsPage from "./pages/AboutDetailsPage";
 import MailingConsentPage from "./pages/MailingConsentPage";
+import AboutPage from "./pages/AboutPage";
 import AccountPage from "./pages/account/AccountPage";
 import OrdersPage from "./pages/account/OrdersPage";
 import AddressesPage from "./pages/account/AddressesPage";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/news" element={<NewsPage />} />
               <Route path="/news/:slug" element={<NewsArticlePage />} />
               <Route path="/about/partners" element={<PartnersPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/about/offer" element={<OfferPage />} />
               <Route path="/about/privacy" element={<PrivacyPage />} />
               <Route path="/about/warranty" element={<WarrantyPage />} />
