@@ -228,7 +228,9 @@ const ProductPage = () => {
 
               {/* Description */}
               {product.description && (
-                <p className="text-muted-foreground">{product.description}</p>
+                <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {product.description}
+                </p>
               )}
 
               {/* Characteristics */}
@@ -369,7 +371,7 @@ const ProductPage = () => {
 
             <TabsContent value="description" className="bg-background rounded-xl p-6">
               <div className="prose max-w-none">
-                <p>{product.description || "Описание товара отсутствует."}</p>
+                <p className="whitespace-pre-line">{product.description || "Описание товара отсутствует."}</p>
                 {(product.type || product.size || product.balloon_count) && (
                   <>
                     <h3>Характеристики набора:</h3>
