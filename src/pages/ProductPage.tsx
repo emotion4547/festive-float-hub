@@ -390,14 +390,14 @@ const ProductPage = () => {
               <div className="prose max-w-none">
                 <h3>Способы доставки:</h3>
                 <ul>
-                  <li><strong>Курьер по Санкт-Петербургу</strong> — 200₽ (бесплатно от 5000₽)</li>
+                  <li><strong>По Краснодару</strong> — от 500 ₽</li>
                   <li><strong>Самовывоз</strong> — бесплатно</li>
                 </ul>
                 <h3>Способы оплаты:</h3>
                 <ul>
-                  <li>Банковская карта (Visa, MasterCard)</li>
-                  <li>СбербанкОнлайн</li>
-                  <li>Наличными при получении</li>
+                  <li>Наличные</li>
+                  <li>Банковская карта</li>
+                  <li>По счёту (работаем с юр. лицами)</li>
                 </ul>
               </div>
             </TabsContent>
