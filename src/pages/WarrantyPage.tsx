@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
-import { AlertCircle, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
+import warrantyInfoImage from "@/assets/warranty-info.jpg";
 
 const WarrantyPage = () => {
   return (
@@ -20,13 +20,19 @@ const WarrantyPage = () => {
               ГАРАНТИЯ И ВОЗВРАТ
             </h1>
 
-            <div className="prose prose-lg max-w-none">
+            <div className="prose prose-lg max-w-none mb-8">
               <p>
                 Воздушные шары не подлежат возврату или обмену в соответствии с Законом России «О защите прав потребителей» 
                 (ст.25 от 1992г. №2300-1 (ред. от 25.10.2007г.)) и Постановлением Правительства Российской Федерации от 19.01.1998г. №55 
                 (ред. 27.03.2007г.).
               </p>
             </div>
+
+            <img 
+              src={warrantyInfoImage} 
+              alt="Правила ухода за воздушными шарами" 
+              className="rounded-xl w-full max-w-2xl"
+            />
           </main>
 
           {/* Right Sidebar */}
