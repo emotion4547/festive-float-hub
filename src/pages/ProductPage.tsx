@@ -9,7 +9,6 @@ import {
   Plus, 
   Truck, 
   Shield, 
-  RefreshCw,
   Check,
   Loader2
 } from "lucide-react";
@@ -338,18 +337,14 @@ const ProductPage = () => {
               </div>
 
               {/* Guarantees */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
                 <div className="flex items-center gap-3 text-sm">
                   <Truck className="h-5 w-5 text-primary shrink-0" />
-                  <span>Доставка 1-2 дня</span>
+                  <span>Доставка от 1 часа</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Shield className="h-5 w-5 text-primary shrink-0" />
                   <span>Гарантия качества</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <RefreshCw className="h-5 w-5 text-primary shrink-0" />
-                  <span>Возврат 14 дней</span>
                 </div>
               </div>
             </div>
