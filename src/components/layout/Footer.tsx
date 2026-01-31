@@ -88,16 +88,12 @@ export function Footer() {
                 <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                 <div>
                   <p>Время работы магазина:</p>
-                  <p>{workHours}</p>
+                  <p>С 10:00 до 20:00 ежедневно</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p>Прием заказов осуществляется:</p>
-                  <p>с 10:00 до 20:00</p>
-                  <p className="text-xs mt-1">Заказы, поступающие после 20:00 будут обработаны менеджером с 10:00 следующего дня</p>
-                </div>
+                <p>Приём заказов 24/7</p>
               </div>
             </div>
           </div>
