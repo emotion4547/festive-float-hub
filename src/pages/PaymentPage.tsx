@@ -110,13 +110,6 @@ const PaymentPage = () => {
             
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-xl p-4">
-                <h4 className="font-semibold mb-2">Когда происходит списание средств?</h4>
-                <p className="text-sm text-muted-foreground">
-                  При онлайн-оплате средства списываются в момент подтверждения заказа. При оплате наличными — при получении заказа.
-                </p>
-              </div>
-              
-              <div className="bg-muted/30 rounded-xl p-4">
                 <h4 className="font-semibold mb-2">Выдаётся ли чек?</h4>
                 <p className="text-sm text-muted-foreground">
                   Да, электронный чек отправляется на указанный email при онлайн-оплате. При оплате наличными курьер выдаёт печатный чек.
