@@ -1,6 +1,7 @@
 import { ReactNode, lazy, Suspense } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { AnnouncementBar } from "./AnnouncementBar";
 import { FloatingButtons } from "./FloatingButtons";
 import { CookieConsent } from "./CookieConsent";
 import { PendingSpinHandler } from "@/components/wheel/PendingSpinHandler";
@@ -18,6 +19,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <AnnouncementBar />
       <main className="flex-1">{children}</main>
       <Footer />
       <FloatingButtons />
