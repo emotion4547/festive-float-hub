@@ -75,24 +75,6 @@ const DeliveryPage = () => {
             {/* Delivery Tariffs */}
             <h2 className="font-heading text-2xl font-bold mb-4">Стандартный тариф доставки с 9:00 до 21:00</h2>
             
-            <div className="bg-muted/30 rounded-xl p-6 mb-8">
-              <h3 className="font-semibold mb-4">Особые тарифы доставки:</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>доставка к точному времени +350₽ к стандартному тарифу (интервал 1 час)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>подъём на этаж (без лифта) + 50₽ за этаж</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary">•</span>
-                  <span>срочная доставка 40% к дня +150-350₽ к стандартному тарифу</span>
-                </li>
-              </ul>
-            </div>
-
             {/* Delivery Zones */}
             <h2 className="font-heading text-2xl font-bold mb-4">
               {content.zone_1?.title ? "Зоны доставки" : "Зоны и стоимость доставки"}
