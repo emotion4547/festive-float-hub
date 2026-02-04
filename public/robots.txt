@@ -1,8 +1,17 @@
+# Robots.txt для radugaprazdnika.ru
+# Разрешаем индексацию всем поисковым роботам
+
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
+
+User-agent: Yandexbot
+Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -10,5 +19,30 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+User-agent: TelegramBot
+Allow: /
+
+User-agent: vkShare
+Allow: /
+
 User-agent: *
 Allow: /
+Crawl-delay: 2
+
+# Запрещаем индексацию служебных страниц
+Disallow: /admin
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /auth
+Disallow: /favorites
+
+# Sitemap
+# Статический sitemap (для резервного использования)
+Sitemap: https://radugaprazdnika.ru/sitemap.xml
+
+# Динамический sitemap (основной, генерируется из базы данных)
+Sitemap: https://edzhahcogyhamcwkqszp.supabase.co/functions/v1/sitemap
+
+# Host
+Host: https://radugaprazdnika.ru
