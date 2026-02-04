@@ -55,7 +55,7 @@ const features = [
   {
     icon: Truck,
     title: "Быстрая доставка",
-    description: "Доставим за 24-48 часов по всему городу",
+    description: "Доставим от 30 минут по всему городу",
   },
   {
     icon: Clock,
