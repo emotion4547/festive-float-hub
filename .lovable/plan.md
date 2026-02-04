@@ -1,114 +1,87 @@
 
+# План внедрения Prerendering для SEO на VPS
 
-# План оптимизации производительности и исправления неактивных элементов
+## Проблема
+Сайт на React SPA отдаёт пустой `<div id="root">` до выполнения JavaScript. Хотя Googlebot умеет рендерить JS, это может:
+- Замедлить индексирование
+- Ухудшить позиции в Яндекс (хуже работает с JS)
+- Сломать превью в соцсетях и мессенджерах
 
-## Часть 1: Оптимизация производительности
+## Выбранное решение: Prerender.io + Nginx
 
-### 1.1 Оптимизация ShaderGradient
-- Добавить проверку `prefers-reduced-motion` для пользователей, которые предпочитают меньше анимаций
-- Снизить параметры `uDensity` и `uFrequency` для уменьшения нагрузки
-- Опционально: заменить на статический CSS-градиент для мобильных устройств
+Prerendering — оптимальный вариант для вашего случая:
+- Не требует переписывать код
+- Работает с любым React SPA
+- Боты получают готовый HTML, пользователи — обычный SPA
 
-### 1.2 Ленивая загрузка видео
-- Добавить Intersection Observer для видео в ProductCard
-- Проигрывать видео только когда карточка попадает в viewport
-- Приостанавливать видео, когда карточка выходит из зоны видимости
+## Архитектура
 
-### 1.3 Оптимизация 3D-карточек
-- Добавить `requestAnimationFrame` для throttling mousemove событий
-- Опционально отключить эффект на мобильных устройствах
+```text
+┌─────────────┐     ┌─────────────┐     ┌──────────────────┐
+│   Запрос    │────▶│    Nginx    │────▶│   React SPA      │
+│  (браузер)  │     │             │     │  (обычный путь)  │
+└─────────────┘     └─────────────┘     └──────────────────┘
 
-### 1.4 Отложенная загрузка компонентов
-- Обернуть FortuneWheelDialog в React.lazy()
-- Использовать динамический импорт для тяжёлых компонентов
-
----
-
-## Часть 2: Исправление неактивных ссылок
-
-### 2.1 Создать недостающие страницы
-
-**Новые файлы:**
-- `src/pages/AboutDetailsPage.tsx` - страница "Реквизиты"
-- `src/pages/MailingConsentPage.tsx` - страница согласия на рассылки
-
-**Обновить App.tsx:**
-```tsx
-<Route path="/about/details" element={<AboutDetailsPage />} />
-<Route path="/about/mailing" element={<MailingConsentPage />} />
+┌─────────────┐     ┌─────────────┐     ┌──────────────────┐
+│   Запрос    │────▶│    Nginx    │────▶│  Prerender.io    │
+│ (Googlebot) │     │ (проверка   │     │  (готовый HTML)  │
+│             │     │  User-Agent)│     │                  │
+└─────────────┘     └─────────────┘     └──────────────────┘
 ```
 
-### 2.2 Исправить быстрые фильтры в каталоге
+## Этапы реализации
 
-**Обновить CatalogPage.tsx:**
-```tsx
-// Добавить извлечение параметра filter
-const filterParam = searchParams.get("filter");
+### Этап 1: Создание sitemap.xml
+Создам динамический sitemap со всеми публичными страницами сайта для поисковых роботов.
 
-// Добавить логику в useEffect или useMemo:
-useEffect(() => {
-  if (filterParam === "hits") {
-    setFilters(prev => ({ ...prev, isHit: true }));
-  } else if (filterParam === "sale") {
-    setFilters(prev => ({ ...prev, hasSale: true }));
-  } else if (filterParam === "new") {
-    setFilters(prev => ({ ...prev, isNew: true }));
-  } else if (filterParam === "budget") {
-    setFilters(prev => ({ ...prev, priceRange: [0, 3000] }));
-  }
-}, [filterParam]);
+**Файл:** `public/sitemap.xml`
 
-// Обновить фильтрацию продуктов:
-if (filterParam === "hits") {
-  result = result.filter(p => p.is_hit);
-}
-if (filterParam === "sale") {
-  result = result.filter(p => p.discount && p.discount > 0);
-}
-if (filterParam === "new") {
-  result = result.filter(p => p.is_new);
-}
-```
+Включит:
+- Главная страница (/)
+- Каталог (/catalog)
+- Страницы товаров (/product/:id) — генерируются из базы
+- Информационные страницы (/delivery, /payment, /contacts и др.)
+- Новости (/news, /news/:slug)
+- Коллекции (/collection/:slug)
 
-### 2.3 Исправить форму подписки на новости
+### Этап 2: Edge Function для динамического sitemap
+Создам серверную функцию, которая будет генерировать актуальный sitemap с товарами из базы данных.
 
-**Обновить Index.tsx:**
-- Добавить state для email
-- Добавить обработчик отправки формы
-- Сохранять email в таблицу `newsletter_subscribers` (создать миграцию)
-- Показывать уведомление об успехе/ошибке
+### Этап 3: Обновление robots.txt
+Добавлю ссылку на sitemap и правила для ботов.
+
+### Этап 4: Конфигурация Nginx для VPS
+
+Предоставлю готовый конфиг nginx:
+- Проксирование запросов ботов на Prerender.io
+- Отдача статики React SPA
+- Поддержка HTML5 History API (fallback на index.html)
+- HTTPS с Let's Encrypt
+
+### Этап 5: Инструкция по настройке Prerender.io
+- Регистрация на prerender.io (есть бесплатный план до 250 страниц/месяц)
+- Получение токена
+- Настройка кэширования
 
 ---
 
-## Часть 3: Технические детали
+## Технические детали
 
-### Файлы для изменения:
-1. `src/pages/Index.tsx` - оптимизация ShaderGradient + форма подписки
-2. `src/components/products/ProductCard.tsx` - ленивая загрузка видео
-3. `src/components/ui/3d-card.tsx` - throttling mousemove
-4. `src/pages/CatalogPage.tsx` - поддержка filter параметра
-5. `src/App.tsx` - добавление новых маршрутов
-6. `src/components/layout/Layout.tsx` - lazy loading FortuneWheelDialog
+### Создаваемые файлы:
+1. `public/sitemap.xml` — статический базовый sitemap
+2. `supabase/functions/sitemap/index.ts` — динамический sitemap с товарами
+3. Обновление `public/robots.txt`
+4. `docs/nginx-vps-config.md` — инструкция по настройке VPS
 
-### Новые файлы:
-1. `src/pages/AboutPage.tsx`
-2. `src/pages/AboutDetailsPage.tsx`  
-3. `src/pages/MailingConsentPage.tsx`
-
-### Миграция базы данных:
-- Создать таблицу `newsletter_subscribers` для подписок на рассылку
+### Альтернатива Prerender.io — Rendertron (self-hosted):
+Если не хотите использовать внешний сервис, можно развернуть Rendertron на том же VPS. Это бесплатно, но требует больше ресурсов сервера.
 
 ---
 
-## Ожидаемые результаты
-
-**Производительность:**
-- Уменьшение нагрузки на GPU за счёт оптимизации WebGL
-- Меньше одновременно играющих видео
-- Более плавное отслеживание мыши для 3D-карточек
-
-**Функциональность:**
-- Все ссылки в меню будут вести на существующие страницы
-- Быстрые фильтры в мобильном меню будут работать
-- Форма подписки будет сохранять email
+## Ожидаемый результат
+После внедрения:
+- Googlebot, Yandexbot, Bingbot получают готовый HTML с контентом
+- Превью в Telegram, WhatsApp, VK работают корректно
+- Индексирование происходит быстрее и полнее
+- Обычные пользователи получают быстрый SPA без изменений
 
