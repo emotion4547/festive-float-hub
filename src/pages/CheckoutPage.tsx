@@ -98,7 +98,7 @@ const CheckoutPage = () => {
     deliveryDate: "",
     deliveryTime: "",
     deliveryMethod: "courier",
-    paymentMethod: "card",
+    paymentMethod: "cash",
   });
 
   // Calculate discount - prioritize admin coupon, then manual user coupon match, then selected user coupon
@@ -607,27 +607,24 @@ const CheckoutPage = () => {
                     className="space-y-3"
                   >
                     <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                      <RadioGroupItem value="card" id="card" />
-                      <Label htmlFor="card" className="flex-1 cursor-pointer">
-                        <span className="font-medium">Банковская карта</span>
-                        <span className="text-muted-foreground ml-2">
-                          Visa, MasterCard
-                        </span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                      <RadioGroupItem value="sbp" id="sbp" />
-                      <Label htmlFor="sbp" className="flex-1 cursor-pointer">
-                        <span className="font-medium">СБП</span>
-                        <span className="text-muted-foreground ml-2">
-                          Система быстрых платежей
-                        </span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
                       <RadioGroupItem value="cash" id="cash" />
                       <Label htmlFor="cash" className="flex-1 cursor-pointer">
                         <span className="font-medium">Наличными при получении</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                      <RadioGroupItem value="card" id="card" />
+                      <Label htmlFor="card" className="flex-1 cursor-pointer">
+                        <span className="font-medium">Картой при получении</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                      <RadioGroupItem value="invoice" id="invoice" />
+                      <Label htmlFor="invoice" className="flex-1 cursor-pointer">
+                        <span className="font-medium">Счёт для юр. лиц</span>
+                        <span className="text-muted-foreground ml-2">
+                          Свяжется менеджер
+                        </span>
                       </Label>
                     </div>
                   </RadioGroup>
@@ -651,7 +648,7 @@ const CheckoutPage = () => {
                   onClick={handleNextStep}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Оформление..." : step === 1 ? "Далее → К оплате" : `Оплатить ${finalTotal.toLocaleString("ru-RU")} ₽`}
+                  {isSubmitting ? "Оформление..." : step === 1 ? "Далее → К оплате" : `Оформить заказ на ${finalTotal.toLocaleString("ru-RU")} ₽`}
                 </Button>
               </div>
             </div>
