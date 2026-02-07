@@ -12,7 +12,7 @@ import { useCoupon } from "@/hooks/useCoupon";
 import { useUserCoupons } from "@/hooks/useUserCoupons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { products } from "@/data/products";
+import { useRelatedProducts } from "@/hooks/useRelatedProducts";
 import { cn } from "@/lib/utils";
 
 const CartPage = () => {
@@ -74,10 +74,11 @@ const CartPage = () => {
   const discountCoupons = userCoupons.filter(c => c.prize_type === "discount");
   const giftCoupons = userCoupons.filter(c => c.prize_type === "gift");
 
-  // Recommended products
-  const recommendedProducts = products
-    .filter((p) => !items.find((item) => item.product.id === p.id))
-    .slice(0, 4);
+  // Recommended products based on cart categories
+  const { products: recommendedProducts } = useRelatedProducts(
+    items.map(item => item.product.id),
+    4
+  );
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
