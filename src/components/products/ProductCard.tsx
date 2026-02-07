@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
 interface ProductCardProduct {
   id: string | number;
   name: string;
@@ -37,6 +37,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { toast } = useToast();
   const isProductFavorite = isFavorite(product.id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLAnchorElement>(null);
@@ -91,6 +92,10 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     addItem(product as any);
+    toast({
+      title: "Добавлено в корзину",
+      description: product.name,
+    });
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
