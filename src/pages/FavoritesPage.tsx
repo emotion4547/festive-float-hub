@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
 import { useFavorites } from "@/hooks/useFavorites";
-import { products } from "@/data/products";
+import { useRelatedProducts } from "@/hooks/useRelatedProducts";
 
 const FavoritesPage = () => {
   const { items, removeFavorite } = useFavorites();
 
-  const recommendedProducts = products
-    .filter((p) => !items.find((item) => item.id === p.id))
-    .slice(0, 4);
+  // Get related products based on cart categories, excluding favorites
+  const { products: recommendedProducts } = useRelatedProducts(
+    items.map(item => item.id),
+    4
+  );
 
   if (items.length === 0) {
     return (

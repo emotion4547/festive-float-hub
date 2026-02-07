@@ -66,7 +66,13 @@ serve(async (req) => {
       ).join('\n');
 
       const deliveryMethodText = deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка';
-      const paymentMethodText = paymentMethod === 'cash' ? 'Наличными' : 'Картой';
+      
+      const paymentMethodMap: Record<string, string> = {
+        'cash': 'Наличными при получении',
+        'card': 'Картой при получении',
+        'invoice': 'Счёт для юр. лиц'
+      };
+      const paymentMethodText = paymentMethodMap[paymentMethod] || paymentMethod;
 
       message = `🛒 *Новый заказ ${escapeMarkdown(orderNumber)}*\n\n` +
         `👤 Клиент: ${escapeMarkdown(customerName)}\n` +
