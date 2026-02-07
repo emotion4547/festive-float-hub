@@ -239,13 +239,13 @@ export function Header() {
       </div>
 
       {/* Navigation bar */}
-      <div className="bg-primary text-primary-foreground hidden lg:block overflow-hidden">
+      <div className="bg-secondary text-secondary-foreground hidden lg:block overflow-hidden">
         <div className="container">
           <nav className="flex items-center">
             {/* Catalog link */}
             <Link 
               to="/catalog"
-              className="bg-primary-hover hover:bg-primary-hover/80 text-primary-foreground font-heading font-semibold h-12 px-4 xl:px-6 flex items-center gap-2 whitespace-nowrap shrink-0"
+              className="bg-primary hover:bg-primary-hover text-primary-foreground font-heading font-semibold h-12 px-4 xl:px-6 flex items-center gap-2 whitespace-nowrap shrink-0"
             >
               <Menu className="h-4 w-4" />
               КАТАЛОГ ТОВАРОВ
@@ -258,7 +258,7 @@ export function Header() {
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="ghost" 
-                      className="text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-hover font-heading text-xs xl:text-sm h-12 px-2 xl:px-4 rounded-none gap-1 whitespace-nowrap"
+                      className="text-secondary-foreground/90 hover:text-secondary-foreground hover:bg-secondary-hover font-heading text-xs xl:text-sm h-12 px-2 xl:px-4 rounded-none gap-1 whitespace-nowrap"
                     >
                       {link.name}
                       <ChevronDown className="h-3 w-3" />
@@ -276,7 +276,7 @@ export function Header() {
                 <Link
                   key={link.name}
                   to={link.href}
-                  className="text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-hover font-heading text-xs xl:text-sm h-12 px-2 xl:px-4 flex items-center transition-colors whitespace-nowrap"
+                  className="text-secondary-foreground/90 hover:text-secondary-foreground hover:bg-secondary-hover font-heading text-xs xl:text-sm h-12 px-2 xl:px-4 flex items-center transition-colors whitespace-nowrap"
                 >
                   {link.name}
                 </Link>
@@ -289,7 +289,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="ml-auto text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-hover font-heading text-sm h-12 px-4 rounded-none gap-2"
+                    className="ml-auto text-secondary-foreground/90 hover:text-secondary-foreground hover:bg-secondary-hover font-heading text-sm h-12 px-4 rounded-none gap-2"
                   >
                     <User className="h-4 w-4" />
                     Профиль
@@ -327,7 +327,7 @@ export function Header() {
             ) : (
               <Button 
                 variant="ghost" 
-                className="ml-auto text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-hover font-heading text-sm h-12 px-4 rounded-none"
+                className="ml-auto text-secondary-foreground/90 hover:text-secondary-foreground hover:bg-secondary-hover font-heading text-sm h-12 px-4 rounded-none"
                 asChild
               >
                 <Link to="/auth">Войти</Link>
