@@ -363,67 +363,111 @@ export function CategoryManager() {
               </div>
               <div>
                 <Label>Изображение</Label>
-                <div
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-                    dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/30"
-                  }`}
-                >
-                  {formData.image ? (
-                    <div className="relative inline-block">
+                
+                {/* Image Preview */}
+                {formData.image ? (
+                  <div className="mt-2 mb-3">
+                    <div className="relative inline-block group">
                       <img
                         src={formData.image}
                         alt="Preview"
-                        className="w-24 h-24 object-cover rounded-lg"
+                        className="w-32 h-32 object-cover rounded-lg border"
                       />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
-                        onClick={() => setFormData((prev) => ({ ...prev, image: "" }))}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setFormData((prev) => ({ ...prev, image: "" }))}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Удалить
+                        </Button>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <label className="cursor-pointer">
-                        <span className="text-sm text-primary hover:underline">
-                          Загрузить
-                        </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) =>
-                            e.target.files && handleFileUpload(e.target.files)
-                          }
-                        />
-                      </label>
-                      {uploading && (
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto mt-2" />
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <div className="flex-1 relative">
-                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Или URL"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="pl-10"
-                    />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={addImageUrl}>
-                    OK
-                  </Button>
+                ) : (
+                  <div
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/30"
+                    }`}
+                  >
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Перетащите изображение сюда
+                    </p>
+                    {uploading && (
+                      <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                    )}
+                  </div>
+                )}
+
+                {/* Upload Buttons */}
+                <div className="flex gap-2 mt-3">
+                  <label className="flex-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={uploading}
+                      asChild
+                    >
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        С устройства
+                      </span>
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        e.target.files && handleFileUpload(e.target.files)
+                      }
+                    />
+                  </label>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline" className="flex-1">
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        По URL
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Добавить изображение по URL</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="image-url">URL изображения</Label>
+                          <Input
+                            id="image-url"
+                            placeholder="https://example.com/image.jpg"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              if (imageUrl.trim()) {
+                                setFormData((prev) => ({ ...prev, image: imageUrl.trim() }));
+                                setImageUrl("");
+                              }
+                            }}
+                            disabled={!imageUrl.trim()}
+                          >
+                            Добавить
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
 
