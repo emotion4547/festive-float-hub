@@ -99,8 +99,9 @@ const CatalogPage = () => {
     }
 
     // Filter by category from URL or filter panel
-    if (categorySlug) {
-      result = result.filter(p => p.categories?.slug === categorySlug);
+    if (categorySlug && currentCategory) {
+      // Use category_id for reliable filtering instead of nested categories object
+      result = result.filter(p => p.category_id === currentCategory.id);
     } else if (filters.categories.length > 0) {
       // filters.categories contains category IDs from the filter panel
       result = result.filter(p => {
@@ -162,7 +163,7 @@ const CatalogPage = () => {
     }
 
     return result;
-  }, [products, filters, sortBy, categorySlug, filterParam]);
+  }, [products, filters, sortBy, categorySlug, filterParam, currentCategory]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
