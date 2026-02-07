@@ -100,7 +100,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
+    const wasFavorite = isProductFavorite;
     toggleFavorite(product as any);
+    toast({
+      title: wasFavorite ? "Удалено из избранного" : "Добавлено в избранное",
+      description: product.name,
+    });
   };
 
   const handleToggleMute = (e: React.MouseEvent) => {
