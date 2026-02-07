@@ -165,14 +165,14 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout title="Настройки">
-      <Tabs defaultValue="branding" className="space-y-6">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="branding">Брендинг</TabsTrigger>
-          <TabsTrigger value="general">Общие</TabsTrigger>
-          <TabsTrigger value="contacts">Контакты</TabsTrigger>
-          <TabsTrigger value="social">Соцсети</TabsTrigger>
-          <TabsTrigger value="delivery">Доставка</TabsTrigger>
-          <TabsTrigger value="pages">Страницы</TabsTrigger>
+      <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="branding" className="text-xs sm:text-sm">Брендинг</TabsTrigger>
+          <TabsTrigger value="general" className="text-xs sm:text-sm">Общие</TabsTrigger>
+          <TabsTrigger value="contacts" className="text-xs sm:text-sm">Контакты</TabsTrigger>
+          <TabsTrigger value="social" className="text-xs sm:text-sm">Соцсети</TabsTrigger>
+          <TabsTrigger value="delivery" className="text-xs sm:text-sm">Доставка</TabsTrigger>
+          <TabsTrigger value="pages" className="text-xs sm:text-sm">Страницы</TabsTrigger>
         </TabsList>
 
         {/* Branding Tab */}

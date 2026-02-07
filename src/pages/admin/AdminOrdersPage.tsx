@@ -255,7 +255,7 @@ export default function AdminOrdersPage() {
           </CardContent>
         </Card>
 
-        {/* Orders Table */}
+        {/* Orders */}
         {filteredOrders.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
@@ -264,60 +264,50 @@ export default function AdminOrdersPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Номер</TableHead>
-                    <TableHead>Дата</TableHead>
-                    <TableHead>Клиент</TableHead>
-                    <TableHead>Товаров</TableHead>
-                    <TableHead>Сумма</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order) => {
-                    const status = statusOptions.find(
-                      (s) => s.value === order.status
-                    );
-
-                    return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">
-                          {order.order_number}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", {
-                            locale: ru,
-                          })}
-                        </TableCell>
-                        <TableCell>
+          <>
+            {/* Mobile Cards View */}
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {filteredOrders.map((order) => {
+                const status = statusOptions.find((s) => s.value === order.status);
+                return (
+                  <Card key={order.id} className="overflow-hidden">
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <p className="font-semibold text-sm">{order.order_number}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                          </p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => fetchOrderDetails(order.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium">{order.customer_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {order.customer_phone}
-                            </p>
+                            <p className="font-medium text-sm">{order.customer_name}</p>
+                            <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
                           </div>
-                        </TableCell>
-                        <TableCell>{order.order_items.length}</TableCell>
-                        <TableCell className="font-medium">
-                          {(
-                            Number(order.total) + Number(order.delivery_cost)
-                          ).toLocaleString("ru-RU")}{" "}
-                          ₽
-                        </TableCell>
-                        <TableCell>
+                          <p className="font-semibold">
+                            {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {order.order_items.length} товаров
+                          </span>
                           <Select
                             value={order.status}
-                            onValueChange={(value) =>
-                              handleStatusChange(order.id, value)
-                            }
+                            onValueChange={(value) => handleStatusChange(order.id, value)}
                           >
-                            <SelectTrigger className="w-36">
-                              <Badge variant={status?.variant}>
+                            <SelectTrigger className="w-32 h-8">
+                              <Badge variant={status?.variant} className="text-xs">
                                 {status?.label}
                               </Badge>
                             </SelectTrigger>
@@ -329,28 +319,76 @@ export default function AdminOrdersPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => fetchOrderDetails(order.id)}
-                            disabled={loadingDetails}
-                          >
-                            {loadingDetails ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </Card>
+
+            {/* Desktop Table View */}
+            <Card className="hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Номер</TableHead>
+                      <TableHead>Дата</TableHead>
+                      <TableHead>Клиент</TableHead>
+                      <TableHead>Товаров</TableHead>
+                      <TableHead>Сумма</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOrders.map((order) => {
+                      const status = statusOptions.find((s) => s.value === order.status);
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.order_number}</TableCell>
+                          <TableCell>
+                            {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{order.customer_name}</p>
+                              <p className="text-sm text-muted-foreground">{order.customer_phone}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{order.order_items.length}</TableCell>
+                          <TableCell className="font-medium">
+                            {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={order.status}
+                              onValueChange={(value) => handleStatusChange(order.id, value)}
+                            >
+                              <SelectTrigger className="w-36">
+                                <Badge variant={status?.variant}>{status?.label}</Badge>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {statusOptions.map((s) => (
+                                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => fetchOrderDetails(order.id)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </>
         )}
       </div>
 

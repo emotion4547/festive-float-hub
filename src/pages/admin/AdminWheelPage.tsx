@@ -511,82 +511,98 @@ export default function AdminWheelPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Цвет</TableHead>
-                      <TableHead>Название</TableHead>
-                      <TableHead>Тип приза</TableHead>
-                      <TableHead>Значение</TableHead>
-                      <TableHead>Вероятность</TableHead>
-                      <TableHead>Статус</TableHead>
-                      <TableHead className="w-24">Действия</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {segments.map((segment) => (
-                      <TableRow key={segment.id}>
-                        <TableCell>
-                          <div
-                            className="w-6 h-6 rounded-full border"
-                            style={{ backgroundColor: segment.color }}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{segment.label}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            segment.prize_type === "gift"
-                              ? "bg-purple-100 text-purple-700"
-                              : "bg-blue-100 text-blue-700"
-                          }`}>
-                            {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {segment.prize_type === "gift"
-                            ? "Товар"
-                            : segment.discount_type === "percentage"
-                              ? `${segment.discount_value}%`
-                              : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
-                        </TableCell>
-                        <TableCell>{segment.probability}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              segment.is_active
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {segment.is_active ? "Активен" : "Неактивен"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenDialog(segment)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(segment.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+            <>
+              {/* Mobile Cards */}
+              <div className="grid grid-cols-1 gap-3 md:hidden">
+                {segments.map((segment) => (
+                  <Card key={segment.id}>
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-3">
+                        <div
+                          className="w-8 h-8 rounded-full border flex-shrink-0"
+                          style={{ backgroundColor: segment.color }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{segment.label}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className={`px-2 py-0.5 rounded text-xs ${
+                              segment.prize_type === "gift" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                            }`}>
+                              {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {segment.prize_type === "gift" ? "Товар" : segment.discount_type === "percentage" ? `${segment.discount_value}%` : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
+                            </span>
+                            <span className="text-xs text-muted-foreground">Вес: {segment.probability}</span>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(segment)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(segment.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </Card>
+
+              {/* Desktop Table */}
+              <Card className="hidden md:block">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Цвет</TableHead>
+                        <TableHead>Название</TableHead>
+                        <TableHead>Тип приза</TableHead>
+                        <TableHead>Значение</TableHead>
+                        <TableHead>Вероятность</TableHead>
+                        <TableHead>Статус</TableHead>
+                        <TableHead className="w-24">Действия</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {segments.map((segment) => (
+                        <TableRow key={segment.id}>
+                          <TableCell>
+                            <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: segment.color }} />
+                          </TableCell>
+                          <TableCell className="font-medium">{segment.label}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs ${segment.prize_type === "gift" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
+                              {segment.prize_type === "gift" ? "Подарок" : "Скидка"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {segment.prize_type === "gift" ? "Товар" : segment.discount_type === "percentage" ? `${segment.discount_value}%` : `${Number(segment.discount_value).toLocaleString("ru-RU")} ₽`}
+                          </TableCell>
+                          <TableCell>{segment.probability}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded text-xs ${segment.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
+                              {segment.is_active ? "Активен" : "Неактивен"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(segment)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDelete(segment.id)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </>
           )}
         </TabsContent>
 

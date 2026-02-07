@@ -317,7 +317,7 @@ export default function AdminCouponsPage() {
           </Dialog>
         </div>
 
-        {/* Coupons Table */}
+        {/* Coupons */}
         {coupons.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
@@ -326,68 +326,97 @@ export default function AdminCouponsPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Код</TableHead>
-                    <TableHead>Скидка</TableHead>
-                    <TableHead>Мин. сумма</TableHead>
-                    <TableHead>Использовано</TableHead>
-                    <TableHead>Статус</TableHead>
-                    <TableHead className="w-24">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {coupons.map((coupon) => (
-                    <TableRow key={coupon.id}>
-                      <TableCell className="font-mono font-medium">
-                        {coupon.code}
-                      </TableCell>
-                      <TableCell>
-                        {coupon.discount_type === "percentage"
-                          ? `${coupon.discount_value}%`
-                          : `${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
-                      </TableCell>
-                      <TableCell>
-                        {coupon.min_order_amount
-                          ? `${Number(coupon.min_order_amount).toLocaleString("ru-RU")} ₽`
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {coupon.used_count}
-                        {coupon.max_uses && ` / ${coupon.max_uses}`}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={coupon.is_active ? "default" : "secondary"}>
-                          {coupon.is_active ? "Активен" : "Неактивен"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(coupon)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(coupon.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <>
+            {/* Mobile Cards View */}
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {coupons.map((coupon) => (
+                <Card key={coupon.id} className="overflow-hidden">
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <p className="font-mono font-bold text-sm">{coupon.code}</p>
+                        <p className="text-sm text-primary font-medium">
+                          {coupon.discount_type === "percentage"
+                            ? `${coupon.discount_value}%`
+                            : `${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(coupon)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(coupon.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        {coupon.min_order_amount ? `от ${Number(coupon.min_order_amount).toLocaleString("ru-RU")} ₽` : "Без мин. суммы"}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {coupon.used_count}{coupon.max_uses && ` / ${coupon.max_uses}`} исп.
+                      </span>
+                      <Badge variant={coupon.is_active ? "default" : "secondary"} className="text-xs">
+                        {coupon.is_active ? "Активен" : "Неактивен"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </Card>
+
+            {/* Desktop Table View */}
+            <Card className="hidden md:block">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Код</TableHead>
+                      <TableHead>Скидка</TableHead>
+                      <TableHead>Мин. сумма</TableHead>
+                      <TableHead>Использовано</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead className="w-24">Действия</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {coupons.map((coupon) => (
+                      <TableRow key={coupon.id}>
+                        <TableCell className="font-mono font-medium">{coupon.code}</TableCell>
+                        <TableCell>
+                          {coupon.discount_type === "percentage"
+                            ? `${coupon.discount_value}%`
+                            : `${Number(coupon.discount_value).toLocaleString("ru-RU")} ₽`}
+                        </TableCell>
+                        <TableCell>
+                          {coupon.min_order_amount ? `${Number(coupon.min_order_amount).toLocaleString("ru-RU")} ₽` : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {coupon.used_count}{coupon.max_uses && ` / ${coupon.max_uses}`}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={coupon.is_active ? "default" : "secondary"}>
+                            {coupon.is_active ? "Активен" : "Неактивен"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(coupon)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(coupon.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </>
         )}
       </div>
     </AdminLayout>

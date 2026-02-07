@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -417,98 +418,101 @@ export default function AdminNewsPage() {
             Нет статей
           </div>
         ) : (
-          <div className="rounded-lg border bg-background">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Изображение</TableHead>
-                  <TableHead>Заголовок</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Дата</TableHead>
-                  <TableHead className="text-right">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {articles.map((article) => (
-                  <TableRow key={article.id}>
-                    <TableCell>
-                      {article.image_url ? (
-                        <img
-                          src={article.image_url}
-                          alt={article.title}
-                          className="w-16 h-12 object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-16 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground">
-                          <Image className="h-5 w-5" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {article.title}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                          article.is_published
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {article.is_published ? (
-                          <>
-                            <Eye className="h-3 w-3" />
-                            Опубликовано
-                          </>
+          <>
+            {/* Mobile Cards */}
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {articles.map((article) => (
+                <Card key={article.id}>
+                  <CardContent className="p-3">
+                    <div className="flex gap-3">
+                      <div className="w-16 h-12 rounded overflow-hidden bg-muted flex-shrink-0">
+                        {article.image_url ? (
+                          <img src={article.image_url} alt={article.title} className="w-full h-full object-cover" />
                         ) : (
-                          <>
-                            <EyeOff className="h-3 w-3" />
-                            Черновик
-                          </>
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Image className="h-5 w-5 text-muted-foreground" />
+                          </div>
                         )}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(article.created_at), "d MMM yyyy", {
-                        locale: ru,
-                      })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => togglePublish(article)}
-                          title={article.is_published ? "Скрыть" : "Опубликовать"}
-                        >
-                          {article.is_published ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm line-clamp-2 mb-1">{article.title}</p>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                          article.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                        }`}>
+                          {article.is_published ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          {article.is_published ? "Опубл." : "Черновик"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => togglePublish(article)}>
+                          {article.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(article)}
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(article)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(article.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(article.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
-                    </TableCell>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Desktop Table */}
+            <div className="rounded-lg border bg-background hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Изображение</TableHead>
+                    <TableHead>Заголовок</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>Дата</TableHead>
+                    <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {articles.map((article) => (
+                    <TableRow key={article.id}>
+                      <TableCell>
+                        {article.image_url ? (
+                          <img src={article.image_url} alt={article.title} className="w-16 h-12 object-cover rounded" />
+                        ) : (
+                          <div className="w-16 h-12 bg-muted rounded flex items-center justify-center text-muted-foreground">
+                            <Image className="h-5 w-5" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{article.title}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                          article.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                        }`}>
+                          {article.is_published ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          {article.is_published ? "Опубликовано" : "Черновик"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{format(new Date(article.created_at), "d MMM yyyy", { locale: ru })}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => togglePublish(article)}>
+                            {article.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(article)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(article.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </div>
     </AdminLayout>
