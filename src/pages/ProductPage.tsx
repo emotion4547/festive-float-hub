@@ -19,11 +19,16 @@ import { Layout } from "@/components/layout/Layout";
 import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductReviews } from "@/components/products/ProductReviews";
 import { RelatedProducts } from "@/components/products/RelatedProducts";
+import { SEOHead } from "@/components/SEOHead";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { 
+  generateProductSchema, 
+  generateBreadcrumbSchema 
+} from "@/lib/seoSchemas";
 
 const ProductPage = () => {
   const { id } = useParams();
@@ -88,6 +93,38 @@ const ProductPage = () => {
   const images = product.images || [];
   const videos = (product as any).videos || [];
 
+  // Generate SEO schema data
+  const productSchema = generateProductSchema({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    oldPrice: product.old_price,
+    images: product.images,
+    rating: product.rating,
+    reviewsCount: product.reviews_count,
+    inStock: product.in_stock,
+    categoryName: product.categories?.name,
+  });
+
+  const breadcrumbItems = [
+    { name: 'Главная', url: '/' },
+    { name: 'Каталог', url: '/catalog' },
+    ...(product.categories ? [{ 
+      name: product.categories.name, 
+      url: `/catalog/${product.categories.slug}` 
+    }] : []),
+    { name: product.name, url: `/product/${product.id}` },
+  ];
+
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
+
+  // Combine schemas
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [productSchema, breadcrumbSchema],
+  };
+
   const handleAddToCart = () => {
     const cartProduct = {
       id: product.id,
@@ -118,8 +155,24 @@ const ProductPage = () => {
     L: "Большой",
   };
 
+  // SEO meta description
+  const seoDescription = product.description 
+    ? product.description.slice(0, 155) + (product.description.length > 155 ? '...' : '')
+    : `${product.name} — купить в Краснодаре с доставкой. Цена ${product.price} ₽. Радуга Праздника.`;
+
   return (
     <Layout>
+      {/* SEO Head */}
+      <SEOHead
+        title={product.name}
+        description={seoDescription}
+        canonicalPath={`/product/${product.id}`}
+        ogType="product"
+        ogImage={product.images?.[0]}
+        keywords={`${product.name}, воздушные шары, купить шары Краснодар, ${product.categories?.name || 'шары'}`}
+        structuredData={structuredData}
+      />
+
       {/* Breadcrumb */}
       <div className="bg-muted/30 py-4">
         <div className="container">

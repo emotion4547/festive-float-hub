@@ -1,82 +1,97 @@
 
-# План внедрения Prerendering для SEO на VPS
+# План оптимизации производительности и SEO
 
 ## ✅ ВЫПОЛНЕНО
 
-## Проблема
-Сайт на React SPA отдаёт пустой `<div id="root">` до выполнения JavaScript. Хотя Googlebot умеет рендерить JS, это может:
-- Замедлить индексирование
-- Ухудшить позиции в Яндекс (хуже работает с JS)
-- Сломать превью в соцсетях и мессенджерах
+### 1. Оптимизация изображений
 
-## Выбранное решение: Prerender.io + Nginx
+**Созданные файлы:**
+- `src/lib/imageUtils.ts` — утилиты для оптимизации изображений через Supabase Storage Transform API
+  - Автоматическая конвертация в WebP
+  - Генерация srcset для responsive изображений
+  - Lazy loading с Intersection Observer
 
-Prerendering — оптимальный вариант для вашего случая:
-- Не требует переписывать код
-- Работает с любым React SPA
-- Боты получают готовый HTML, пользователи — обычный SPA
+- `src/components/ui/optimized-image.tsx` — компонент OptimizedImage
+  - Skeleton placeholder во время загрузки
+  - Автоматическая оптимизация Supabase-изображений
+  - Priority loading для критичных изображений
 
-## Созданные файлы
+**Обновлённые файлы:**
+- `src/components/products/ProductCard.tsx` — оптимизация изображений товаров (400px, WebP, 80% quality)
 
-### ✅ Этап 1: Sitemap.xml
-**Файл:** `public/sitemap.xml` — статический базовый sitemap
+### 2. SEO-разметка (Schema.org)
 
-### ✅ Этап 2: Edge Function для динамического sitemap
-**Файл:** `supabase/functions/sitemap/index.ts`
+**Создан файл:** `src/lib/seoSchemas.ts`
 
-Динамический sitemap доступен по адресу:
-```
-https://edzhahcogyhamcwkqszp.supabase.co/functions/v1/sitemap
-```
+Поддерживаемые схемы:
+- **Product** — для страниц товаров (цена, наличие, рейтинг)
+- **BreadcrumbList** — хлебные крошки
+- **Organization** — информация о компании
+- **LocalBusiness** — локальный бизнес с адресом и координатами
+- **ItemList** — списки товаров в категориях
+- **FAQPage** — часто задаваемые вопросы
+- **WebSite** — с поддержкой SearchAction
 
-Включает:
-- Все статические страницы
-- Все категории из базы данных
-- Все товары в наличии
-- Все опубликованные новости
-- Все активные коллекции
+**Обновлённые страницы:**
+- `src/pages/ProductPage.tsx` — Product + BreadcrumbList схемы
+- `src/pages/Index.tsx` — WebSite + LocalBusiness + FAQPage схемы
+- `src/pages/CatalogPage.tsx` — ItemList + BreadcrumbList схемы
 
-### ✅ Этап 3: Обновление robots.txt
-**Файл:** `public/robots.txt`
+### 3. Оптимизация загрузки ресурсов
 
-Добавлено:
-- Правила для всех основных ботов (Google, Yandex, Bing, соцсети)
-- Ссылки на оба sitemap
-- Блокировка служебных страниц (/admin, /account, /cart, /checkout)
-
-### ✅ Этап 4: Инструкция по настройке VPS
-**Файл:** `docs/nginx-vps-config.md`
-
-Содержит:
-- Полный конфиг Nginx с prerendering
-- Инструкцию по настройке SSL через Let's Encrypt
-- Альтернативный вариант с Rendertron (self-hosted)
-- Инструкции по мониторингу и отладке
+**Обновлён:** `index.html`
+- Preconnect к Supabase Storage
+- DNS prefetch для Yandex Metrika
+- Preload критичных шрифтов (Montserrat, Open Sans)
 
 ---
 
-## Следующие шаги (на вашем VPS)
+## Как работает оптимизация изображений
 
-1. **Зарегистрируйтесь на Prerender.io** (бесплатный план — 250 страниц/месяц)
-2. **Скопируйте билд сайта** на VPS в `/var/www/radugaprazdnika.ru`
-3. **Настройте Nginx** по инструкции из `docs/nginx-vps-config.md`
-4. **Получите SSL сертификат** через Certbot
-5. **Добавьте сайт в Google Search Console и Яндекс.Вебмастер**
-6. **Отправьте sitemap** в поисковые системы
+Supabase Storage Transform API автоматически:
+1. Конвертирует изображения в WebP (экономия до 30%)
+2. Изменяет размер под нужное разрешение
+3. Применяет сжатие с заданным качеством
+4. Кэширует результаты на CDN
+
+**Пример URL-преобразования:**
+```
+# Исходный URL:
+https://xxx.supabase.co/storage/v1/object/public/product-images/photo.jpg
+
+# Оптимизированный URL:
+https://xxx.supabase.co/storage/v1/render/image/public/product-images/photo.jpg?width=400&quality=80&format=webp&resize=cover
+```
 
 ---
 
-## Проверка
+## Ожидаемые улучшения
 
-После настройки VPS проверьте:
+### Производительность:
+- **LCP (Largest Contentful Paint)**: улучшение на 20-40% за счёт WebP и правильных размеров
+- **FID (First Input Delay)**: улучшение за счёт lazy loading и code splitting
+- **CLS (Cumulative Layout Shift)**: skeleton placeholders предотвращают сдвиги
 
-```bash
-# Проверка для обычного пользователя
-curl -I https://radugaprazdnika.ru/
+### SEO:
+- Расширенные сниппеты в поиске (rich results)
+- Улучшенное понимание структуры сайта ботами
+- Правильные хлебные крошки в результатах поиска
+- Карточки товаров с ценой и наличием в Google
 
-# Проверка для Googlebot (должен вернуть полный HTML)
-curl -A "Googlebot" https://radugaprazdnika.ru/
+---
 
-# Проверка sitemap
-curl https://radugaprazdnika.ru/sitemap.xml
-```
+## Дополнительные рекомендации
+
+### На уровне хостинга (VPS):
+1. Включить Brotli/Gzip сжатие в Nginx
+2. Настроить кэширование статики (уже есть в docs/nginx-vps-config.md)
+3. Использовать HTTP/2 или HTTP/3
+
+### На уровне Supabase:
+1. Убедиться, что бакеты `product-images` и `product-videos` публичные
+2. Рассмотреть миграцию старых изображений через Storage Transform
+
+### Мониторинг:
+1. Использовать Lighthouse для регулярной проверки
+2. Настроить Real User Monitoring (RUM) через Yandex Metrika
+3. Следить за Core Web Vitals в Search Console

@@ -6,6 +6,8 @@ import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getOptimizedImageUrl } from "@/lib/imageUtils";
+
 interface ProductCardProduct {
   id: string | number;
   name: string;
@@ -56,7 +58,9 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const isHit = product.is_hit ?? product.isHit ?? false;
   const images = product.images || [];
   const hasMultipleImages = images.length > 1;
-  const imageUrl = images[currentImageIndex] || images[0] || "https://placehold.co/400x400?text=🎈";
+  const rawImageUrl = images[currentImageIndex] || images[0] || "/placeholder.svg";
+  // Optimize image: 400px width, WebP format, 80% quality
+  const imageUrl = getOptimizedImageUrl(rawImageUrl, { width: 400, quality: 80 });
   const liveCoverUrl = product.live_cover_url;
 
   // Intersection Observer for lazy loading videos
