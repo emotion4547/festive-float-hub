@@ -328,12 +328,19 @@ const ProductPage = () => {
                     "flex-1 text-lg",
                     isProductFavorite && "border-secondary text-secondary"
                   )}
-                  onClick={() => toggleFavorite({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    images: product.images,
-                  } as any)}
+                  onClick={() => {
+                    const wasFavorite = isProductFavorite;
+                    toggleFavorite({
+                      id: product.id,
+                      name: product.name,
+                      price: product.price,
+                      images: product.images,
+                    } as any);
+                    toast({
+                      title: wasFavorite ? "Удалено из избранного" : "Добавлено в избранное",
+                      description: product.name,
+                    });
+                  }}
                 >
                   <Heart
                     className={cn("h-5 w-5 mr-2", isProductFavorite && "fill-current")}
