@@ -66,17 +66,30 @@ export function useFilterOptions() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        // Fetch categories
+        // Fetch categories that have at least one product
         const { data: categoriesData } = await supabase
           .from("categories")
           .select("id, name, slug")
           .order("sort_order", { ascending: true });
 
-        const categories = (categoriesData || []).map(c => ({
-          id: c.id,
-          label: c.name,
-          slug: c.slug,
-        }));
+        // Fetch product counts per category to show only categories with products
+        const { data: productCounts } = await supabase
+          .from("products")
+          .select("category_id");
+
+        const categoriesWithProducts = new Set(
+          (productCounts || [])
+            .map(p => p.category_id)
+            .filter(Boolean)
+        );
+
+        const categories = (categoriesData || [])
+          .filter(c => categoriesWithProducts.has(c.id))
+          .map(c => ({
+            id: c.id,
+            label: c.name,
+            slug: c.slug,
+          }));
 
         // Fetch unique types
         const { data: typesData } = await supabase

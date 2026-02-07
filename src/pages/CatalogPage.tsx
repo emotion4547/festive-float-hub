@@ -102,7 +102,11 @@ const CatalogPage = () => {
     if (categorySlug) {
       result = result.filter(p => p.categories?.slug === categorySlug);
     } else if (filters.categories.length > 0) {
-      result = result.filter(p => p.category_id && filters.categories.includes(p.category_id));
+      // filters.categories contains category IDs from the filter panel
+      result = result.filter(p => {
+        if (!p.category_id) return false;
+        return filters.categories.includes(p.category_id);
+      });
     }
 
     // Apply filters
