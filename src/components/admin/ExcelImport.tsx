@@ -29,16 +29,33 @@ interface ExcelRow {
   "SKU"?: string;
 }
 
-// Utility to strip HTML tags
-const stripHtml = (html: string): string => {
+// Utility to convert HTML to plain text with preserved line breaks
+const convertHtmlToText = (html: string): string => {
   if (!html) return "";
   return html
+    // Convert block elements to newlines
     .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    // Convert lists
     .replace(/<li[^>]*>/gi, "• ")
     .replace(/<\/li>/gi, "\n")
+    .replace(/<\/?[ou]l[^>]*>/gi, "\n")
+    // Strip remaining HTML tags (but preserve text inside)
     .replace(/<[^>]*>/g, "")
-    .replace(/\\</g, "<")
-    .replace(/\s+/g, " ")
+    // Decode common HTML entities
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    // Clean up excess whitespace but preserve intentional line breaks
+    .replace(/[ \t]+/g, " ")          // Collapse horizontal whitespace
+    .replace(/\n[ \t]+/g, "\n")       // Remove leading spaces after newlines
+    .replace(/[ \t]+\n/g, "\n")       // Remove trailing spaces before newlines
+    .replace(/\n{3,}/g, "\n\n")       // Max 2 consecutive newlines
     .trim();
 };
 
@@ -212,9 +229,9 @@ export function ExcelImport({ onImportComplete }: { onImportComplete?: () => voi
           discount = Math.round(((oldPrice - price) / oldPrice) * 100);
         }
 
-        // Prepare description
+        // Prepare description - convert HTML to text with preserved formatting
         const rawDescription = row["Text"] || row["Description"] || "";
-        const description = stripHtml(rawDescription);
+        const description = convertHtmlToText(rawDescription);
 
         const productData = {
           name: title,
