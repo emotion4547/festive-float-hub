@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye } from "lucide-react";
+import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -43,6 +43,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Normalize product fields for both DB and static data
   const inStock = product.in_stock ?? product.inStock ?? true;
@@ -53,7 +54,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const isNew = product.is_new ?? product.isNew ?? false;
   const isHit = product.is_hit ?? product.isHit ?? false;
   const images = product.images || [];
-  const imageUrl = images[0] || "https://placehold.co/400x400?text=🎈";
+  const hasMultipleImages = images.length > 1;
+  const imageUrl = images[currentImageIndex] || images[0] || "https://placehold.co/400x400?text=🎈";
   const liveCoverUrl = product.live_cover_url;
 
   // Intersection Observer for lazy loading videos
@@ -117,10 +119,29 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
   const handleMouseLeave = () => {
     setIsHovering(false);
+    setCurrentImageIndex(0);
     if (videoRef.current && !liveCoverUrl) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
+  };
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleDotClick = (e: React.MouseEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex(index);
   };
 
   return (
@@ -169,13 +190,51 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               </button>
             </>
           ) : (
-            <img
-              src={imageUrl}
-              alt={product.name}
-              loading="lazy"
-              decoding="async"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
+            <>
+              <img
+                src={imageUrl}
+                alt={product.name}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              
+              {/* Gallery Navigation - only when multiple images and hovering */}
+              {hasMultipleImages && isHovering && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm p-1.5 rounded-full z-10 hover:bg-background transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm p-1.5 rounded-full z-10 hover:bg-background transition-colors"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              
+              {/* Image Dots Indicator */}
+              {hasMultipleImages && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={(e) => handleDotClick(e, index)}
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all",
+                        currentImageIndex === index
+                          ? "bg-primary w-3"
+                          : "bg-background/60 hover:bg-background/80"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
           
           {/* Badges */}
