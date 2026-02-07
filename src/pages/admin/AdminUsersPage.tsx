@@ -279,42 +279,55 @@ export default function AdminUsersPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Клиент</TableHead>
-                          <TableHead>Телефон</TableHead>
-                          <TableHead>Дата регистрации</TableHead>
-                          <TableHead>Заказов</TableHead>
-                          <TableHead>Сумма покупок</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredCustomers.map((customer) => (
-                          <TableRow key={customer.id}>
-                            <TableCell className="font-medium">
-                              {customer.full_name || "Без имени"}
-                            </TableCell>
-                            <TableCell>{customer.phone || "—"}</TableCell>
-                            <TableCell>
-                              {format(new Date(customer.created_at), "dd.MM.yyyy", {
-                                locale: ru,
-                              })}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{customer.orders_count}</Badge>
-                            </TableCell>
-                            <TableCell className="font-medium">
+                <>
+                  {/* Mobile Cards */}
+                  <div className="grid grid-cols-1 gap-3 md:hidden">
+                    {filteredCustomers.map((customer) => (
+                      <Card key={customer.id}>
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-medium text-sm">{customer.full_name || "Без имени"}</p>
+                            <Badge variant="secondary" className="text-xs">{customer.orders_count} заказов</Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{customer.phone || "—"}</span>
+                            <span className="font-medium text-foreground">
                               {customer.total_spent.toLocaleString("ru-RU")} ₽
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                </Card>
+                  
+                  {/* Desktop Table */}
+                  <Card className="hidden md:block">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Клиент</TableHead>
+                            <TableHead>Телефон</TableHead>
+                            <TableHead>Дата регистрации</TableHead>
+                            <TableHead>Заказов</TableHead>
+                            <TableHead>Сумма покупок</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredCustomers.map((customer) => (
+                            <TableRow key={customer.id}>
+                              <TableCell className="font-medium">{customer.full_name || "Без имени"}</TableCell>
+                              <TableCell>{customer.phone || "—"}</TableCell>
+                              <TableCell>{format(new Date(customer.created_at), "dd.MM.yyyy", { locale: ru })}</TableCell>
+                              <TableCell><Badge variant="secondary">{customer.orders_count}</Badge></TableCell>
+                              <TableCell className="font-medium">{customer.total_spent.toLocaleString("ru-RU")} ₽</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
+                </>
               )}
             </>
           )}
@@ -383,86 +396,123 @@ export default function AdminUsersPage() {
               </div>
 
               {/* Users Table */}
-              <div className="bg-background rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Пользователь</TableHead>
-                      <TableHead>Телефон</TableHead>
-                      <TableHead>Дата регистрации</TableHead>
-                      <TableHead>Роль</TableHead>
-                      <TableHead className="w-[180px]">Действия</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsersWithRoles.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                          {rolesSearch ? "Пользователи не найдены" : "Нет пользователей"}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredUsersWithRoles.map((user) => {
-                        const RoleIcon = roleIcons[user.role];
-                        const isCurrentUser = user.user_id === currentUser?.id;
-
-                        return (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {user.full_name || "Без имени"}
-                                </span>
-                                {isCurrentUser && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Вы
-                                  </Badge>
-                                )}
+              {filteredUsersWithRoles.length === 0 ? (
+                <div className="bg-background rounded-lg border p-8 text-center text-muted-foreground">
+                  {rolesSearch ? "Пользователи не найдены" : "Нет пользователей"}
+                </div>
+              ) : (
+                <>
+                  {/* Mobile Cards */}
+                  <div className="grid grid-cols-1 gap-3 md:hidden">
+                    {filteredUsersWithRoles.map((user) => {
+                      const RoleIcon = roleIcons[user.role];
+                      const isCurrentUser = user.user_id === currentUser?.id;
+                      return (
+                        <Card key={user.id}>
+                          <CardContent className="p-3">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div>
+                                <div className="flex items-center gap-1">
+                                  <p className="font-medium text-sm">{user.full_name || "Без имени"}</p>
+                                  {isCurrentUser && <Badge variant="outline" className="text-xs">Вы</Badge>}
+                                </div>
+                                <p className="text-xs text-muted-foreground">{user.phone || "—"}</p>
                               </div>
-                            </TableCell>
-                            <TableCell>{user.phone || "—"}</TableCell>
-                            <TableCell>
-                              {format(new Date(user.created_at), "d MMM yyyy", {
-                                locale: ru,
-                              })}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={roleColors[user.role]}>
+                              <Badge className={`${roleColors[user.role]} text-xs`}>
                                 <RoleIcon className="h-3 w-3 mr-1" />
                                 {roleLabels[user.role]}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {isCurrentUser ? (
-                                <span className="text-sm text-muted-foreground">—</span>
-                              ) : (
-                                <Select
-                                  value={user.role}
-                                  onValueChange={(value) => handleRoleChange(user.user_id, value)}
-                                  disabled={updatingUserId === user.user_id}
-                                >
-                                  <SelectTrigger className="w-[160px]">
-                                    {updatingUserId === user.user_id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <SelectValue />
-                                    )}
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="user">Пользователь</SelectItem>
-                                    <SelectItem value="moderator">Модератор</SelectItem>
-                                    <SelectItem value="admin">Администратор</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                            </div>
+                            {!isCurrentUser && (
+                              <Select
+                                value={user.role}
+                                onValueChange={(value) => handleRoleChange(user.user_id, value)}
+                                disabled={updatingUserId === user.user_id}
+                              >
+                                <SelectTrigger className="w-full h-8 text-xs">
+                                  {updatingUserId === user.user_id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <SelectValue />
+                                  )}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">Пользователь</SelectItem>
+                                  <SelectItem value="moderator">Модератор</SelectItem>
+                                  <SelectItem value="admin">Администратор</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Desktop Table */}
+                  <div className="bg-background rounded-lg border overflow-hidden hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Пользователь</TableHead>
+                          <TableHead>Телефон</TableHead>
+                          <TableHead>Дата регистрации</TableHead>
+                          <TableHead>Роль</TableHead>
+                          <TableHead className="w-[180px]">Действия</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsersWithRoles.map((user) => {
+                          const RoleIcon = roleIcons[user.role];
+                          const isCurrentUser = user.user_id === currentUser?.id;
+                          return (
+                            <TableRow key={user.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{user.full_name || "Без имени"}</span>
+                                  {isCurrentUser && <Badge variant="outline" className="text-xs">Вы</Badge>}
+                                </div>
+                              </TableCell>
+                              <TableCell>{user.phone || "—"}</TableCell>
+                              <TableCell>{format(new Date(user.created_at), "d MMM yyyy", { locale: ru })}</TableCell>
+                              <TableCell>
+                                <Badge className={roleColors[user.role]}>
+                                  <RoleIcon className="h-3 w-3 mr-1" />
+                                  {roleLabels[user.role]}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {isCurrentUser ? (
+                                  <span className="text-sm text-muted-foreground">—</span>
+                                ) : (
+                                  <Select
+                                    value={user.role}
+                                    onValueChange={(value) => handleRoleChange(user.user_id, value)}
+                                    disabled={updatingUserId === user.user_id}
+                                  >
+                                    <SelectTrigger className="w-[160px]">
+                                      {updatingUserId === user.user_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <SelectValue />
+                                      )}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="user">Пользователь</SelectItem>
+                                      <SelectItem value="moderator">Модератор</SelectItem>
+                                      <SelectItem value="admin">Администратор</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
             </>
           )}
         </TabsContent>

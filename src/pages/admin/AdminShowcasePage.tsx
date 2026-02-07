@@ -466,10 +466,10 @@ export default function AdminShowcasePage() {
         </TabsList>
 
         {/* Banners Tab */}
-        <TabsContent value="banners" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <p className="text-muted-foreground">
-              Управление баннерами на главной странице. Перетаскивайте для изменения порядка.
+        <TabsContent value="banners" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Управление баннерами. Перетаскивайте для изменения порядка.
             </p>
             <Dialog open={bannerDialogOpen} onOpenChange={(open) => {
               setBannerDialogOpen(open);
