@@ -484,7 +484,7 @@ export function CategoryManager() {
                       className="pl-10"
                     />
                   </div>
-                  <ScrollArea className="h-[200px] border rounded-lg p-2">
+                  <ScrollArea className="h-[150px] sm:h-[200px] border rounded-lg p-2">
                     {filteredProducts.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">
                         Товары не найдены
