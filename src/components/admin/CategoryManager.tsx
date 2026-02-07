@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,18 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useProducts";
-import { Loader2, Plus, Edit, Trash2, Upload, Link as LinkIcon, FolderOpen, X } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Upload, Link as LinkIcon, FolderOpen, X, GripVertical, Package, Search } from "lucide-react";
+import { SortableList } from "./SortableList";
+import { SortableItem } from "./SortableItem";
 
 interface CategoryFormData {
   id?: string;
@@ -30,9 +26,17 @@ interface CategoryFormData {
   image: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  images: string[] | null;
+  category_id: string | null;
+}
+
 export function CategoryManager() {
   const { toast } = useToast();
   const { categories, loading } = useCategories();
+  const [localCategories, setLocalCategories] = useState(categories);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -43,6 +47,27 @@ export function CategoryManager() {
     image: "",
   });
   const [imageUrl, setImageUrl] = useState("");
+  
+  // Products management
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, images, category_id")
+        .order("name", { ascending: true });
+      setProducts(data || []);
+    };
+    fetchProducts();
+  }, []);
 
   const generateSlug = (name: string) => {
     const translitMap: Record<string, string> = {
@@ -137,10 +162,11 @@ export function CategoryManager() {
   const openCreate = () => {
     setFormData({ name: "", slug: "", image: "" });
     setImageUrl("");
+    setSelectedProducts([]);
     setOpen(true);
   };
 
-  const openEdit = (category: { id: string; name: string; slug: string; image: string | null }) => {
+  const openEdit = async (category: { id: string; name: string; slug: string; image: string | null }) => {
     setFormData({
       id: category.id,
       name: category.name,
@@ -148,6 +174,11 @@ export function CategoryManager() {
       image: category.image || "",
     });
     setImageUrl("");
+    
+    // Load products for this category
+    const categoryProducts = products.filter(p => p.category_id === category.id);
+    setSelectedProducts(categoryProducts.map(p => p.id));
+    
     setOpen(true);
   };
 
@@ -165,19 +196,48 @@ export function CategoryManager() {
         image: formData.image || null,
       };
 
+      let categoryId = formData.id;
+
       if (formData.id) {
         const { error } = await supabase
           .from("categories")
           .update(data)
           .eq("id", formData.id);
         if (error) throw error;
-        toast({ title: "Категория обновлена" });
       } else {
-        const { error } = await supabase.from("categories").insert(data);
+        const { data: newCat, error } = await supabase
+          .from("categories")
+          .insert(data)
+          .select("id")
+          .single();
         if (error) throw error;
-        toast({ title: "Категория создана" });
+        categoryId = newCat.id;
       }
 
+      // Update product category assignments
+      if (categoryId) {
+        // Remove category from products that were unchecked
+        const productsToRemove = products.filter(
+          p => p.category_id === categoryId && !selectedProducts.includes(p.id)
+        );
+        
+        if (productsToRemove.length > 0) {
+          await supabase
+            .from("products")
+            .update({ category_id: null })
+            .in("id", productsToRemove.map(p => p.id));
+        }
+
+        // Add category to newly selected products
+        if (selectedProducts.length > 0) {
+          await supabase
+            .from("products")
+            .update({ category_id: categoryId })
+            .in("id", selectedProducts);
+        }
+      }
+
+      toast({ title: formData.id ? "Категория обновлена" : "Категория создана" });
       setOpen(false);
       window.location.reload();
     } catch (error) {
@@ -209,6 +269,45 @@ export function CategoryManager() {
     }
   };
 
+  const handleReorder = async (newCategories: typeof localCategories) => {
+    setLocalCategories(newCategories);
+    
+    // Save new order to database
+    try {
+      const updates = newCategories.map((cat, index) => ({
+        id: cat.id,
+        sort_order: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("categories")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+      }
+      
+      toast({ title: "Порядок сохранён" });
+    } catch (error) {
+      console.error("Error saving order:", error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка сохранения порядка",
+      });
+    }
+  };
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
   if (loading) {
     return (
       <Card>
@@ -235,7 +334,7 @@ export function CategoryManager() {
               Добавить
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {formData.id ? "Редактировать категорию" : "Новая категория"}
@@ -327,6 +426,67 @@ export function CategoryManager() {
                   </Button>
                 </div>
               </div>
+
+              {/* Products section */}
+              <div>
+                <Label>Товары в категории</Label>
+                <div className="mt-2 space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Поиск товаров..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <ScrollArea className="h-[200px] border rounded-lg p-2">
+                    {filteredProducts.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Товары не найдены
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {filteredProducts.map((product) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                            onClick={() => toggleProductSelection(product.id)}
+                          >
+                            <Checkbox
+                              checked={selectedProducts.includes(product.id)}
+                              onCheckedChange={() => toggleProductSelection(product.id)}
+                            />
+                            <div className="w-8 h-8 rounded bg-muted overflow-hidden flex-shrink-0">
+                              {product.images?.[0] ? (
+                                <img
+                                  src={product.images[0]}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm truncate">{product.name}</span>
+                            {product.category_id && product.category_id !== formData.id && (
+                              <span className="text-xs text-muted-foreground ml-auto">
+                                (в другой категории)
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  <p className="text-xs text-muted-foreground">
+                    Выбрано: {selectedProducts.length} товаров
+                  </p>
+                </div>
+              </div>
+
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setOpen(false)}>
                   Отмена
@@ -341,25 +501,20 @@ export function CategoryManager() {
         </Dialog>
       </CardHeader>
       <CardContent>
-        {categories.length === 0 ? (
+        {localCategories.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             Категории не созданы
           </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Фото</TableHead>
-                <TableHead>Название</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead className="w-24">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((cat) => (
-                <TableRow key={cat.id}>
-                  <TableCell>
-                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted">
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              Перетащите категории для изменения порядка отображения
+            </p>
+            <SortableList items={localCategories} onReorder={handleReorder}>
+              {localCategories.map((cat) => (
+                <SortableItem key={cat.id} id={cat.id} className="p-2 mb-2">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                       {cat.image ? (
                         <img
                           src={cat.image}
@@ -372,10 +527,10 @@ export function CategoryManager() {
                         </div>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{cat.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{cat.slug}</TableCell>
-                  <TableCell>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{cat.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{cat.slug}</p>
+                    </div>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
@@ -392,11 +547,11 @@ export function CategoryManager() {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </SortableItem>
               ))}
-            </TableBody>
-          </Table>
+            </SortableList>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -37,6 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AgendaSection } from "@/components/home/AgendaSection";
+import { CategoriesSection } from "@/components/home/CategoriesSection";
 
 // Lazy load ShaderGradient for performance
 const ShaderGradientCanvas = lazy(() => 
@@ -211,14 +212,6 @@ const Index = () => {
     return result.slice(0, MAX_PRODUCTS);
   }, [products, filters]);
 
-  // Get product image for category
-  const getCategoryImage = (categoryId: string) => {
-    const categoryProduct = products.find(p => 
-      p.category_id === categoryId && p.images && p.images.length > 0 && p.images[0]
-    );
-    return categoryProduct?.images?.[0] || null;
-  };
-
   const currentBanner = banners[currentBannerIndex];
 
   return (
@@ -382,62 +375,12 @@ const Index = () => {
 
 
       {/* Categories */}
-      <section className="py-16">
-        <div className="container">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-heading text-2xl md:text-3xl font-bold">Категории</h2>
-            <Link
-              to="/catalog"
-              className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors font-medium"
-            >
-              Все категории
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-          {categoriesLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="aspect-square rounded-2xl" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {categories.slice(0, 12).map((category) => {
-                    const productImage = category.image || getCategoryImage(category.id);
-                    return (
-                      <Link 
-                        key={category.id} 
-                        to={`/catalog?category=${category.slug}`}
-                        className="group"
-                  >
-                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
-                      {productImage ? (
-                        <img 
-                          src={productImage} 
-                          alt={category.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-5xl">🎈</span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="font-heading font-bold text-sm text-background group-hover:text-primary transition-colors">
-                          {category.name}
-                        </h3>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
+      <CategoriesSection 
+        categories={categories}
+        products={products}
+        loading={categoriesLoading}
+        initialVisibleCount={6}
+      />
 
       {/* Products Catalog - Limited to 3 rows with Filters */}
       <section className="py-16 section-alt">
