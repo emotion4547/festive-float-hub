@@ -245,7 +245,7 @@ export function Header() {
             {/* Catalog link */}
             <Link 
               to="/catalog"
-              className="bg-primary hover:bg-primary-hover text-primary-foreground font-heading font-semibold h-12 px-4 xl:px-6 flex items-center gap-2 whitespace-nowrap shrink-0"
+              className="bg-primary hover:bg-primary-hover text-primary-foreground font-heading font-semibold h-9 my-1.5 px-5 flex items-center gap-2 whitespace-nowrap shrink-0 rounded-full transition-colors"
             >
               <Menu className="h-4 w-4" />
               КАТАЛОГ ТОВАРОВ
