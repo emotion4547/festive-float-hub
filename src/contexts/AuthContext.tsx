@@ -43,47 +43,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
-    let initialized = false;
 
-    const initializeAuth = async (session: Session | null) => {
-      if (!isMounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Listener for ONGOING auth changes (does NOT control loading state)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        // Skip INITIAL_SESSION as we handle it with getSession below
+        if (event === 'INITIAL_SESSION') return;
+        if (!isMounted) return;
 
-      if (session?.user) {
-        const adminStatus = await checkAdminRole(session.user.id);
-        if (isMounted) {
-          setIsAdmin(adminStatus);
-        }
-      } else {
-        if (isMounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        // Fire and forget - don't await, don't set loading
+        if (session?.user) {
+          checkAdminRole(session.user.id).then((adminStatus) => {
+            if (isMounted) setIsAdmin(adminStatus);
+          });
+        } else {
           setIsAdmin(false);
         }
       }
+    );
 
-      if (isMounted) {
-        setLoading(false);
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        // Fetch role BEFORE setting loading false
+        if (session?.user) {
+          const adminStatus = await checkAdminRole(session.user.id);
+          if (isMounted) setIsAdmin(adminStatus);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
-    // Get initial session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!initialized) {
-        initialized = true;
-        initializeAuth(session);
-      }
-    });
-
-    // Set up auth state listener for subsequent changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Skip INITIAL_SESSION as we handle it with getSession
-        if (event === 'INITIAL_SESSION') return;
-        
-        initializeAuth(session);
-      }
-    );
+    initializeAuth();
 
     return () => {
       isMounted = false;
