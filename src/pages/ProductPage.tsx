@@ -22,6 +22,7 @@ import { RelatedProducts } from "@/components/products/RelatedProducts";
 import { useProduct } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const ProductPage = () => {
@@ -29,6 +30,7 @@ const ProductPage = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { toast } = useToast();
   
   const { product, loading, error } = useProduct(id || "");
   const [quantity, setQuantity] = useState(1);
@@ -98,6 +100,10 @@ const ProductPage = () => {
     addItem(cartProduct as any, quantity);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
+    toast({
+      title: "Добавлено в корзину",
+      description: `${product.name} × ${quantity}`,
+    });
   };
 
   const typeLabels: Record<string, string> = {
