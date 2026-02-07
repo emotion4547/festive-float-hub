@@ -2,9 +2,33 @@
 
 ## 7 февраля 2026
 
-### Оплата и оформление заказа
+### Оптимизация производительности и SEO
 
-#### Обновлены способы оплаты (CheckoutPage.tsx)
+#### Оптимизация изображений
+- Создан `src/lib/imageUtils.ts` — утилиты для работы с Supabase Storage Transform API
+- Автоматическая конвертация в WebP, адаптивные `srcset`, ресайз изображений
+- Создан компонент `src/components/ui/optimized-image.tsx` с lazy loading и skeleton-плейсхолдерами
+- Интегрировано в `ProductCard.tsx`
+
+#### SEO-структурированные данные (JSON-LD)
+- Создан `src/lib/seoSchemas.ts` — генераторы схем для Product, BreadcrumbList, Organization, LocalBusiness, ItemList, FAQPage
+- Интегрировано в страницы: ProductPage, Index, CatalogPage
+
+#### Ресурсная оптимизация (index.html)
+- Добавлен `preconnect` для Supabase
+- Добавлен `dns-prefetch` для Яндекс.Метрики
+- Добавлен `preload` для критичных шрифтов (Montserrat, Open Sans)
+
+---
+
+### Обновление футера
+
+#### Добавлена ссылка на разработчика
+- Добавлен текст "Сайт разработан командой Emotion Marketing" со ссылкой на t.me/emotion_marketing
+
+---
+
+### Оплата и оформление заказа
 - Удалены: СБП, Онлайн-оплата картой
 - Добавлены:
   - **Наличными при получении**

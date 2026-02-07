@@ -165,9 +165,17 @@ export function Footer() {
                   e.currentTarget.src = DEFAULT_LOGO;
                 }}
               />
-              <p className="text-muted-foreground text-sm">
-                © 2026 Все права защищены.
-              </p>
+              <div className="text-muted-foreground text-sm">
+                <p>© 2026 Все права защищены.</p>
+                <a 
+                  href="https://t.me/emotion_marketing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  Сайт разработан командой Emotion Marketing
+                </a>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <img src="https://cdn.svgporn.com/logos/visa.svg" alt="Visa" className="h-6 opacity-70" />
