@@ -72,9 +72,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           sidebarOpen && "lg:ml-64" // expanded sidebar width
         )}
       >
-        <div className="p-6 pt-20 lg:pt-6">
+        <div className="p-3 sm:p-6 pt-16 lg:pt-6">
           {/* Desktop Title */}
-          <h1 className="text-2xl font-bold mb-6 hidden lg:block">{title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 hidden lg:block">{title}</h1>
           {children}
         </div>
       </main>
