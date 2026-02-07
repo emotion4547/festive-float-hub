@@ -195,6 +195,35 @@ const CheckoutPage = () => {
           await markCouponAsUsed(effectiveUserCoupon.id, orderData.id);
         }
 
+        // Send to Telegram
+        try {
+          await supabase.functions.invoke("send-telegram", {
+            body: {
+              type: "order",
+              data: {
+                orderNumber: orderData.order_number,
+                customerName: formData.name,
+                customerPhone: formData.phone,
+                customerEmail: formData.email || null,
+                deliveryMethod: formData.deliveryMethod,
+                deliveryAddress: deliveryAddress,
+                deliveryDate: formData.deliveryDate || null,
+                deliveryTime: formData.deliveryTime || null,
+                paymentMethod: formData.paymentMethod,
+                total: finalTotal,
+                items: items.map(item => ({
+                  name: item.product.name,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                })),
+                comment: formData.comment || null,
+              },
+            },
+          });
+        } catch (tgError) {
+          console.error("Telegram notification error:", tgError);
+        }
+
         setOrderNumber(orderData.order_number);
         clearCart();
         removeCoupon();

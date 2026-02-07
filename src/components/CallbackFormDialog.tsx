@@ -39,6 +39,7 @@ export function CallbackFormDialog({ children, trigger }: CallbackFormDialogProp
 
     setLoading(true);
     try {
+      // Save to database
       const { error } = await supabase
         .from("callback_requests" as never)
         .insert({
@@ -48,6 +49,22 @@ export function CallbackFormDialog({ children, trigger }: CallbackFormDialogProp
         } as never);
 
       if (error) throw error;
+
+      // Send to Telegram
+      try {
+        await supabase.functions.invoke("send-telegram", {
+          body: {
+            type: "callback",
+            data: {
+              name: formData.name.trim(),
+              phone: formData.phone.trim(),
+              comment: formData.comment.trim() || null,
+            },
+          },
+        });
+      } catch (tgError) {
+        console.error("Telegram notification error:", tgError);
+      }
 
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
       setFormData({ name: "", phone: "", comment: "", agreePersonal: false });
