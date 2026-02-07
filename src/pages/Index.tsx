@@ -12,6 +12,11 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
+import { 
+  generateWebSiteSchema, 
+  generateLocalBusinessSchema,
+  generateFAQSchema 
+} from "@/lib/seoSchemas";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -221,6 +226,14 @@ const Index = () => {
         description="Радуга Праздника — воздушные шары с доставкой по Краснодару. Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!"
         keywords="воздушные шары Краснодар, шары с доставкой, шарики на праздник, гелиевые шары, фольгированные шары"
         canonicalPath="/"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            generateWebSiteSchema(),
+            generateLocalBusinessSchema(),
+            generateFAQSchema(faqItems),
+          ],
+        }}
       />
       {/* Hero Section with Animated Gradient */}
       <section className="relative overflow-hidden min-h-[400px] md:min-h-[480px]">

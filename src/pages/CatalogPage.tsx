@@ -23,6 +23,7 @@ import { DynamicFilterSidebar, FilterState } from "@/components/products/Dynamic
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEOHead } from "@/components/SEOHead";
+import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/seoSchemas";
 import {
   Pagination,
   PaginationContent,
@@ -203,13 +204,39 @@ const CatalogPage = () => {
     return pages;
   };
 
+  // Generate structured data for SEO
+  const breadcrumbItems = [
+    { name: 'Главная', url: '/' },
+    { name: 'Каталог', url: '/catalog' },
+    ...(currentCategory ? [{ name: currentCategory.name, url: `/catalog?category=${currentCategory.slug}` }] : []),
+  ];
+
+  const itemListSchema = generateItemListSchema(
+    getPageTitle(),
+    paginatedProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0],
+    }))
+  );
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      generateBreadcrumbSchema(breadcrumbItems),
+      itemListSchema,
+    ],
+  };
+
   return (
     <Layout>
       <SEOHead
         title={getPageTitle()}
         description={getSEODescription()}
         keywords={`воздушные шары ${getPageTitle().toLowerCase()}, шары Краснодар, доставка шаров, гелиевые шары`}
-        canonicalPath="/catalog"
+        canonicalPath={currentCategory ? `/catalog?category=${currentCategory.slug}` : '/catalog'}
+        structuredData={structuredData}
       />
       {/* Breadcrumbs */}
       <div className="bg-muted/30 py-4">
