@@ -10,6 +10,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
@@ -334,13 +339,13 @@ export function CategoryManager() {
               Добавить
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+           <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>
                 {formData.id ? "Редактировать категорию" : "Новая категория"}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               <div>
                 <Label htmlFor="cat-name">Название</Label>
                 <Input
@@ -430,44 +435,39 @@ export function CategoryManager() {
                       }
                     />
                   </label>
-                  <Dialog>
-                    <DialogTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
                       <Button type="button" variant="outline" className="flex-1">
                         <LinkIcon className="h-4 w-4 mr-2" />
                         По URL
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Добавить изображение по URL</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="image-url">URL изображения</Label>
-                          <Input
-                            id="image-url"
-                            placeholder="https://example.com/image.jpg"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              if (imageUrl.trim()) {
-                                setFormData((prev) => ({ ...prev, image: imageUrl.trim() }));
-                                setImageUrl("");
-                              }
-                            }}
-                            disabled={!imageUrl.trim()}
-                          >
-                            Добавить
-                          </Button>
-                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 bg-background" align="start">
+                      <div className="space-y-3">
+                        <Label htmlFor="image-url">URL изображения</Label>
+                        <Input
+                          id="image-url"
+                          placeholder="https://example.com/image.jpg"
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            if (imageUrl.trim()) {
+                              setFormData((prev) => ({ ...prev, image: imageUrl.trim() }));
+                              setImageUrl("");
+                            }
+                          }}
+                          disabled={!imageUrl.trim()}
+                        >
+                          Добавить
+                        </Button>
                       </div>
-                    </DialogContent>
-                  </Dialog>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
@@ -530,16 +530,16 @@ export function CategoryManager() {
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  Отмена
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Сохранить
-                </Button>
-              </div>
+            <div className="flex gap-2 justify-end pt-4 border-t flex-shrink-0">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Отмена
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Сохранить
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
