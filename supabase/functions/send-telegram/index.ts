@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,8 +17,34 @@ serve(async (req) => {
   }
 
   try {
-    const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
-    const TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_CHAT_ID');
+    // First try environment secrets, then fall back to database settings
+    let TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    let TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_CHAT_ID');
+
+    // If env secrets are empty, try reading from site_settings
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data: settings } = await supabase
+        .from('site_settings')
+        .select('key, value')
+        .in('key', ['telegram_bot_token', 'telegram_chat_id']);
+
+      if (settings) {
+        const tokenSetting = settings.find(s => s.key === 'telegram_bot_token');
+        const chatSetting = settings.find(s => s.key === 'telegram_chat_id');
+        
+        if (!TELEGRAM_BOT_TOKEN && tokenSetting?.value) {
+          TELEGRAM_BOT_TOKEN = tokenSetting.value;
+        }
+        if (!TELEGRAM_CHAT_ID && chatSetting?.value) {
+          TELEGRAM_CHAT_ID = chatSetting.value;
+        }
+      }
+    }
 
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
       throw new Error('Telegram credentials not configured');
