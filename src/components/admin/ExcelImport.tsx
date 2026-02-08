@@ -8,11 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 
+interface SkippedRow {
+  row: number;
+  title: string;
+  reason: string;
+}
+
 interface ImportResult {
   total: number;
   created: number;
   updated: number;
-  skipped: number;
+  skipped: SkippedRow[];
   errors: string[];
 }
 
@@ -141,7 +147,7 @@ export function ExcelImport({ onImportComplete }: { onImportComplete?: () => voi
       total: rows.length,
       created: 0,
       updated: 0,
-      skipped: 0,
+      skipped: [],
       errors: [],
     };
 
@@ -173,13 +179,21 @@ export function ExcelImport({ onImportComplete }: { onImportComplete?: () => voi
       try {
         const title = row["Title"]?.trim();
         if (!title) {
-          result.skipped++;
+          result.skipped.push({
+            row: i + 2,
+            title: "(пустое)",
+            reason: "Отсутствует название товара (Title)"
+          });
           continue;
         }
 
         const price = parseFloat(String(row["Price"] || "0").replace(",", "."));
         if (isNaN(price) || price <= 0) {
-          result.skipped++;
+          result.skipped.push({
+            row: i + 2,
+            title: title,
+            reason: `Некорректная цена: "${row["Price"] || "(пусто)"}"`,
+          });
           continue;
         }
 
@@ -367,9 +381,31 @@ export function ExcelImport({ onImportComplete }: { onImportComplete?: () => voi
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">Пропущено</Badge>
-                <span className="font-medium">{result.skipped}</span>
+                <span className="font-medium">{result.skipped.length}</span>
               </div>
             </div>
+
+            {result.skipped.length > 0 && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 text-warning mb-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Пропущенные товары ({result.skipped.length}):</span>
+                </div>
+                <div className="max-h-48 overflow-y-auto text-sm space-y-1 bg-warning/10 p-3 rounded-lg border border-warning/30">
+                  {result.skipped.map((item, i) => (
+                    <div key={i} className="flex items-start gap-2 py-1 border-b border-warning/20 last:border-0">
+                      <span className="text-warning font-medium shrink-0">Строка {item.row}</span>
+                      <span className="text-muted-foreground break-words">
+                        <strong>{item.title}</strong>: {item.reason}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Исправьте данные в Excel файле и загрузите снова.
+                </p>
+              </div>
+            )}
 
             {result.errors.length > 0 && (
               <div className="mt-3">
