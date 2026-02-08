@@ -25,11 +25,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Eye, Package, MapPin, Phone, Mail, Calendar, Truck } from "lucide-react";
+import { Loader2, Search, Eye, Package, MapPin, Phone, Mail, Calendar, Truck, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { TelegramSettings } from "@/components/admin/TelegramSettings";
 
 interface OrderItem {
   id: string;
@@ -80,9 +82,9 @@ const statusOptions = [
 ];
 
 const paymentMethods: Record<string, string> = {
-  card: "Банковская карта",
-  sbp: "СБП",
-  cash: "Наличными",
+  card: "Картой при получении",
+  cash: "Наличными при получении",
+  invoice: "Счёт для юр. лиц",
 };
 
 const deliveryMethods: Record<string, string> = {
@@ -224,173 +226,187 @@ export default function AdminOrdersPage() {
 
   return (
     <AdminLayout title="Заказы">
-      <div className="space-y-4">
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Поиск по номеру, имени или телефону..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Все статусы" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Все статусы</SelectItem>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="orders" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="orders">Заказы</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Bell className="h-4 w-4" />
+            Уведомления
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Orders */}
-        {filteredOrders.length === 0 ? (
+        <TabsContent value="orders" className="space-y-4">
+          {/* Filters */}
           <Card>
-            <CardContent className="py-16 text-center">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Заказы не найдены</p>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Поиск по номеру, имени или телефону..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Все статусы" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все статусы</SelectItem>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <>
-            {/* Mobile Cards View */}
-            <div className="grid grid-cols-1 gap-3 md:hidden">
-              {filteredOrders.map((order) => {
-                const status = statusOptions.find((s) => s.value === order.status);
-                return (
-                  <Card key={order.id} className="overflow-hidden">
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <p className="font-semibold text-sm">{order.order_number}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
-                          </p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => fetchOrderDetails(order.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{order.customer_name}</p>
-                            <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
-                          </div>
-                          <p className="font-semibold">
-                            {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            {order.order_items.length} товаров
-                          </span>
-                          <Select
-                            value={order.status}
-                            onValueChange={(value) => handleStatusChange(order.id, value)}
-                          >
-                            <SelectTrigger className="w-32 h-8">
-                              <Badge variant={status?.variant} className="text-xs">
-                                {status?.label}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {statusOptions.map((s) => (
-                                <SelectItem key={s.value} value={s.value}>
-                                  {s.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
 
-            {/* Desktop Table View */}
-            <Card className="hidden md:block">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Номер</TableHead>
-                      <TableHead>Дата</TableHead>
-                      <TableHead>Клиент</TableHead>
-                      <TableHead>Товаров</TableHead>
-                      <TableHead>Сумма</TableHead>
-                      <TableHead>Статус</TableHead>
-                      <TableHead className="w-10"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrders.map((order) => {
-                      const status = statusOptions.find((s) => s.value === order.status);
-                      return (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.order_number}</TableCell>
-                          <TableCell>
-                            {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
-                          </TableCell>
-                          <TableCell>
+          {/* Orders */}
+          {filteredOrders.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Заказы не найдены</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Mobile Cards View */}
+              <div className="grid grid-cols-1 gap-3 md:hidden">
+                {filteredOrders.map((order) => {
+                  const status = statusOptions.find((s) => s.value === order.status);
+                  return (
+                    <Card key={order.id} className="overflow-hidden">
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <p className="font-semibold text-sm">{order.order_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => fetchOrderDetails(order.id)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">{order.customer_name}</p>
-                              <p className="text-sm text-muted-foreground">{order.customer_phone}</p>
+                              <p className="font-medium text-sm">{order.customer_name}</p>
+                              <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
                             </div>
-                          </TableCell>
-                          <TableCell>{order.order_items.length}</TableCell>
-                          <TableCell className="font-medium">
-                            {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
-                          </TableCell>
-                          <TableCell>
+                            <p className="font-semibold">
+                              {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              {order.order_items.length} товаров
+                            </span>
                             <Select
                               value={order.status}
                               onValueChange={(value) => handleStatusChange(order.id, value)}
                             >
-                              <SelectTrigger className="w-36">
-                                <Badge variant={status?.variant}>{status?.label}</Badge>
+                              <SelectTrigger className="w-32 h-8">
+                                <Badge variant={status?.variant} className="text-xs">
+                                  {status?.label}
+                                </Badge>
                               </SelectTrigger>
                               <SelectContent>
                                 {statusOptions.map((s) => (
-                                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                  <SelectItem key={s.value} value={s.value}>
+                                    {s.label}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => fetchOrderDetails(order.id)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-            </Card>
-          </>
-        )}
-      </div>
+
+              {/* Desktop Table View */}
+              <Card className="hidden md:block">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Номер</TableHead>
+                        <TableHead>Дата</TableHead>
+                        <TableHead>Клиент</TableHead>
+                        <TableHead>Товаров</TableHead>
+                        <TableHead>Сумма</TableHead>
+                        <TableHead>Статус</TableHead>
+                        <TableHead className="w-10"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => {
+                        const status = statusOptions.find((s) => s.value === order.status);
+                        return (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">{order.order_number}</TableCell>
+                            <TableCell>
+                              {format(new Date(order.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{order.customer_name}</p>
+                                <p className="text-sm text-muted-foreground">{order.customer_phone}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>{order.order_items.length}</TableCell>
+                            <TableCell className="font-medium">
+                              {(Number(order.total) + Number(order.delivery_cost)).toLocaleString("ru-RU")} ₽
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => handleStatusChange(order.id, value)}
+                              >
+                                <SelectTrigger className="w-36">
+                                  <Badge variant={status?.variant}>{status?.label}</Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {statusOptions.map((s) => (
+                                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" onClick={() => fetchOrderDetails(order.id)}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <TelegramSettings />
+        </TabsContent>
+      </Tabs>
 
       {/* Order Details Dialog */}
       <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
