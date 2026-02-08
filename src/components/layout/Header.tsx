@@ -344,6 +344,12 @@ export function Header() {
             <input
               type="search"
               placeholder="Поиск по каталогу..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(true);
+              }}
+              onFocus={() => setShowSearchDropdown(true)}
               className="w-full pl-4 pr-12 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />
@@ -354,6 +360,12 @@ export function Header() {
               Найти
             </Button>
           </div>
+          {showSearchDropdown && (
+            <SearchDropdown 
+              query={searchQuery} 
+              onClose={() => setShowSearchDropdown(false)} 
+            />
+          )}
         </div>
       )}
     </header>
