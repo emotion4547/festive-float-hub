@@ -1,11 +1,12 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useProducts";
-import { Loader2, X, Upload, Link as LinkIcon, GripVertical, Video, Play, Trash2 } from "lucide-react";
+import { Loader2, X, Upload, Link as LinkIcon, GripVertical, Video, Play, Trash2, Tag, FolderOpen } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface ProductFormProps {
@@ -40,6 +41,7 @@ interface ProductFormProps {
     balloon_count: number | null;
     live_cover_url?: string | null;
     videos?: string[] | null;
+    keywords?: string[] | null;
   };
   onSuccess?: () => void;
 }
@@ -68,6 +70,8 @@ const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
 
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isCopy = searchParams.get("copy") === "true";
   const { toast } = useToast();
   const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
@@ -75,30 +79,73 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [uploadingLiveCover, setUploadingLiveCover] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [keywordInput, setKeywordInput] = useState("");
+
+  // Get initial product data (from prop or from sessionStorage if copying)
+  const getInitialData = () => {
+    if (isCopy && !product) {
+      const stored = sessionStorage.getItem("copyProductData");
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          return data;
+        } catch {
+          return null;
+        }
+      }
+    }
+    return product;
+  };
+
+  const initialData = getInitialData();
 
   const [formData, setFormData] = useState({
-    name: product?.name || "",
-    description: product?.description || "",
-    price: product?.price?.toString() || "",
-    old_price: product?.old_price?.toString() || "",
-    discount: product?.discount?.toString() || "",
-    category_id: product?.category_id || "",
-    type: product?.type || "",
-    occasion: product?.occasion || [],
-    size: product?.size || "",
-    in_stock: product?.in_stock ?? true,
-    on_order: product?.on_order ?? false,
-    is_new: product?.is_new ?? false,
-    is_hit: product?.is_hit ?? false,
-    balloon_count: product?.balloon_count?.toString() || "",
+    name: isCopy && initialData ? `${initialData.name} (копия)` : (initialData?.name || ""),
+    description: initialData?.description || "",
+    price: initialData?.price?.toString() || "",
+    old_price: initialData?.old_price?.toString() || "",
+    discount: initialData?.discount?.toString() || "",
+    category_id: initialData?.category_id || "",
+    type: initialData?.type || "",
+    occasion: initialData?.occasion || [],
+    size: initialData?.size || "",
+    in_stock: initialData?.in_stock ?? true,
+    on_order: initialData?.on_order ?? false,
+    is_new: initialData?.is_new ?? false,
+    is_hit: initialData?.is_hit ?? false,
+    balloon_count: initialData?.balloon_count?.toString() || "",
   });
 
-  const [images, setImages] = useState<string[]>(product?.images || []);
+  const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [imageUrl, setImageUrl] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [liveCoverUrl, setLiveCoverUrl] = useState<string | null>(product?.live_cover_url || null);
-  const [videos, setVideos] = useState<string[]>(product?.videos || []);
+  const [liveCoverUrl, setLiveCoverUrl] = useState<string | null>(initialData?.live_cover_url || null);
+  const [videos, setVideos] = useState<string[]>(initialData?.videos || []);
+  const [keywords, setKeywords] = useState<string[]>(initialData?.keywords || []);
+
+  // Load product categories for existing product
+  useEffect(() => {
+    if (product?.id) {
+      supabase
+        .from("product_categories")
+        .select("category_id")
+        .eq("product_id", product.id)
+        .then(({ data }) => {
+          if (data) {
+            setSelectedCategories(data.map(d => d.category_id));
+          }
+        });
+    }
+    if (isCopy && initialData?.category_id) {
+      setSelectedCategories([initialData.category_id]);
+    }
+    // Clean up sessionStorage after reading
+    if (isCopy) {
+      sessionStorage.removeItem("copyProductData");
+    }
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -114,6 +161,30 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         ? [...prev.occasion, value]
         : prev.occasion.filter((o) => o !== value),
     }));
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+    // Also update the primary category_id
+    if (!selectedCategories.includes(categoryId)) {
+      setFormData(prev => ({ ...prev, category_id: categoryId }));
+    }
+  };
+
+  const addKeyword = () => {
+    const kw = keywordInput.trim().toLowerCase();
+    if (kw && !keywords.includes(kw)) {
+      setKeywords(prev => [...prev, kw]);
+      setKeywordInput("");
+    }
+  };
+
+  const removeKeyword = (kw: string) => {
+    setKeywords(prev => prev.filter(k => k !== kw));
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -183,9 +254,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
       if (validUrls.length > 0) {
         setImages((prev) => [...prev, ...validUrls]);
-        toast({
-          title: `Загружено ${validUrls.length} изображений`,
-        });
+        toast({ title: `Загружено ${validUrls.length} изображений` });
       }
 
       if (validUrls.length < fileArray.length) {
@@ -209,28 +278,19 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const handleLiveCoverUpload = async (file: File) => {
     setUploadingLiveCover(true);
     setUploadProgress(0);
-
     try {
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
-
       const url = await uploadVideo(file);
-      
       clearInterval(progressInterval);
       setUploadProgress(100);
-
       if (url) {
         setLiveCoverUrl(url);
         toast({ title: "Живая обложка загружена" });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка загрузки",
-        description: "Не удалось загрузить видео",
-      });
+      toast({ variant: "destructive", title: "Ошибка загрузки", description: "Не удалось загрузить видео" });
     } finally {
       setUploadingLiveCover(false);
       setUploadProgress(0);
@@ -240,27 +300,19 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const handleGalleryVideoUpload = async (file: File) => {
     setUploadingVideo(true);
     setUploadProgress(0);
-
     try {
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
-
       const url = await uploadVideo(file);
-      
       clearInterval(progressInterval);
       setUploadProgress(100);
-
       if (url) {
         setVideos(prev => [...prev, url]);
         toast({ title: "Видео добавлено в галерею" });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка загрузки",
-        description: "Не удалось загрузить видео",
-      });
+      toast({ variant: "destructive", title: "Ошибка загрузки", description: "Не удалось загрузить видео" });
     } finally {
       setUploadingVideo(false);
       setUploadProgress(0);
@@ -270,18 +322,14 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFileUpload(e.dataTransfer.files);
     }
@@ -294,38 +342,24 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removeImage = (index: number) => setImages((prev) => prev.filter((_, i) => i !== index));
+  const removeVideo = (index: number) => setVideos(prev => prev.filter((_, i) => i !== index));
+  const removeLiveCover = () => setLiveCoverUrl(null);
 
-  const removeVideo = (index: number) => {
-    setVideos(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeLiveCover = () => {
-    setLiveCoverUrl(null);
-  };
-
-  const handleImageDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
+  const handleImageDragStart = (index: number) => setDraggedIndex(index);
 
   const handleImageDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
-
     const newImages = [...images];
     const draggedImage = newImages[draggedIndex];
     newImages.splice(draggedIndex, 1);
     newImages.splice(index, 0, draggedImage);
-
     setImages(newImages);
     setDraggedIndex(index);
   };
 
-  const handleImageDragEnd = () => {
-    setDraggedIndex(null);
-  };
+  const handleImageDragEnd = () => setDraggedIndex(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,7 +372,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         price: parseFloat(formData.price) || 0,
         old_price: formData.old_price ? parseFloat(formData.old_price) : null,
         discount: formData.discount ? parseInt(formData.discount) : null,
-        category_id: formData.category_id || null,
+        // primary category for legacy compatibility
+        category_id: selectedCategories[0] || formData.category_id || null,
         type: formData.type || null,
         occasion: formData.occasion.length > 0 ? formData.occasion : null,
         size: formData.size || null,
@@ -346,29 +381,46 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         on_order: formData.on_order,
         is_new: formData.is_new,
         is_hit: formData.is_hit,
-        balloon_count: formData.balloon_count
-          ? parseInt(formData.balloon_count)
-          : null,
+        balloon_count: formData.balloon_count ? parseInt(formData.balloon_count) : null,
         images: images.length > 0 ? images : null,
         live_cover_url: liveCoverUrl,
         videos: videos.length > 0 ? videos : null,
+        keywords: keywords.length > 0 ? keywords : null,
       };
 
-      if (product?.id) {
+      let productId = product?.id;
+
+      if (product?.id && !isCopy) {
+        // Update existing product
         const { error } = await supabase
           .from("products")
           .update(productData)
           .eq("id", product.id);
-
         if (error) throw error;
+
+        // Update product_categories: delete old, insert new
+        await supabase.from("product_categories").delete().eq("product_id", product.id);
+        if (selectedCategories.length > 0) {
+          await supabase.from("product_categories").insert(
+            selectedCategories.map(catId => ({ product_id: product.id, category_id: catId }))
+          );
+        }
 
         toast({ title: "Товар обновлён" });
       } else {
-        const { error } = await supabase.from("products").insert(productData);
-
+        // Create new product (including copy)
+        const { data, error } = await supabase.from("products").insert(productData).select("id").single();
         if (error) throw error;
+        productId = data.id;
 
-        toast({ title: "Товар создан" });
+        // Insert product_categories
+        if (selectedCategories.length > 0 && productId) {
+          await supabase.from("product_categories").insert(
+            selectedCategories.map(catId => ({ product_id: productId!, category_id: catId }))
+          );
+        }
+
+        toast({ title: isCopy ? "Товар скопирован и создан" : "Товар создан" });
       }
 
       onSuccess?.();
@@ -387,6 +439,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isCopy && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+          Вы создаёте копию товара. При сохранении будет создан новый товар.
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left column - Main info */}
         <div className="space-y-6">
@@ -397,45 +454,83 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Название *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+                <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
               </div>
 
               <div>
                 <Label htmlFor="description">Описание</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={4}
-                />
+                <Textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} />
               </div>
 
+              {/* Multi-category selector */}
               <div>
-                <Label htmlFor="category_id">Категория</Label>
-                <Select
-                  value={formData.category_id}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, category_id: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите категорию" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background">
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
+                <Label className="flex items-center gap-1.5 mb-2">
+                  <FolderOpen className="h-4 w-4" />
+                  Категории
+                </Label>
+                <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+                  {categories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Нет доступных категорий</p>
+                  ) : (
+                    categories.map((cat) => (
+                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-1 py-0.5">
+                        <Checkbox
+                          checked={selectedCategories.includes(cat.id)}
+                          onCheckedChange={() => toggleCategory(cat.id)}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {selectedCategories.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Выбрано: {selectedCategories.length} категори{selectedCategories.length === 1 ? "я" : selectedCategories.length < 5 ? "и" : "й"}
+                  </p>
+                )}
+              </div>
+
+              {/* Keywords field */}
+              <div>
+                <Label className="flex items-center gap-1.5 mb-2">
+                  <Tag className="h-4 w-4" />
+                  Ключевые слова
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Слова для поиска. По ним товар найдётся быстрее.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Введите слово и нажмите Enter"
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addKeyword();
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" onClick={addKeyword}>
+                    Добавить
+                  </Button>
+                </div>
+                {keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {keywords.map((kw) => (
+                      <Badge key={kw} variant="secondary" className="gap-1 pr-1">
+                        {kw}
+                        <button
+                          type="button"
+                          onClick={() => removeKeyword(kw)}
+                          className="ml-0.5 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -448,47 +543,21 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="price">Цена *</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} required />
                 </div>
                 <div>
                   <Label htmlFor="old_price">Старая цена</Label>
-                  <Input
-                    id="old_price"
-                    name="old_price"
-                    type="number"
-                    value={formData.old_price}
-                    onChange={handleChange}
-                  />
+                  <Input id="old_price" name="old_price" type="number" value={formData.old_price} onChange={handleChange} />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="discount">Скидка (%)</Label>
-                  <Input
-                    id="discount"
-                    name="discount"
-                    type="number"
-                    value={formData.discount}
-                    onChange={handleChange}
-                  />
+                  <Input id="discount" name="discount" type="number" value={formData.discount} onChange={handleChange} />
                 </div>
                 <div>
                   <Label htmlFor="balloon_count">Кол-во шаров</Label>
-                  <Input
-                    id="balloon_count"
-                    name="balloon_count"
-                    type="number"
-                    value={formData.balloon_count}
-                    onChange={handleChange}
-                  />
+                  <Input id="balloon_count" name="balloon_count" type="number" value={formData.balloon_count} onChange={handleChange} />
                 </div>
               </div>
             </CardContent>
@@ -502,40 +571,26 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Тип</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, type: value }))
-                    }
-                  >
+                  <Select value={formData.type} onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Выберите тип" />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
                       {typeOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Размер</Label>
-                  <Select
-                    value={formData.size}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, size: value }))
-                    }
-                  >
+                  <Select value={formData.size} onValueChange={(value) => setFormData((prev) => ({ ...prev, size: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Выберите размер" />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
                       {sizeOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -546,15 +601,10 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                 <Label className="mb-2 block">По поводу</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {occasionOptions.map((opt) => (
-                    <label
-                      key={opt.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
+                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                       <Checkbox
                         checked={formData.occasion.includes(opt.value)}
-                        onCheckedChange={(checked) =>
-                          handleOccasionChange(opt.value, checked as boolean)
-                        }
+                        onCheckedChange={(checked) => handleOccasionChange(opt.value, checked as boolean)}
                       />
                       <span className="text-sm">{opt.label}</span>
                     </label>
@@ -579,22 +629,10 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <p className="text-sm text-muted-foreground">
                 Видео будет проигрываться при наведении на карточку товара в каталоге. Макс. 10 МБ.
               </p>
-              
               {liveCoverUrl ? (
                 <div className="relative rounded-lg overflow-hidden bg-muted">
-                  <video
-                    src={liveCoverUrl}
-                    className="w-full aspect-video object-cover"
-                    controls
-                    muted
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={removeLiveCover}
-                  >
+                  <video src={liveCoverUrl} className="w-full aspect-video object-cover" controls muted />
+                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2" onClick={removeLiveCover}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -610,22 +648,15 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <>
                       <Video className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
                       <label className="cursor-pointer">
-                        <span className="text-primary hover:underline">
-                          Загрузить видео
-                        </span>
+                        <span className="text-primary hover:underline">Загрузить видео</span>
                         <input
                           type="file"
                           accept="video/mp4,video/webm,video/ogg"
                           className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleLiveCoverUpload(file);
-                          }}
+                          onChange={(e) => { const file = e.target.files?.[0]; if (file) handleLiveCoverUpload(file); }}
                         />
                       </label>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        MP4, WebM или OGG до 10 МБ
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">MP4, WebM или OGG до 10 МБ</p>
                     </>
                   )}
                 </div>
@@ -639,35 +670,20 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <CardTitle>Изображения</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Drag and Drop Zone */}
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/30"
+                  dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/30"
                 }`}
               >
                 <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Перетащите файлы сюда или
-                </p>
+                <p className="text-sm text-muted-foreground mb-2">Перетащите файлы сюда или</p>
                 <label className="cursor-pointer">
-                  <span className="text-primary hover:underline">
-                    выберите с устройства
-                  </span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) =>
-                      e.target.files && handleFileUpload(e.target.files)
-                    }
-                  />
+                  <span className="text-primary hover:underline">выберите с устройства</span>
+                  <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => e.target.files && handleFileUpload(e.target.files)} />
                 </label>
                 {uploading && (
                   <div className="mt-4 flex items-center justify-center gap-2">
@@ -677,7 +693,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                 )}
               </div>
 
-              {/* URL Input */}
               <div className="flex gap-2">
                 <div className="flex-1 relative">
                   <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -686,20 +701,12 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                     className="pl-10"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addImageUrl();
-                      }
-                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageUrl(); } }}
                   />
                 </div>
-                <Button type="button" variant="outline" onClick={addImageUrl}>
-                  Добавить
-                </Button>
+                <Button type="button" variant="outline" onClick={addImageUrl}>Добавить</Button>
               </div>
 
-              {/* Image Preview */}
               {images.length > 0 && (
                 <div className="grid grid-cols-3 gap-3">
                   {images.map((img, index) => (
@@ -713,20 +720,10 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                         draggedIndex === index ? "opacity-50" : ""
                       }`}
                     >
-                      <img
-                        src={img}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={img} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <GripVertical className="h-5 w-5 text-white absolute top-2 left-2" />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => removeImage(index)}
-                        >
+                        <Button type="button" variant="destructive" size="icon" className="h-8 w-8" onClick={() => removeImage(index)}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -754,8 +751,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <p className="text-sm text-muted-foreground">
                 Добавьте видео, которые будут отображаться в галерее карточки товара. Макс. 10 МБ каждое.
               </p>
-
-              {/* Upload area */}
               <div className="border-2 border-dashed rounded-lg p-6 text-center">
                 {uploadingVideo ? (
                   <div className="space-y-2">
@@ -767,42 +762,24 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   <>
                     <Play className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <label className="cursor-pointer">
-                      <span className="text-primary hover:underline">
-                        Добавить видео
-                      </span>
+                      <span className="text-primary hover:underline">Добавить видео</span>
                       <input
                         type="file"
                         accept="video/mp4,video/webm,video/ogg"
                         className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleGalleryVideoUpload(file);
-                        }}
+                        onChange={(e) => { const file = e.target.files?.[0]; if (file) handleGalleryVideoUpload(file); }}
                       />
                     </label>
                   </>
                 )}
               </div>
-
-              {/* Videos list */}
               {videos.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {videos.map((video, index) => (
                     <div key={index} className="relative rounded-lg overflow-hidden bg-muted group">
-                      <video
-                        src={video}
-                        className="w-full aspect-video object-cover"
-                        muted
-                        preload="metadata"
-                      />
+                      <video src={video} className="w-full aspect-video object-cover" muted preload="metadata" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => removeVideo(index)}
-                        >
+                        <Button type="button" variant="destructive" size="icon" className="h-8 w-8" onClick={() => removeVideo(index)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -825,12 +802,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <label className="flex items-center gap-3 cursor-pointer">
                 <Checkbox
                   checked={formData.in_stock}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      in_stock: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, in_stock: checked as boolean }))}
                 />
                 <span>В наличии</span>
               </label>
@@ -838,12 +810,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <label className="flex items-center gap-3 cursor-pointer">
                 <Checkbox
                   checked={formData.on_order}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      on_order: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, on_order: checked as boolean }))}
                 />
                 <span>Под заказ</span>
               </label>
@@ -851,12 +818,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <label className="flex items-center gap-3 cursor-pointer">
                 <Checkbox
                   checked={formData.is_new}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      is_new: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_new: checked as boolean }))}
                 />
                 <span>Новинка</span>
               </label>
@@ -864,12 +826,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <label className="flex items-center gap-3 cursor-pointer">
                 <Checkbox
                   checked={formData.is_hit}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      is_hit: checked as boolean,
-                    }))
-                  }
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_hit: checked as boolean }))}
                 />
                 <span>Хит продаж</span>
               </label>
@@ -882,13 +839,9 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       <div className="flex gap-4">
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {product ? "Сохранить" : "Создать товар"}
+          {isCopy ? "Создать копию" : product ? "Сохранить" : "Создать товар"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate("/admin/products")}
-        >
+        <Button type="button" variant="outline" onClick={() => navigate("/admin/products")}>
           Отмена
         </Button>
       </div>

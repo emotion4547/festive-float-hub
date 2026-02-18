@@ -58,28 +58,47 @@ export function SearchDropdown({ query, onClose }: SearchDropdownProps) {
 
       setLoading(true);
       try {
-        // Search products
-        const { data: products } = await supabase
-          .from("products")
-          .select("id, name, images, price")
-          .ilike("name", `%${query}%`)
-          .limit(5);
+        // Search products: first by keywords (exact match priority), then by name
+        const [keywordsRes, nameRes] = await Promise.all([
+          supabase
+            .from("products")
+            .select("id, name, images, price, keywords")
+            .contains("keywords", [query.toLowerCase()])
+            .eq("is_visible", true)
+            .limit(5),
+          supabase
+            .from("products")
+            .select("id, name, images, price, keywords")
+            .ilike("name", `%${query}%`)
+            .eq("is_visible", true)
+            .limit(5),
+        ]);
 
-        const productResults: SearchResult[] = (products || []).map((p) => ({
-          id: p.id,
-          title: p.name,
-          type: "product" as const,
-          url: `/product/${p.id}`,
-          image: p.images?.[0],
-          price: p.price,
-        }));
+        // Merge keyword results first, then name results (deduplicate)
+        const seen = new Set<string>();
+        const merged: SearchResult[] = [];
+
+        for (const p of [...(keywordsRes.data || []), ...(nameRes.data || [])]) {
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            merged.push({
+              id: p.id,
+              title: p.name,
+              type: "product" as const,
+              url: `/product/${p.id}`,
+              image: p.images?.[0],
+              price: p.price,
+            });
+          }
+        }
+
+        const productResults = merged.slice(0, 6);
 
         // Search pages by title
         const matchingPages = pageResults.filter((page) =>
           page.title.toLowerCase().includes(query.toLowerCase())
         );
 
-        // Combine results
         setResults([...productResults, ...matchingPages.slice(0, 3)]);
       } catch (error) {
         console.error("Search error:", error);
