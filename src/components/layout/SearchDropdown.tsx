@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ interface SearchDropdownProps {
   query: string;
   onClose: () => void;
   onNavigate?: (url: string) => void;
+  /** If provided, renders via portal positioned at these coords */
+  portalRect?: { top: number; left: number; width: number };
 }
 
 const pageResults: SearchResult[] = [
@@ -33,7 +36,7 @@ const pageResults: SearchResult[] = [
   { id: "news", title: "Новости", type: "page", url: "/news" },
 ];
 
-export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownProps) {
+export function SearchDropdown({ query, onClose, onNavigate, portalRect }: SearchDropdownProps) {
   const navigate = useNavigate();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +62,6 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
 
       setLoading(true);
       try {
-        // Search products: first by keywords (exact match priority), then by name
         const [keywordsRes, nameRes] = await Promise.all([
           supabase
             .from("products")
@@ -75,7 +77,6 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
             .limit(5),
         ]);
 
-        // Merge keyword results first, then name results (deduplicate)
         const seen = new Set<string>();
         const merged: SearchResult[] = [];
 
@@ -95,7 +96,6 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
 
         const productResults = merged.slice(0, 6);
 
-        // Search pages by title
         const matchingPages = pageResults.filter((page) =>
           page.title.toLowerCase().includes(query.toLowerCase())
         );
@@ -123,36 +123,41 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "product":
-        return "товар";
-      case "page":
-        return "страница";
-      case "news":
-        return "новость";
-      default:
-        return type;
+      case "product": return "товар";
+      case "page": return "страница";
+      case "news": return "новость";
+      default: return type;
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "product":
-        return <Package className="h-4 w-4" />;
-      case "page":
-        return <FileText className="h-4 w-4" />;
-      case "news":
-        return <Newspaper className="h-4 w-4" />;
-      default:
-        return null;
+      case "product": return <Package className="h-4 w-4" />;
+      case "page": return <FileText className="h-4 w-4" />;
+      case "news": return <Newspaper className="h-4 w-4" />;
+      default: return null;
     }
   };
 
   if (!query.trim() || query.length < 2) return null;
 
-  return (
+  const content = (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+      className={
+        portalRect
+          ? "fixed bg-background border rounded-lg shadow-xl z-[9999] max-h-[60vh] overflow-y-auto"
+          : "absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+      }
+      style={
+        portalRect
+          ? {
+              top: portalRect.top,
+              left: portalRect.left,
+              width: portalRect.width,
+            }
+          : undefined
+      }
     >
       {loading ? (
         <div className="flex items-center justify-center py-8">
@@ -166,9 +171,10 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
       ) : (
         <div className="py-2">
           {results.map((result) => (
-            <button
+            <Link
               key={`${result.type}-${result.id}`}
-              onClick={() => handleResultClick(result.url)}
+              to={result.url}
+              onClick={() => onClose()}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
             >
               {result.image ? (
@@ -195,7 +201,7 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
                   )}
                 </div>
               </div>
-            </button>
+            </Link>
           ))}
           <div className="border-t mt-2 pt-2 px-4">
             <Button
@@ -218,4 +224,10 @@ export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownPro
       )}
     </div>
   );
+
+  if (portalRect) {
+    return createPortal(content, document.body);
+  }
+
+  return content;
 }
