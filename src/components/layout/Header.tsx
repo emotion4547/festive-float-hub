@@ -381,7 +381,13 @@ export function Header() {
               onClose={() => {
                 setShowSearchDropdown(false);
                 setIsSearchOpen(false);
-              }} 
+              }}
+              onNavigate={(url) => {
+                setShowSearchDropdown(false);
+                setIsSearchOpen(false);
+                setSearchQuery("");
+                navigate(url);
+              }}
             />
           )}
         </div>
