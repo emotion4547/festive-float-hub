@@ -134,19 +134,19 @@ const CatalogPage = () => {
       return true;
     });
 
-    // Sort products: with images first
-    result.sort((a, b) => {
-      const aHasImage = a.images && a.images.length > 0 && a.images[0];
-      const bHasImage = b.images && b.images.length > 0 && b.images[0];
-      if (aHasImage && !bHasImage) return -1;
-      if (!aHasImage && bHasImage) return 1;
-      return 0;
-    });
-
     // Apply sorting
     switch (sortBy) {
-      case "new":
-        result.sort((a, b) => (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0));
+      case "date-desc": // Сначала новые
+        result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        break;
+      case "date-asc": // Сначала старые
+        result.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
+        break;
+      case "name-asc": // от А до Я
+        result.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+        break;
+      case "name-desc": // от Я до А
+        result.sort((a, b) => b.name.localeCompare(a.name, "ru"));
         break;
       case "price-asc":
         result.sort((a, b) => a.price - b.price);
@@ -159,7 +159,16 @@ const CatalogPage = () => {
         break;
       case "popular":
       default:
-        // Already sorted by images first, then by popularity
+        // Sort: with images first, then hits, then by rating
+        result.sort((a, b) => {
+          const aHasImage = a.images && a.images.length > 0 && a.images[0] ? 1 : 0;
+          const bHasImage = b.images && b.images.length > 0 && b.images[0] ? 1 : 0;
+          if (aHasImage !== bHasImage) return bHasImage - aHasImage;
+          const aHit = a.is_hit ? 1 : 0;
+          const bHit = b.is_hit ? 1 : 0;
+          if (aHit !== bHit) return bHit - aHit;
+          return (b.rating || 0) - (a.rating || 0);
+        });
         break;
     }
 
@@ -293,8 +302,11 @@ const CatalogPage = () => {
                 <SelectValue placeholder="Сортировка" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="popular">Популярные</SelectItem>
-                <SelectItem value="new">Новинки</SelectItem>
+                <SelectItem value="popular">По умолчанию</SelectItem>
+                <SelectItem value="date-desc">Сначала новые</SelectItem>
+                <SelectItem value="date-asc">Сначала старые</SelectItem>
+                <SelectItem value="name-asc">от А до Я</SelectItem>
+                <SelectItem value="name-desc">от Я до А</SelectItem>
                 <SelectItem value="price-asc">Сначала дешевле</SelectItem>
                 <SelectItem value="price-desc">Сначала дороже</SelectItem>
                 <SelectItem value="rating">По рейтингу</SelectItem>

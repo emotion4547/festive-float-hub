@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface DbProduct {
   id: string;
   name: string;
+  created_at?: string;
   description: string | null;
   price: number;
   old_price: number | null;
