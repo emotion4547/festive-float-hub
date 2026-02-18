@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Heart, Menu, X, ChevronDown, Phone, User, LogOut, Settings, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,7 @@ const mainNavLinks = [
 ];
 
 export function Header() {
+  const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -350,12 +351,26 @@ export function Header() {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  navigate(`/catalog?search=${encodeURIComponent(searchQuery)}`);
+                  setIsSearchOpen(false);
+                  setShowSearchDropdown(false);
+                }
+              }}
               className="w-full pl-4 pr-12 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               autoFocus
             />
             <Button 
               size="sm" 
               className="absolute right-1 top-1/2 -translate-y-1/2"
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  navigate(`/catalog?search=${encodeURIComponent(searchQuery)}`);
+                  setIsSearchOpen(false);
+                  setShowSearchDropdown(false);
+                }
+              }}
             >
               Найти
             </Button>
@@ -363,7 +378,10 @@ export function Header() {
           {showSearchDropdown && (
             <SearchDropdown 
               query={searchQuery} 
-              onClose={() => setShowSearchDropdown(false)} 
+              onClose={() => {
+                setShowSearchDropdown(false);
+                setIsSearchOpen(false);
+              }} 
             />
           )}
         </div>

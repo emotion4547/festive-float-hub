@@ -19,10 +19,12 @@ export interface DbProduct {
   images: string[] | null;
   is_new: boolean;
   is_hit: boolean;
+  is_visible: boolean;
   colors: string[] | null;
   balloon_count: number | null;
   live_cover_url: string | null;
   videos: string[] | null;
+  keywords: string[] | null;
   categories?: {
     name: string;
     slug: string;
@@ -57,6 +59,9 @@ export function useProducts(options: UseProductsOptions = {}) {
         if (options.categorySlug) {
           query = query.eq("categories.slug", options.categorySlug);
         }
+
+        // Only show visible products on public pages
+        query = query.eq("is_visible", true);
 
         if (options.search) {
           query = query.ilike("name", `%${options.search}%`);

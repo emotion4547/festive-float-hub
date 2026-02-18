@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Plus, Edit, Trash2, Package } from "lucide-react";
+import { Loader2, Search, Plus, Edit, Trash2, Package, Eye, EyeOff, Copy } from "lucide-react";
 import { ExcelImport } from "@/components/admin/ExcelImport";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 
@@ -28,12 +33,14 @@ interface Product {
   in_stock: boolean;
   is_new: boolean;
   is_hit: boolean;
+  is_visible: boolean;
   images: string[] | null;
   created_at: string;
 }
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,12 +49,12 @@ export default function AdminProductsPage() {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, old_price, in_stock, is_new, is_hit, images, created_at")
+        .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      setProducts(data || []);
+      setProducts((data || []).map(p => ({ ...p, is_visible: p.is_visible ?? true })));
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -64,17 +71,46 @@ export default function AdminProductsPage() {
 
     try {
       const { error } = await supabase.from("products").delete().eq("id", id);
-
       if (error) throw error;
-
       toast({ title: "Товар удалён" });
       fetchProducts();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Ошибка",
-        description: "Не удалось удалить товар",
-      });
+      toast({ variant: "destructive", title: "Ошибка", description: "Не удалось удалить товар" });
+    }
+  };
+
+  const handleToggleVisibility = async (product: Product) => {
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_visible: !product.is_visible })
+        .eq("id", product.id);
+
+      if (error) throw error;
+
+      toast({ title: product.is_visible ? "Товар скрыт с сайта" : "Товар снова виден на сайте" });
+      fetchProducts();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Ошибка", description: "Не удалось изменить видимость" });
+    }
+  };
+
+  const handleCopyProduct = async (product: Product) => {
+    // Fetch full product data for copy
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", product.id)
+        .single();
+
+      if (error) throw error;
+
+      // Store in sessionStorage to pass to the new product form
+      sessionStorage.setItem("copyProductData", JSON.stringify(data));
+      navigate("/admin/products/new?copy=true");
+    } catch (error) {
+      toast({ variant: "destructive", title: "Ошибка", description: "Не удалось скопировать товар" });
     }
   };
 
@@ -91,6 +127,69 @@ export default function AdminProductsPage() {
       </AdminLayout>
     );
   }
+
+  const ActionButtons = ({ product }: { product: Product }) => (
+    <div className="flex gap-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleToggleVisibility(product)}
+          >
+            {product.is_visible ? (
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <EyeOff className="h-4 w-4 text-orange-500" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {product.is_visible ? "Скрыть с сайта" : "Показать на сайте"}
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleCopyProduct(product)}
+          >
+            <Copy className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Копировать товар</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link to={`/admin/products/${product.id}`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Редактировать</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleDelete(product.id)}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Удалить</TooltipContent>
+      </Tooltip>
+    </div>
+  );
 
   return (
     <AdminLayout title="Товары">
@@ -135,10 +234,10 @@ export default function AdminProductsPage() {
               {/* Mobile Cards View */}
               <div className="grid grid-cols-1 gap-3 md:hidden">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden">
+                  <Card key={product.id} className={`overflow-hidden ${!product.is_visible ? "opacity-60" : ""}`}>
                     <CardContent className="p-3">
                       <div className="flex gap-3">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
                           {product.images && product.images[0] ? (
                             <img
                               src={product.images[0]}
@@ -149,6 +248,11 @@ export default function AdminProductsPage() {
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          {!product.is_visible && (
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <EyeOff className="h-4 w-4 text-white" />
                             </div>
                           )}
                         </div>
@@ -167,38 +271,23 @@ export default function AdminProductsPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1 flex-wrap">
-                            <Badge 
+                            <Badge
                               variant={product.in_stock ? "default" : "secondary"}
                               className="text-xs"
                             >
                               {product.in_stock ? "В наличии" : "Нет"}
                             </Badge>
-                            {product.is_new && (
-                              <Badge variant="outline" className="text-xs">
-                                Новое
+                            {!product.is_visible && (
+                              <Badge variant="outline" className="text-xs text-orange-500 border-orange-300">
+                                Скрыт
                               </Badge>
                             )}
-                            {product.is_hit && (
-                              <Badge variant="outline" className="text-xs">
-                                Хит
-                              </Badge>
-                            )}
+                            {product.is_new && <Badge variant="outline" className="text-xs">Новое</Badge>}
+                            {product.is_hit && <Badge variant="outline" className="text-xs">Хит</Badge>}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <Link to={`/admin/products/${product.id}`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                        <div className="flex flex-col gap-0.5">
+                          <ActionButtons product={product} />
                         </div>
                       </div>
                     </CardContent>
@@ -217,14 +306,14 @@ export default function AdminProductsPage() {
                         <TableHead>Цена</TableHead>
                         <TableHead>Статус</TableHead>
                         <TableHead>Метки</TableHead>
-                        <TableHead className="w-24">Действия</TableHead>
+                        <TableHead className="w-40">Действия</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredProducts.map((product) => (
-                        <TableRow key={product.id}>
+                        <TableRow key={product.id} className={!product.is_visible ? "opacity-60" : ""}>
                           <TableCell>
-                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted relative">
                               {product.images && product.images[0] ? (
                                 <img
                                   src={product.images[0]}
@@ -235,6 +324,11 @@ export default function AdminProductsPage() {
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                   <Package className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                              )}
+                              {!product.is_visible && (
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                  <EyeOff className="h-3 w-3 text-white" />
                                 </div>
                               )}
                             </div>
@@ -255,39 +349,25 @@ export default function AdminProductsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={product.in_stock ? "default" : "secondary"}>
-                              {product.in_stock ? "В наличии" : "Нет в наличии"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              {product.is_new && (
-                                <Badge variant="outline" className="text-xs">
-                                  Новинка
-                                </Badge>
-                              )}
-                              {product.is_hit && (
-                                <Badge variant="outline" className="text-xs">
-                                  Хит
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={product.in_stock ? "default" : "secondary"}>
+                                {product.in_stock ? "В наличии" : "Нет в наличии"}
+                              </Badge>
+                              {!product.is_visible && (
+                                <Badge variant="outline" className="text-xs text-orange-500 border-orange-300 w-fit">
+                                  Скрыт
                                 </Badge>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" asChild>
-                                <Link to={`/admin/products/${product.id}`}>
-                                  <Edit className="h-4 w-4" />
-                                </Link>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(product.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              {product.is_new && <Badge variant="outline" className="text-xs">Новинка</Badge>}
+                              {product.is_hit && <Badge variant="outline" className="text-xs">Хит</Badge>}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <ActionButtons product={product} />
                           </TableCell>
                         </TableRow>
                       ))}
