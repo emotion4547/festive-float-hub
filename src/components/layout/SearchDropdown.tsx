@@ -16,6 +16,7 @@ interface SearchResult {
 interface SearchDropdownProps {
   query: string;
   onClose: () => void;
+  onNavigate?: (url: string) => void;
 }
 
 const pageResults: SearchResult[] = [
@@ -32,7 +33,7 @@ const pageResults: SearchResult[] = [
   { id: "news", title: "Новости", type: "page", url: "/news" },
 ];
 
-export function SearchDropdown({ query, onClose }: SearchDropdownProps) {
+export function SearchDropdown({ query, onClose, onNavigate }: SearchDropdownProps) {
   const navigate = useNavigate();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -112,8 +113,12 @@ export function SearchDropdown({ query, onClose }: SearchDropdownProps) {
   }, [query]);
 
   const handleResultClick = (url: string) => {
-    navigate(url);
-    onClose();
+    if (onNavigate) {
+      onNavigate(url);
+    } else {
+      navigate(url);
+      onClose();
+    }
   };
 
   const getTypeLabel = (type: string) => {
@@ -197,8 +202,13 @@ export function SearchDropdown({ query, onClose }: SearchDropdownProps) {
               variant="ghost"
               className="w-full justify-center text-primary"
               onClick={() => {
-                navigate(`/catalog?search=${encodeURIComponent(query)}`);
-                onClose();
+                const url = `/catalog?search=${encodeURIComponent(query)}`;
+                if (onNavigate) {
+                  onNavigate(url);
+                } else {
+                  navigate(url);
+                  onClose();
+                }
               }}
             >
               Показать все результаты
