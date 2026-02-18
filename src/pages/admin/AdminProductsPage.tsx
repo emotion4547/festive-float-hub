@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Search, Plus, Edit, Trash2, Package, Eye, EyeOff, Copy } from "lucide-react";
@@ -44,6 +51,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
 
   const fetchProducts = async () => {
     try {
@@ -114,9 +122,35 @@ export default function AdminProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortBy) {
+      case "date-asc":
+        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.name.localeCompare(a.name, "ru"));
+        break;
+      case "price-asc":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "date-desc":
+      default:
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+    }
+
+    return result;
+  }, [products, searchQuery, sortBy]);
 
   if (loading) {
     return (
@@ -213,12 +247,27 @@ export default function AdminProductsPage() {
                 className="pl-10"
               />
             </div>
-            <Button asChild>
-              <Link to="/admin/products/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить товар
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Сортировка" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Сначала новые</SelectItem>
+                  <SelectItem value="date-asc">Сначала старые</SelectItem>
+                  <SelectItem value="name-asc">от А до Я</SelectItem>
+                  <SelectItem value="name-desc">от Я до А</SelectItem>
+                  <SelectItem value="price-asc">Сначала дешевле</SelectItem>
+                  <SelectItem value="price-desc">Сначала дороже</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button asChild>
+                <Link to="/admin/products/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить товар
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Products Table */}

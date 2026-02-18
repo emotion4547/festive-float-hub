@@ -50,9 +50,22 @@ const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get("category");
   const filterParam = searchParams.get("filter");
+  const sortBy = searchParams.get("sort") || "popular";
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
-  const [sortBy, setSortBy] = useState("popular");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const handleSortChange = (val: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (val === "popular") {
+        next.delete("sort");
+      } else {
+        next.set("sort", val);
+      }
+      return next;
+    }, { replace: true });
+    setCurrentPage(1);
+  };
   const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   
   const { products, loading: productsLoading } = useProducts({});
@@ -297,7 +310,7 @@ const CatalogPage = () => {
             </Sheet>
 
             {/* Sort */}
-            <Select value={sortBy} onValueChange={(val) => { setSortBy(val); setCurrentPage(1); }}>
+            <Select value={sortBy} onValueChange={handleSortChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Сортировка" />
               </SelectTrigger>
