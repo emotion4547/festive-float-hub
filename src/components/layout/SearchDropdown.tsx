@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Search, Package, Newspaper, FileText, Loader2 } from "lucide-react";
@@ -112,12 +112,14 @@ export function SearchDropdown({ query, onClose, onNavigate, portalRect }: Searc
     return () => clearTimeout(debounce);
   }, [query]);
 
-  const handleResultClick = (url: string) => {
+  const handleResultClick = (e: React.MouseEvent, url: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onNavigate) {
       onNavigate(url);
     } else {
-      navigate(url);
       onClose();
+      navigate(url);
     }
   };
 
@@ -171,10 +173,9 @@ export function SearchDropdown({ query, onClose, onNavigate, portalRect }: Searc
       ) : (
         <div className="py-2">
           {results.map((result) => (
-            <Link
+            <button
               key={`${result.type}-${result.id}`}
-              to={result.url}
-              onClick={() => onClose()}
+              onMouseDown={(e) => handleResultClick(e, result.url)}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
             >
               {result.image ? (
@@ -201,19 +202,20 @@ export function SearchDropdown({ query, onClose, onNavigate, portalRect }: Searc
                   )}
                 </div>
               </div>
-            </Link>
+            </button>
           ))}
           <div className="border-t mt-2 pt-2 px-4">
             <Button
               variant="ghost"
               className="w-full justify-center text-primary"
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
                 const url = `/catalog?search=${encodeURIComponent(query)}`;
                 if (onNavigate) {
                   onNavigate(url);
                 } else {
-                  navigate(url);
                   onClose();
+                  navigate(url);
                 }
               }}
             >
