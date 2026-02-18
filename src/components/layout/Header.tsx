@@ -353,9 +353,10 @@ export function Header() {
               onFocus={() => setShowSearchDropdown(true)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchQuery.trim()) {
-                  navigate(`/catalog?search=${encodeURIComponent(searchQuery)}`);
                   setIsSearchOpen(false);
                   setShowSearchDropdown(false);
+                  setSearchQuery("");
+                  navigate(`/catalog?search=${encodeURIComponent(searchQuery)}`);
                 }
               }}
               className="w-full pl-4 pr-12 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
@@ -366,31 +367,36 @@ export function Header() {
               className="absolute right-1 top-1/2 -translate-y-1/2"
               onClick={() => {
                 if (searchQuery.trim()) {
-                  navigate(`/catalog?search=${encodeURIComponent(searchQuery)}`);
+                  const q = searchQuery;
                   setIsSearchOpen(false);
                   setShowSearchDropdown(false);
+                  setSearchQuery("");
+                  navigate(`/catalog?search=${encodeURIComponent(q)}`);
                 }
               }}
             >
               Найти
             </Button>
           </div>
-          {showSearchDropdown && (
-            <SearchDropdown 
-              query={searchQuery} 
-              onClose={() => {
-                setShowSearchDropdown(false);
-                setIsSearchOpen(false);
-              }}
-              onNavigate={(url) => {
-                setShowSearchDropdown(false);
-                setIsSearchOpen(false);
-                setSearchQuery("");
-                navigate(url);
-              }}
-            />
-          )}
         </div>
+      )}
+
+      {/* Mobile search results — rendered via portal into document.body */}
+      {isSearchOpen && showSearchDropdown && (
+        <SearchDropdown 
+          query={searchQuery} 
+          portalRect={{ top: 128, left: 0, width: window.innerWidth }}
+          onClose={() => {
+            setShowSearchDropdown(false);
+            setIsSearchOpen(false);
+          }}
+          onNavigate={(url) => {
+            setShowSearchDropdown(false);
+            setIsSearchOpen(false);
+            setSearchQuery("");
+            navigate(url);
+          }}
+        />
       )}
     </header>
   );
