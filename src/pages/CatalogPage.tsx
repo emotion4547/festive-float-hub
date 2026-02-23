@@ -50,6 +50,7 @@ const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get("category");
   const filterParam = searchParams.get("filter");
+  const searchQuery = searchParams.get("search") || "";
   const sortBy = searchParams.get("sort") || "popular";
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [currentPage, setCurrentPage] = useState(1);
@@ -76,6 +77,7 @@ const CatalogPage = () => {
 
   // Get page title based on filter
   const getPageTitle = () => {
+    if (searchQuery) return `Результаты поиска: "${searchQuery}"`;
     if (currentCategory) return currentCategory.name;
     switch (filterParam) {
       case "hits": return "Хиты продаж";
@@ -100,6 +102,17 @@ const CatalogPage = () => {
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
+
+    // Apply text search from URL parameter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p => {
+        if (p.keywords && p.keywords.some((k: string) => k.toLowerCase().includes(q))) return true;
+        if (p.name.toLowerCase().includes(q)) return true;
+        if (p.description && p.description.toLowerCase().includes(q)) return true;
+        return false;
+      });
+    }
 
     // Apply quick filter from URL parameter
     if (filterParam === "hits") {
@@ -186,7 +199,7 @@ const CatalogPage = () => {
     }
 
     return result;
-  }, [products, filters, sortBy, categorySlug, filterParam, currentCategory]);
+  }, [products, filters, sortBy, categorySlug, filterParam, currentCategory, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
