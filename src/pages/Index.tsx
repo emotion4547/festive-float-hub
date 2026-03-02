@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AgendaSection } from "@/components/home/AgendaSection";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
+import { useSiteData } from "@/contexts/SiteDataContext";
 
 // Lazy load ShaderGradient for performance
 const ShaderGradientCanvas = lazy(() => 
@@ -123,10 +124,20 @@ const Index = () => {
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const { toast } = useToast();
+  const { settings: siteSettings } = useSiteData();
   
   // Load products from database
   const { products, loading: productsLoading } = useProducts({});
   const { categories, loading: categoriesLoading } = useCategories();
+
+  // Hero settings from DB
+  const heroColor1 = siteSettings.hero_color1 || "#F9A8D4";
+  const heroColor2 = siteSettings.hero_color2 || "#5BC5C8";
+  const heroColor3 = siteSettings.hero_color3 || "#abfffc";
+  const heroTitle = siteSettings.hero_default_title || "Воздушные шары с доставкой по Краснодару";
+  const heroSubtitle = siteSettings.hero_default_subtitle || "Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!";
+  const heroBtnText = siteSettings.hero_btn_text || "Выбрать шары";
+  const heroBtnLink = siteSettings.hero_btn_link || "/catalog";
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -259,9 +270,9 @@ const Index = () => {
                   cDistance={3.6}
                   cPolarAngle={90}
                   cameraZoom={1}
-                  color1="#F9A8D4"
-                  color2="#5BC5C8"
-                  color3="#abfffc"
+                   color1={heroColor1}
+                   color2={heroColor2}
+                   color3={heroColor3}
                   envPreset="city"
                   grain="on"
                   lightType="3d"
@@ -350,16 +361,15 @@ const Index = () => {
               ) : (
                 <div className="h-full space-y-6 bg-background/80 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-lg flex flex-col justify-center">
                   <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                    <span className="block">Воздушные шары</span>
-                    <span className="gradient-text">с доставкой</span> по&nbsp;Краснодару
+                    {heroTitle}
                   </h1>
                   <p className="text-base md:text-lg text-muted-foreground">
-                    Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!
+                    {heroSubtitle}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <Button size="lg" className="btn-primary text-base px-6" asChild>
-                      <Link to="/catalog" className="flex items-center gap-2">
-                        Выбрать шары
+                      <Link to={heroBtnLink} className="flex items-center gap-2">
+                        {heroBtnText}
                         <ArrowRight className="h-5 w-5" />
                       </Link>
                     </Button>
