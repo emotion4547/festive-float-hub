@@ -6,12 +6,12 @@ import { usePageContent, useSetting } from "@/contexts/SiteDataContext";
 import { SEOHead } from "@/components/SEOHead";
 
 const deliveryZones = [
-  { zone: "Центральный район", price: "от 300 ₽", time: "1-2 ч" },
-  { zone: "Прикубанский район", price: "от 300 ₽", time: "1-2 ч" },
-  { zone: "Карасунский район", price: "от 500 ₽", time: "1-3 ч" },
-  { zone: "Западный округ", price: "от 500 ₽", time: "1-3 ч" },
-  { zone: "Пригород", price: "от 800 ₽", time: "от 1 ч" },
-];
+{ zone: "Центральный район", price: "от 300 ₽", time: "1-2 ч" },
+{ zone: "Прикубанский район", price: "от 300 ₽", time: "1-2 ч" },
+{ zone: "Карасунский район", price: "от 500 ₽", time: "1-3 ч" },
+{ zone: "Западный округ", price: "от 500 ₽", time: "1-3 ч" },
+{ zone: "Пригород", price: "от 800 ₽", time: "от 1 ч" }];
+
 
 const DeliveryPage = () => {
   const content = usePageContent("delivery");
@@ -25,8 +25,8 @@ const DeliveryPage = () => {
         title="Доставка воздушных шаров"
         description="Доставка воздушных шаров по Краснодару и Краснодарскому краю. Доставка от 2 часов, работаем ежедневно 10:00-20:00. Бесплатная доставка от 5000₽."
         keywords="доставка шаров Краснодар, доставка воздушных шаров, курьерская доставка шаров, доставка гелиевых шаров"
-        canonicalPath="/delivery"
-      />
+        canonicalPath="/delivery" />
+
       <div className="container py-8">
         <div className="flex gap-8">
           
@@ -41,11 +41,11 @@ const DeliveryPage = () => {
                   по Краснодару и Краснодарскому краю
                 </p>
               </div>
-              <img 
-                src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop" 
+              <img
+                src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop"
                 alt="Доставка шаров"
-                className="absolute right-0 top-0 h-full w-1/3 object-cover hidden md:block"
-              />
+                className="absolute right-0 top-0 h-full w-1/3 object-cover hidden md:block" />
+
             </div>
 
             {/* Main Content */}
@@ -64,8 +64,8 @@ const DeliveryPage = () => {
                 <AlertCircle className="h-6 w-6 text-secondary shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-secondary mb-2">ВАЖНО!</p>
-                  <p className="text-sm">
-                    При заказе 3-х и более наборов возможна получить скидку на доставку. Уточняйте у менеджера!
+                  <p className="text-sm">При заказе 3-х и более наборов возможно получить скидку на доставку. Уточняйте у менеджера!
+
                   </p>
                 </div>
               </div>
@@ -89,13 +89,13 @@ const DeliveryPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {deliveryZones.map((zone, index) => (
-                    <tr key={index} className={index % 2 === 0 ? "bg-muted/30" : ""}>
+                  {deliveryZones.map((zone, index) =>
+                  <tr key={index} className={index % 2 === 0 ? "bg-muted/30" : ""}>
                       <td className="px-4 py-3 border-b">{zone.zone}</td>
                       <td className="px-4 py-3 border-b font-semibold text-primary">{zone.price}</td>
                       <td className="px-4 py-3 border-b">{zone.time}</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -103,10 +103,10 @@ const DeliveryPage = () => {
             {/* Contact */}
             <div id="calculator" className="bg-primary/10 rounded-xl p-6 mb-8 text-center">
               <p className="mb-4">Окончательную сумму доставки поможет рассчитать наш менеджер</p>
-              <Button 
+              <Button
                 className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                onClick={() => whatsapp && window.open(whatsapp, "_blank")}
-              >
+                onClick={() => whatsapp && window.open(whatsapp, "_blank")}>
+
                 Связаться с менеджером
               </Button>
             </div>
@@ -121,6 +121,12 @@ const DeliveryPage = () => {
                 <li>г. Краснодар, ул. Российская 72/1к1, торговая галерея Опера, 5 павильон</li>
                 <li>г. Краснодар, ул. Краеведа Соловьёва 2к1, магазин «Воздушные шары»</li>
               </ul>
+              <p>
+                Время работы: с 10:00 до 20:00 ежедневно
+              </p>
+              <p>
+                Все самовывозы осуществляются только по готовности!
+              </p>
             </div>
 
           </main>
@@ -131,8 +137,8 @@ const DeliveryPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>);
+
 };
 
 export default DeliveryPage;
