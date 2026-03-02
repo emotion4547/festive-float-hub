@@ -1,23 +1,35 @@
 import { Layout } from "@/components/layout/Layout";
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
-import { MapPin, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePageContent, useSetting } from "@/contexts/SiteDataContext";
 import { SEOHead } from "@/components/SEOHead";
 
-const deliveryZones = [
-{ zone: "Центральный район", price: "от 300 ₽", time: "1-2 ч" },
-{ zone: "Прикубанский район", price: "от 300 ₽", time: "1-2 ч" },
-{ zone: "Карасунский район", price: "от 500 ₽", time: "1-3 ч" },
-{ zone: "Западный округ", price: "от 500 ₽", time: "1-3 ч" },
-{ zone: "Пригород", price: "от 800 ₽", time: "от 1 ч" }];
-
+interface DeliveryZone {
+  zone: string;
+  price: string;
+  time: string;
+}
 
 const DeliveryPage = () => {
   const content = usePageContent("delivery");
-  const phone = useSetting("phone", "+7 (861) 123-45-67");
-  const address = useSetting("address", "г. Краснодар, ул. Красная, 123");
   const whatsapp = useSetting("whatsapp");
+
+  const heroTitle = content.hero?.title || "ДОСТАВКА";
+  const heroSubtitle = content.hero?.content || "по Краснодару и Краснодарскому краю";
+  const heroImage = (content.hero?.extra_data?.image_url as string) || "";
+  const desc1 = content.description?.content || "Получить свой заказ вы можете любым удобным способом: доставкой или самовывозом.";
+  const desc2 = content.description2?.content || "";
+  const importantTitle = content.important?.title || "ВАЖНО!";
+  const importantText = content.important?.content || "";
+  const scheduleTitle = content.schedule_title?.title || "Доставляем 24/7";
+  const zonesTitle = content.zones_title?.title || "Зоны и стоимость доставки";
+  const zones = (content.zones?.extra_data?.zones as DeliveryZone[]) || [];
+  const contactText = content.contact?.content || "Окончательную сумму доставки поможет рассчитать наш менеджер";
+  const contactButton = (content.contact?.extra_data?.button_text as string) || "Связаться с менеджером";
+  const pickupTitle = content.pickup_title?.title || "Самовывоз";
+  const pickupText = content.pickup_text?.content || "";
+  const addresses = (content.pickup_addresses?.extra_data?.addresses as string[]) || [];
 
   return (
     <Layout>
@@ -25,120 +37,112 @@ const DeliveryPage = () => {
         title="Доставка воздушных шаров"
         description="Доставка воздушных шаров по Краснодару и Краснодарскому краю. Доставка от 2 часов, работаем ежедневно 10:00-20:00. Бесплатная доставка от 5000₽."
         keywords="доставка шаров Краснодар, доставка воздушных шаров, курьерская доставка шаров, доставка гелиевых шаров"
-        canonicalPath="/delivery" />
+        canonicalPath="/delivery"
+      />
 
       <div className="container py-8">
         <div className="flex gap-8">
-          
           <main className="flex-1">
             {/* Hero Banner */}
             <div className="relative rounded-2xl overflow-hidden mb-8 bg-gradient-to-r from-primary/20 to-secondary/20">
               <div className="p-8 md:p-12">
-                <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">
-                  {content.main_title?.title || "ДОСТАВКА"}
-                </h1>
-                <p className="text-xl text-primary font-semibold">
-                  по Краснодару и Краснодарскому краю
-                </p>
+                <h1 className="font-heading text-3xl md:text-4xl font-bold mb-4">{heroTitle}</h1>
+                <p className="text-xl text-primary font-semibold">{heroSubtitle}</p>
               </div>
-              <img
-                src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop"
-                alt="Доставка шаров"
-                className="absolute right-0 top-0 h-full w-1/3 object-cover hidden md:block" />
-
+              {heroImage && (
+                <img
+                  src={heroImage}
+                  alt="Доставка шаров"
+                  className="absolute right-0 top-0 h-full w-1/3 object-cover hidden md:block"
+                />
+              )}
             </div>
 
             {/* Main Content */}
             <div className="prose prose-lg max-w-none mb-8">
-              <p>
-                {content.description?.content || "Получить свой заказ вы можете любым удобным способом: доставкой или самовывозом."}
-              </p>
-              <p>
-                Компания "Радуга Праздника" осуществляет круглосуточную доставку шаров по Краснодару и Краснодарскому краю.
-              </p>
+              {desc1 && <p>{desc1}</p>}
+              {desc2 && <p>{desc2}</p>}
             </div>
 
             {/* Important Info */}
-            <div className="bg-secondary/10 border border-secondary/30 rounded-xl p-6 mb-8">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-6 w-6 text-secondary shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-secondary mb-2">ВАЖНО!</p>
-                  <p className="text-sm">При заказе 3-х и более наборов возможно получить скидку на доставку. Уточняйте у менеджера!
-
-                  </p>
+            {importantText && (
+              <div className="bg-secondary/10 border border-secondary/30 rounded-xl p-6 mb-8">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-6 w-6 text-secondary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-secondary mb-2">{importantTitle}</p>
+                    <p className="text-sm">{importantText}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Delivery Tariffs */}
-            <h2 className="font-heading text-2xl font-bold mb-4">Доставляем 24/7</h2>
-            
-            {/* Delivery Zones */}
-            <h2 className="font-heading text-2xl font-bold mb-4">
-              {content.zone_1?.title ? "Зоны доставки" : "Зоны и стоимость доставки"}
-            </h2>
-            
-            <div className="overflow-x-auto mb-8">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-primary text-primary-foreground">
-                    <th className="px-4 py-3 text-left">Зона доставки</th>
-                    <th className="px-4 py-3 text-left">Стоимость</th>
-                    <th className="px-4 py-3 text-left">Время доставки</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deliveryZones.map((zone, index) =>
-                  <tr key={index} className={index % 2 === 0 ? "bg-muted/30" : ""}>
-                      <td className="px-4 py-3 border-b">{zone.zone}</td>
-                      <td className="px-4 py-3 border-b font-semibold text-primary">{zone.price}</td>
-                      <td className="px-4 py-3 border-b">{zone.time}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            {/* Schedule Title */}
+            {scheduleTitle && <h2 className="font-heading text-2xl font-bold mb-4">{scheduleTitle}</h2>}
+
+            {/* Zones */}
+            {zones.length > 0 && (
+              <>
+                <h2 className="font-heading text-2xl font-bold mb-4">{zonesTitle}</h2>
+                <div className="overflow-x-auto mb-8">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-primary text-primary-foreground">
+                        <th className="px-4 py-3 text-left">Зона доставки</th>
+                        <th className="px-4 py-3 text-left">Стоимость</th>
+                        <th className="px-4 py-3 text-left">Время доставки</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zones.map((zone, index) => (
+                        <tr key={index} className={index % 2 === 0 ? "bg-muted/30" : ""}>
+                          <td className="px-4 py-3 border-b">{zone.zone}</td>
+                          <td className="px-4 py-3 border-b font-semibold text-primary">{zone.price}</td>
+                          <td className="px-4 py-3 border-b">{zone.time}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
 
             {/* Contact */}
             <div id="calculator" className="bg-primary/10 rounded-xl p-6 mb-8 text-center">
-              <p className="mb-4">Окончательную сумму доставки поможет рассчитать наш менеджер</p>
+              <p className="mb-4">{contactText}</p>
               <Button
                 className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                onClick={() => whatsapp && window.open(whatsapp, "_blank")}>
-
-                Связаться с менеджером
+                onClick={() => whatsapp && window.open(whatsapp, "_blank")}
+              >
+                {contactButton}
               </Button>
             </div>
 
-            {/* Pickup Info */}
-            <h2 className="font-heading text-2xl font-bold mb-4">Самовывоз</h2>
-            <div className="prose prose-lg max-w-none mb-8">
-              <p>
-                Также вы можете забрать свой заказ самовывозом в наших магазинах:
-              </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>г. Краснодар, ул. Российская 72/1к1, торговая галерея Опера, 5 павильон</li>
-                <li>г. Краснодар, ул. Краеведа Соловьёва 2к1, магазин «Воздушные шары»</li>
-              </ul>
-              <p>
-
-              </p>
-              <p>
-
-              </p>
-            </div>
-
+            {/* Pickup */}
+            {(pickupTitle || addresses.length > 0) && (
+              <>
+                <h2 className="font-heading text-2xl font-bold mb-4">{pickupTitle}</h2>
+                <div className="prose prose-lg max-w-none mb-8">
+                  {pickupText && <p>{pickupText}</p>}
+                  {addresses.length > 0 && (
+                    <ul className="list-disc pl-6 space-y-2">
+                      {addresses.map((addr, i) => (
+                        <li key={i}>{addr}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
           </main>
 
-          {/* Right Sidebar */}
           <div className="hidden xl:block w-64 shrink-0">
             <SidebarWidgets />
           </div>
         </div>
       </div>
-    </Layout>);
-
+    </Layout>
+  );
 };
 
 export default DeliveryPage;

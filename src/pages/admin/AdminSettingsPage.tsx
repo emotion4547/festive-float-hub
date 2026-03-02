@@ -18,6 +18,7 @@ import { Loader2, Save, Globe, Phone, Share2, Truck, MessageCircle, Send } from 
 import { BrandingSettings } from "@/components/admin/BrandingSettings";
 import { SocialLinksManager } from "@/components/admin/SocialLinksManager";
 import { HeroSettings } from "@/components/admin/HeroSettings";
+import { DeliverySettings } from "@/components/admin/DeliverySettings";
 
 interface Setting {
   id: string;
@@ -283,40 +284,7 @@ export default function AdminSettingsPage() {
 
         {/* Delivery Settings */}
         <TabsContent value="delivery" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5" />
-                Настройки доставки
-              </CardTitle>
-              <CardDescription>
-                Пороги бесплатной доставки и стоимость
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              {settingsByCategory.delivery?.map((s) => (
-                <div key={s.key} className="space-y-2">
-                  <Label htmlFor={s.key}>{s.label}</Label>
-                  <Input
-                    id={s.key}
-                    value={s.value || ""}
-                    onChange={(e) => handleSettingChange(s.key, e.target.value)}
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveSettings} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Сохранить настройки
-            </Button>
-          </div>
+          <DeliverySettings />
         </TabsContent>
 
         {/* Pages Content */}
