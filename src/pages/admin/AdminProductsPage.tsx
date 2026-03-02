@@ -543,7 +543,7 @@ export default function AdminProductsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">
-                              <Badge variant={product.in_stock ? "default" : "secondary"}>{product.in_stock ? "В наличии" : "Нет в наличии"}</Badge>
+                              <Badge variant={product.in_stock ? "default" : "secondary"} className="whitespace-nowrap">{product.in_stock ? "В наличии" : "Нет в наличии"}</Badge>
                               {!product.is_visible && <Badge variant="outline" className="text-xs text-orange-500 border-orange-300 w-fit">Скрыт</Badge>}
                             </div>
                           </TableCell>
