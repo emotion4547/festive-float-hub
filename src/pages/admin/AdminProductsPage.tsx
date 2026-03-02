@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -28,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, Plus, Edit, Trash2, Package, Eye, EyeOff, Copy } from "lucide-react";
+import { Loader2, Search, Plus, Edit, Trash2, Package, Eye, EyeOff, Copy, X, CheckSquare } from "lucide-react";
 import { ExcelImport } from "@/components/admin/ExcelImport";
 import { CategoryManager } from "@/components/admin/CategoryManager";
 
@@ -43,21 +44,30 @@ interface Product {
   is_visible: boolean;
   images: string[] | null;
   created_at: string;
+  category_id: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date-desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at")
+        .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at, category_id")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -70,9 +80,20 @@ export default function AdminProductsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    const { data } = await supabase.from("categories").select("id, name").order("name");
+    setCategories(data || []);
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  // Clear selection when search/sort changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [searchQuery, sortBy]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
@@ -104,7 +125,6 @@ export default function AdminProductsPage() {
   };
 
   const handleCopyProduct = async (product: Product) => {
-    // Fetch full product data for copy
     try {
       const { data, error } = await supabase
         .from("products")
@@ -114,11 +134,118 @@ export default function AdminProductsPage() {
 
       if (error) throw error;
 
-      // Store in sessionStorage to pass to the new product form
       sessionStorage.setItem("copyProductData", JSON.stringify(data));
       navigate("/admin/products/new?copy=true");
     } catch (error) {
       toast({ variant: "destructive", title: "Ошибка", description: "Не удалось скопировать товар" });
+    }
+  };
+
+  // --- Bulk actions ---
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredProducts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const selectByCategory = (categoryId: string) => {
+    const ids = filteredProducts.filter(p => p.category_id === categoryId).map(p => p.id);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      ids.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  const handleBulkHide = async () => {
+    if (!selectedIds.size) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_visible: false })
+        .in("id", Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: `${selectedIds.size} товар(ов) скрыто` });
+      setSelectedIds(new Set());
+      fetchProducts();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при скрытии" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkShow = async () => {
+    if (!selectedIds.size) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_visible: true })
+        .in("id", Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: `${selectedIds.size} товар(ов) показано` });
+      setSelectedIds(new Set());
+      fetchProducts();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при показе" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.size) return;
+    if (!confirm(`Удалить ${selectedIds.size} товар(ов)? Это действие нельзя отменить.`)) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .in("id", Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: `${selectedIds.size} товар(ов) удалено` });
+      setSelectedIds(new Set());
+      fetchProducts();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при удалении" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkCopy = async () => {
+    if (!selectedIds.size) return;
+    setBulkProcessing(true);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .in("id", Array.from(selectedIds));
+      if (error || !data) throw error;
+
+      for (const product of data) {
+        const { id, created_at, updated_at, ...rest } = product as any;
+        await supabase.from("products").insert({ ...rest, name: `${rest.name} (копия)` });
+      }
+      toast({ title: `${selectedIds.size} товар(ов) скопировано` });
+      setSelectedIds(new Set());
+      fetchProducts();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при копировании" });
+    } finally {
+      setBulkProcessing(false);
     }
   };
 
@@ -152,6 +279,8 @@ export default function AdminProductsPage() {
     return result;
   }, [products, searchQuery, sortBy]);
 
+  const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
+
   if (loading) {
     return (
       <AdminLayout title="Товары">
@@ -166,57 +295,31 @@ export default function AdminProductsPage() {
     <div className="flex gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => handleToggleVisibility(product)}
-          >
-            {product.is_visible ? (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-orange-500" />
-            )}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleVisibility(product)}>
+            {product.is_visible ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-orange-500" />}
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
-          {product.is_visible ? "Скрыть с сайта" : "Показать на сайте"}
-        </TooltipContent>
+        <TooltipContent>{product.is_visible ? "Скрыть с сайта" : "Показать на сайте"}</TooltipContent>
       </Tooltip>
-
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => handleCopyProduct(product)}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopyProduct(product)}>
             <Copy className="h-4 w-4 text-muted-foreground" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Копировать товар</TooltipContent>
       </Tooltip>
-
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link to={`/admin/products/${product.id}`}>
-              <Edit className="h-4 w-4" />
-            </Link>
+            <Link to={`/admin/products/${product.id}`}><Edit className="h-4 w-4" /></Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent>Редактировать</TooltipContent>
       </Tooltip>
-
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => handleDelete(product.id)}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(product.id)}>
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
         </TooltipTrigger>
@@ -224,6 +327,36 @@ export default function AdminProductsPage() {
       </Tooltip>
     </div>
   );
+
+  // Bulk action bar component
+  const BulkActionBar = () => {
+    if (selectedIds.size === 0) return null;
+    return (
+      <div className="sticky top-0 z-20 bg-primary text-primary-foreground rounded-lg p-3 flex flex-wrap items-center gap-2 shadow-lg animate-in slide-in-from-top-2">
+        <div className="flex items-center gap-2 mr-auto">
+          <CheckSquare className="h-5 w-5" />
+          <span className="font-medium text-sm">
+            Выбрано: {selectedIds.size}
+          </span>
+        </div>
+        <Button size="sm" variant="secondary" onClick={handleBulkShow} disabled={bulkProcessing}>
+          <Eye className="h-4 w-4 mr-1" /> Показать
+        </Button>
+        <Button size="sm" variant="secondary" onClick={handleBulkHide} disabled={bulkProcessing}>
+          <EyeOff className="h-4 w-4 mr-1" /> Скрыть
+        </Button>
+        <Button size="sm" variant="secondary" onClick={handleBulkCopy} disabled={bulkProcessing}>
+          <Copy className="h-4 w-4 mr-1" /> Копировать
+        </Button>
+        <Button size="sm" variant="destructive" onClick={handleBulkDelete} disabled={bulkProcessing}>
+          <Trash2 className="h-4 w-4 mr-1" /> Удалить
+        </Button>
+        <Button size="sm" variant="ghost" className="text-primary-foreground hover:text-primary-foreground/80" onClick={() => setSelectedIds(new Set())}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <AdminLayout title="Товары">
@@ -247,7 +380,18 @@ export default function AdminProductsPage() {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {/* Select by category */}
+              <Select onValueChange={selectByCategory}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Выделить категорию" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Сортировка" />
@@ -270,6 +414,9 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
+          {/* Bulk Action Bar */}
+          <BulkActionBar />
+
           {/* Products Table */}
           {filteredProducts.length === 0 ? (
             <Card>
@@ -283,17 +430,18 @@ export default function AdminProductsPage() {
               {/* Mobile Cards View */}
               <div className="grid grid-cols-1 gap-3 md:hidden">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className={`overflow-hidden ${!product.is_visible ? "opacity-60" : ""}`}>
+                  <Card key={product.id} className={`overflow-hidden ${!product.is_visible ? "opacity-60" : ""} ${selectedIds.has(product.id) ? "ring-2 ring-primary" : ""}`}>
                     <CardContent className="p-3">
                       <div className="flex gap-3">
+                        <div className="flex items-start pt-1">
+                          <Checkbox
+                            checked={selectedIds.has(product.id)}
+                            onCheckedChange={() => toggleSelect(product.id)}
+                          />
+                        </div>
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
                           {product.images && product.images[0] ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
+                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Package className="h-6 w-6 text-muted-foreground" />
@@ -306,31 +454,16 @@ export default function AdminProductsPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm line-clamp-2 mb-1">
-                            {product.name}
-                          </h3>
+                          <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-sm">
-                              {Number(product.price).toLocaleString("ru-RU")} ₽
-                            </span>
+                            <span className="font-semibold text-sm">{Number(product.price).toLocaleString("ru-RU")} ₽</span>
                             {product.old_price && (
-                              <span className="text-xs text-muted-foreground line-through">
-                                {Number(product.old_price).toLocaleString("ru-RU")} ₽
-                              </span>
+                              <span className="text-xs text-muted-foreground line-through">{Number(product.old_price).toLocaleString("ru-RU")} ₽</span>
                             )}
                           </div>
                           <div className="flex items-center gap-1 flex-wrap">
-                            <Badge
-                              variant={product.in_stock ? "default" : "secondary"}
-                              className="text-xs"
-                            >
-                              {product.in_stock ? "В наличии" : "Нет"}
-                            </Badge>
-                            {!product.is_visible && (
-                              <Badge variant="outline" className="text-xs text-orange-500 border-orange-300">
-                                Скрыт
-                              </Badge>
-                            )}
+                            <Badge variant={product.in_stock ? "default" : "secondary"} className="text-xs">{product.in_stock ? "В наличии" : "Нет"}</Badge>
+                            {!product.is_visible && <Badge variant="outline" className="text-xs text-orange-500 border-orange-300">Скрыт</Badge>}
                             {product.is_new && <Badge variant="outline" className="text-xs">Новое</Badge>}
                             {product.is_hit && <Badge variant="outline" className="text-xs">Хит</Badge>}
                           </div>
@@ -350,6 +483,12 @@ export default function AdminProductsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
                         <TableHead className="w-16">Фото</TableHead>
                         <TableHead>Название</TableHead>
                         <TableHead>Цена</TableHead>
@@ -360,16 +499,17 @@ export default function AdminProductsPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredProducts.map((product) => (
-                        <TableRow key={product.id} className={!product.is_visible ? "opacity-60" : ""}>
+                        <TableRow key={product.id} className={`${!product.is_visible ? "opacity-60" : ""} ${selectedIds.has(product.id) ? "bg-primary/5" : ""}`}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(product.id)}
+                              onCheckedChange={() => toggleSelect(product.id)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted relative">
                               {product.images && product.images[0] ? (
-                                <img
-                                  src={product.images[0]}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
+                                <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                   <Package className="h-5 w-5 text-muted-foreground" />
@@ -382,31 +522,19 @@ export default function AdminProductsPage() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="font-medium max-w-xs truncate">
-                            {product.name}
-                          </TableCell>
+                          <TableCell className="font-medium max-w-xs truncate">{product.name}</TableCell>
                           <TableCell>
                             <div>
-                              <span className="font-medium">
-                                {Number(product.price).toLocaleString("ru-RU")} ₽
-                              </span>
+                              <span className="font-medium">{Number(product.price).toLocaleString("ru-RU")} ₽</span>
                               {product.old_price && (
-                                <span className="text-sm text-muted-foreground line-through ml-2">
-                                  {Number(product.old_price).toLocaleString("ru-RU")} ₽
-                                </span>
+                                <span className="text-sm text-muted-foreground line-through ml-2">{Number(product.old_price).toLocaleString("ru-RU")} ₽</span>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">
-                              <Badge variant={product.in_stock ? "default" : "secondary"}>
-                                {product.in_stock ? "В наличии" : "Нет в наличии"}
-                              </Badge>
-                              {!product.is_visible && (
-                                <Badge variant="outline" className="text-xs text-orange-500 border-orange-300 w-fit">
-                                  Скрыт
-                                </Badge>
-                              )}
+                              <Badge variant={product.in_stock ? "default" : "secondary"}>{product.in_stock ? "В наличии" : "Нет в наличии"}</Badge>
+                              {!product.is_visible && <Badge variant="outline" className="text-xs text-orange-500 border-orange-300 w-fit">Скрыт</Badge>}
                             </div>
                           </TableCell>
                           <TableCell>
