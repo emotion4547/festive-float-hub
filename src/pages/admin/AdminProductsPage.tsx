@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -141,22 +141,54 @@ export default function AdminProductsPage() {
     }
   };
 
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortBy) {
+      case "date-asc":
+        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.name.localeCompare(a.name, "ru"));
+        break;
+      case "price-asc":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "date-desc":
+      default:
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+    }
+
+    return result;
+  }, [products, searchQuery, sortBy]);
+
   // --- Bulk actions ---
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredProducts.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
-    }
-  };
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      if (prev.size === filteredProducts.length) {
+        return new Set();
+      } else {
+        return new Set(filteredProducts.map(p => p.id));
+      }
+    });
+  }, [filteredProducts]);
 
   const selectByCategory = (categoryId: string) => {
     const ids = filteredProducts.filter(p => p.category_id === categoryId).map(p => p.id);
@@ -249,35 +281,6 @@ export default function AdminProductsPage() {
     }
   };
 
-  const filteredProducts = useMemo(() => {
-    let result = products.filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    switch (sortBy) {
-      case "date-asc":
-        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        break;
-      case "name-asc":
-        result.sort((a, b) => a.name.localeCompare(b.name, "ru"));
-        break;
-      case "name-desc":
-        result.sort((a, b) => b.name.localeCompare(a.name, "ru"));
-        break;
-      case "price-asc":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case "date-desc":
-      default:
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-    }
-
-    return result;
-  }, [products, searchQuery, sortBy]);
 
   const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
 
@@ -291,7 +294,7 @@ export default function AdminProductsPage() {
     );
   }
 
-  const ActionButtons = ({ product }: { product: Product }) => (
+  const ActionButtons = memo(({ product }: { product: Product }) => (
     <div className="flex gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
@@ -326,7 +329,8 @@ export default function AdminProductsPage() {
         <TooltipContent>Удалить</TooltipContent>
       </Tooltip>
     </div>
-  );
+  ));
+  ActionButtons.displayName = "ActionButtons";
 
   // Bulk action bar component
   const BulkActionBar = () => {
@@ -433,10 +437,12 @@ export default function AdminProductsPage() {
                   <Card key={product.id} className={`overflow-hidden ${!product.is_visible ? "opacity-60" : ""} ${selectedIds.has(product.id) ? "ring-2 ring-primary" : ""}`}>
                     <CardContent className="p-3">
                       <div className="flex gap-3">
-                        <div className="flex items-start pt-1">
-                          <Checkbox
+                        <div className="flex items-start pt-1" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
                             checked={selectedIds.has(product.id)}
-                            onCheckedChange={() => toggleSelect(product.id)}
+                            onChange={() => toggleSelect(product.id)}
+                            className="h-4 w-4 rounded border-primary accent-primary cursor-pointer"
                           />
                         </div>
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
@@ -484,9 +490,11 @@ export default function AdminProductsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
-                          <Checkbox
+                          <input
+                            type="checkbox"
                             checked={allSelected}
-                            onCheckedChange={toggleSelectAll}
+                            onChange={toggleSelectAll}
+                            className="h-4 w-4 rounded border-primary accent-primary cursor-pointer"
                           />
                         </TableHead>
                         <TableHead className="w-16">Фото</TableHead>
@@ -500,10 +508,12 @@ export default function AdminProductsPage() {
                     <TableBody>
                       {filteredProducts.map((product) => (
                         <TableRow key={product.id} className={`${!product.is_visible ? "opacity-60" : ""} ${selectedIds.has(product.id) ? "bg-primary/5" : ""}`}>
-                          <TableCell>
-                            <Checkbox
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
                               checked={selectedIds.has(product.id)}
-                              onCheckedChange={() => toggleSelect(product.id)}
+                              onChange={() => toggleSelect(product.id)}
+                              className="h-4 w-4 rounded border-primary accent-primary cursor-pointer"
                             />
                           </TableCell>
                           <TableCell>
