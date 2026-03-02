@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { SlidersHorizontal, ChevronRight } from "lucide-react";
+import { SlidersHorizontal, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,17 +24,8 @@ import { useProducts, useCategories } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEOHead } from "@/components/SEOHead";
 import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/seoSchemas";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 12;
+const VISIBLE_STEPS = [50, 100, 500, 1000, Infinity] as const;
 
 const defaultFilters: FilterState = {
   priceRange: [300, 15000],
@@ -53,7 +44,7 @@ const CatalogPage = () => {
   const searchQuery = searchParams.get("search") || "";
   const sortBy = searchParams.get("sort") || "popular";
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [visibleStepIndex, setVisibleStepIndex] = useState(0);
 
   const handleSortChange = (val: string) => {
     setSearchParams(prev => {
@@ -65,7 +56,7 @@ const CatalogPage = () => {
       }
       return next;
     }, { replace: true });
-    setCurrentPage(1);
+    setVisibleStepIndex(0);
   };
   const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   
@@ -127,10 +118,8 @@ const CatalogPage = () => {
 
     // Filter by category from URL or filter panel
     if (categorySlug && currentCategory) {
-      // Use category_id for reliable filtering instead of nested categories object
       result = result.filter(p => p.category_id === currentCategory.id);
     } else if (filters.categories.length > 0) {
-      // filters.categories contains category IDs from the filter panel
       result = result.filter(p => {
         if (!p.category_id) return false;
         return filters.categories.includes(p.category_id);
@@ -162,16 +151,16 @@ const CatalogPage = () => {
 
     // Apply sorting
     switch (sortBy) {
-      case "date-desc": // Сначала новые
+      case "date-desc":
         result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         break;
-      case "date-asc": // Сначала старые
+      case "date-asc":
         result.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
         break;
-      case "name-asc": // от А до Я
+      case "name-asc":
         result.sort((a, b) => a.name.localeCompare(b.name, "ru"));
         break;
-      case "name-desc": // от Я до А
+      case "name-desc":
         result.sort((a, b) => b.name.localeCompare(a.name, "ru"));
         break;
       case "price-asc":
@@ -185,7 +174,6 @@ const CatalogPage = () => {
         break;
       case "popular":
       default:
-        // Sort: with images first, then hits, then by rating
         result.sort((a, b) => {
           const aHasImage = a.images && a.images.length > 0 && a.images[0] ? 1 : 0;
           const bHasImage = b.images && b.images.length > 0 && b.images[0] ? 1 : 0;
@@ -201,42 +189,53 @@ const CatalogPage = () => {
     return result;
   }, [products, filters, sortBy, categorySlug, filterParam, currentCategory, searchQuery]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+  // Progressive pagination
+  const currentLimit = VISIBLE_STEPS[visibleStepIndex];
+  const visibleProducts = useMemo(() => {
+    if (currentLimit === Infinity) return filteredProducts;
+    return filteredProducts.slice(0, currentLimit);
+  }, [filteredProducts, currentLimit]);
 
-  // Reset page when filters change
+  const totalCount = filteredProducts.length;
+  const showingAll = currentLimit === Infinity || currentLimit >= totalCount;
+  const isAtFirstStep = visibleStepIndex === 0;
+
+  // Find the next meaningful step (skip steps that don't add more products)
+  const canShowMore = !showingAll;
+  const canShowLess = visibleStepIndex > 0;
+
+  const getNextStepLabel = () => {
+    if (!canShowMore) return "";
+    const nextIndex = visibleStepIndex + 1;
+    const nextStep = VISIBLE_STEPS[nextIndex];
+    if (nextStep === Infinity) return "Показать все";
+    return `Показать ${nextStep}`;
+  };
+
+  const getPrevStepLabel = () => {
+    if (!canShowLess) return "";
+    const prevIndex = visibleStepIndex - 1;
+    const prevStep = VISIBLE_STEPS[prevIndex];
+    return `Свернуть до ${prevStep}`;
+  };
+
+  const handleShowMore = () => {
+    if (visibleStepIndex < VISIBLE_STEPS.length - 1) {
+      setVisibleStepIndex(visibleStepIndex + 1);
+    }
+  };
+
+  const handleShowLess = () => {
+    if (visibleStepIndex > 0) {
+      setVisibleStepIndex(visibleStepIndex - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // Reset step when filters change
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // Generate page numbers to show
-  const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("ellipsis");
-      
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      
-      for (let i = start; i <= end; i++) pages.push(i);
-      
-      if (currentPage < totalPages - 2) pages.push("ellipsis");
-      pages.push(totalPages);
-    }
-    return pages;
+    setVisibleStepIndex(0);
   };
 
   // Generate structured data for SEO
@@ -248,7 +247,7 @@ const CatalogPage = () => {
 
   const itemListSchema = generateItemListSchema(
     getPageTitle(),
-    paginatedProducts.map(p => ({
+    visibleProducts.map(p => ({
       id: p.id,
       name: p.name,
       price: p.price,
@@ -263,6 +262,8 @@ const CatalogPage = () => {
       itemListSchema,
     ],
   };
+
+  const visibleCount = visibleProducts.length;
 
   return (
     <Layout>
@@ -294,7 +295,11 @@ const CatalogPage = () => {
             <h1 className="font-heading text-2xl md:text-3xl font-bold">
               {getPageTitle()}
             </h1>
-            <p className="text-muted-foreground mt-1">{filteredProducts.length} товаров</p>
+            <p className="text-muted-foreground mt-1">
+              {showingAll
+                ? `${totalCount} товаров`
+                : `Показано ${visibleCount} из ${totalCount} товаров`}
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {/* Mobile Filter Button */}
@@ -315,7 +320,7 @@ const CatalogPage = () => {
                     onFilterChange={handleFilterChange}
                     onReset={() => {
                       setFilters(defaultFilters);
-                      setCurrentPage(1);
+                      setVisibleStepIndex(0);
                     }}
                   />
                 </div>
@@ -350,7 +355,7 @@ const CatalogPage = () => {
                 onFilterChange={handleFilterChange}
                 onReset={() => {
                   setFilters(defaultFilters);
-                  setCurrentPage(1);
+                  setVisibleStepIndex(0);
                 }}
               />
             </div>
@@ -371,7 +376,7 @@ const CatalogPage = () => {
             ) : (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {paginatedProducts.map((product) => (
+                  {visibleProducts.map((product) => (
                     <ProductCard 
                       key={product.id} 
                       product={product} 
@@ -380,41 +385,30 @@ const CatalogPage = () => {
                   ))}
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <Pagination className="mt-8">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {getPageNumbers().map((page, index) => (
-                        <PaginationItem key={index}>
-                          {page === "ellipsis" ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={() => handlePageChange(page)}
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+                {/* Progressive Show More / Show Less */}
+                {totalCount > VISIBLE_STEPS[0] && (
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+                    {canShowLess && (
+                      <Button
+                        variant="outline"
+                        onClick={handleShowLess}
+                        className="gap-2"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        {getPrevStepLabel()}
+                      </Button>
+                    )}
+                    {canShowMore && (
+                      <Button
+                        variant="default"
+                        onClick={handleShowMore}
+                        className="gap-2"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        {getNextStepLabel()}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -429,7 +423,7 @@ const CatalogPage = () => {
                   className="mt-4"
                   onClick={() => {
                     setFilters(defaultFilters);
-                    setCurrentPage(1);
+                    setVisibleStepIndex(0);
                   }}
                 >
                   Сбросить фильтры
