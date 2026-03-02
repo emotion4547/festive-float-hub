@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Search, Link } from "lucide-react";
 import { SortableList } from "@/components/admin/SortableList";
 import { SortableItem } from "@/components/admin/SortableItem";
 
@@ -74,6 +75,9 @@ export default function AdminCollectionEditPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [addMode, setAddMode] = useState<"search" | "urls">("search");
 
   const fetchData = async () => {
     if (!id) return;
@@ -175,6 +179,89 @@ export default function AdminCollectionEditPage() {
     setSelectedProductId("");
     setProductDialogOpen(false);
     fetchData();
+  };
+
+  const handleBulkAddByUrls = async () => {
+    if (!bulkUrls.trim() || !id) return;
+    setBulkLoading(true);
+
+    // Extract product names/slugs from URLs
+    const lines = bulkUrls
+      .split(/[\n,]+/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    // Extract the last path segment from each URL
+    const slugs: string[] = [];
+    for (const line of lines) {
+      try {
+        const url = new URL(line, "https://example.com");
+        const segments = url.pathname.split("/").filter(Boolean);
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment) slugs.push(decodeURIComponent(lastSegment));
+      } catch {
+        // Try treating as plain slug
+        const cleaned = line.replace(/^\/+|\/+$/g, "").split("/").pop();
+        if (cleaned) slugs.push(cleaned);
+      }
+    }
+
+    if (slugs.length === 0) {
+      toast({ title: "Не удалось извлечь товары из ссылок", variant: "destructive" });
+      setBulkLoading(false);
+      return;
+    }
+
+    // Find products by matching ID or name (case-insensitive partial match)
+    let addedCount = 0;
+    const existingProductIds = new Set(collectionProducts.map((cp) => cp.product_id));
+    const currentSortOrder = collectionProducts.length;
+
+    for (let i = 0; i < slugs.length; i++) {
+      const slug = slugs[i];
+      
+      // Try to find product by ID first, then by name match
+      let productId: string | null = null;
+
+      // Check if it's a UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(slug)) {
+        const match = allProducts.find((p) => p.id === slug);
+        if (match) productId = match.id;
+      }
+
+      // Try matching by name (URL-decoded slug might contain the product name)
+      if (!productId) {
+        const decodedSlug = slug.replace(/-/g, " ").toLowerCase();
+        const match = allProducts.find(
+          (p) => p.name.toLowerCase() === decodedSlug || p.id === slug
+        );
+        if (match) productId = match.id;
+      }
+
+      if (productId && !existingProductIds.has(productId)) {
+        const { error } = await supabase.from("collection_products").insert({
+          collection_id: id,
+          product_id: productId,
+          sort_order: currentSortOrder + addedCount,
+        });
+        if (!error) {
+          addedCount++;
+          existingProductIds.add(productId);
+        }
+      }
+    }
+
+    if (addedCount > 0) {
+      toast({ title: `Добавлено товаров: ${addedCount}` });
+      setBulkUrls("");
+      setProductDialogOpen(false);
+      fetchData();
+    } else {
+      toast({ title: "Товары не найдены или уже добавлены", variant: "destructive" });
+    }
+
+    setBulkLoading(false);
   };
 
   const handleRemoveProduct = async (productRelationId: string) => {
@@ -288,51 +375,87 @@ export default function AdminCollectionEditPage() {
                   <DialogHeader>
                     <DialogTitle>Добавить товар в подборку</DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Поиск товара..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {filteredProducts.slice(0, 20).map((product) => {
-                        const isAdded = collectionProducts.some((cp) => cp.product_id === product.id);
-                        return (
-                          <div
-                            key={product.id}
-                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer border transition-colors ${
-                              selectedProductId === product.id
-                                ? "border-primary bg-primary/5"
-                                : isAdded
-                                ? "border-muted bg-muted/50 opacity-50"
-                                : "border-transparent hover:bg-muted"
-                            }`}
-                            onClick={() => !isAdded && setSelectedProductId(product.id)}
-                          >
-                            {product.images?.[0] && (
-                              <img
-                                src={product.images[0]}
-                                alt={product.name}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">{product.price} ₽</p>
+                  <Tabs value={addMode} onValueChange={(v) => setAddMode(v as "search" | "urls")}>
+                    <TabsList className="w-full">
+                      <TabsTrigger value="search" className="flex-1">
+                        <Search className="h-4 w-4 mr-2" />
+                        Поиск
+                      </TabsTrigger>
+                      <TabsTrigger value="urls" className="flex-1">
+                        <Link className="h-4 w-4 mr-2" />
+                        По ссылкам
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="search" className="space-y-4 mt-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Поиск товара..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {filteredProducts.slice(0, 20).map((product) => {
+                          const isAdded = collectionProducts.some((cp) => cp.product_id === product.id);
+                          return (
+                            <div
+                              key={product.id}
+                              className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer border transition-colors ${
+                                selectedProductId === product.id
+                                  ? "border-primary bg-primary/5"
+                                  : isAdded
+                                  ? "border-muted bg-muted/50 opacity-50"
+                                  : "border-transparent hover:bg-muted"
+                              }`}
+                              onClick={() => !isAdded && setSelectedProductId(product.id)}
+                            >
+                              {product.images?.[0] && (
+                                <img
+                                  src={product.images[0]}
+                                  alt={product.name}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{product.name}</p>
+                                <p className="text-sm text-muted-foreground">{product.price} ₽</p>
+                              </div>
+                              {isAdded && <Badge variant="secondary">Добавлен</Badge>}
                             </div>
-                            {isAdded && <Badge variant="secondary">Добавлен</Badge>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <Button onClick={handleAddProduct} disabled={!selectedProductId} className="w-full">
-                      Добавить выбранный товар
-                    </Button>
-                  </div>
+                          );
+                        })}
+                      </div>
+                      <Button onClick={handleAddProduct} disabled={!selectedProductId} className="w-full">
+                        Добавить выбранный товар
+                      </Button>
+                    </TabsContent>
+
+                    <TabsContent value="urls" className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Вставьте ссылки на товары (каждая с новой строки)</Label>
+                        <Textarea
+                          placeholder={`https://festive-float-hub.lovable.app/product/uuid-товара\nhttps://сайт.ru/product/другой-товар\n...`}
+                          value={bulkUrls}
+                          onChange={(e) => setBulkUrls(e.target.value)}
+                          rows={6}
+                          className="font-mono text-xs"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Поддерживаются ссылки вида /product/ID. Можно вставить несколько ссылок, каждую с новой строки.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleBulkAddByUrls}
+                        disabled={!bulkUrls.trim() || bulkLoading}
+                        className="w-full"
+                      >
+                        {bulkLoading ? "Добавление..." : "Добавить товары по ссылкам"}
+                      </Button>
+                    </TabsContent>
+                  </Tabs>
                 </DialogContent>
               </Dialog>
             </div>
