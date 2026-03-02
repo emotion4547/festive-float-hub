@@ -133,6 +133,7 @@ export type Database = {
           created_at: string
           id: string
           image: string | null
+          is_visible: boolean
           name: string
           parent_id: string | null
           slug: string
@@ -142,6 +143,7 @@ export type Database = {
           created_at?: string
           id?: string
           image?: string | null
+          is_visible?: boolean
           name: string
           parent_id?: string | null
           slug: string
@@ -151,6 +153,7 @@ export type Database = {
           created_at?: string
           id?: string
           image?: string | null
+          is_visible?: boolean
           name?: string
           parent_id?: string | null
           slug?: string
