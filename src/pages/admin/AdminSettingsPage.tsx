@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Globe, Phone, Share2, Truck, MessageCircle, Send } from "lucide-react";
 import { BrandingSettings } from "@/components/admin/BrandingSettings";
 import { SocialLinksManager } from "@/components/admin/SocialLinksManager";
+import { HeroSettings } from "@/components/admin/HeroSettings";
 
 interface Setting {
   id: string;
@@ -168,6 +169,7 @@ export default function AdminSettingsPage() {
       <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="branding" className="text-xs sm:text-sm">Брендинг</TabsTrigger>
+          <TabsTrigger value="hero" className="text-xs sm:text-sm">Херо-блок</TabsTrigger>
           <TabsTrigger value="general" className="text-xs sm:text-sm">Общие</TabsTrigger>
           <TabsTrigger value="contacts" className="text-xs sm:text-sm">Контакты</TabsTrigger>
           <TabsTrigger value="social" className="text-xs sm:text-sm">Соцсети</TabsTrigger>
@@ -178,6 +180,11 @@ export default function AdminSettingsPage() {
         {/* Branding Tab */}
         <TabsContent value="branding">
           <BrandingSettings />
+        </TabsContent>
+
+        {/* Hero Tab */}
+        <TabsContent value="hero">
+          <HeroSettings />
         </TabsContent>
 
         {/* General Settings */}

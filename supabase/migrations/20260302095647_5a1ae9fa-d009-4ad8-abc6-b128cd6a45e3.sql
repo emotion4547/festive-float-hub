@@ -1,0 +1,2 @@
+ALTER TABLE public.site_settings DROP CONSTRAINT site_settings_type_check;
+ALTER TABLE public.site_settings ADD CONSTRAINT site_settings_type_check CHECK (type = ANY (ARRAY['text','textarea','url','phone','email','html','color']));
