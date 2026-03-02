@@ -135,7 +135,7 @@ export function useProduct(id: string) {
 }
 
 export function useCategories() {
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; image: string | null; parent_id: string | null }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; image: string | null; parent_id: string | null; is_visible: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export function useCategories() {
       try {
         const { data, error } = await supabase
           .from("categories")
-          .select("id, name, slug, image, parent_id")
+          .select("id, name, slug, image, parent_id, is_visible")
           .order("sort_order", { ascending: true });
 
         if (error) throw error;

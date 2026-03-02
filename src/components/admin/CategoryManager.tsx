@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useProducts";
-import { Loader2, Plus, Edit, Trash2, Upload, Link as LinkIcon, FolderOpen, X, GripVertical, Package, Search } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Upload, Link as LinkIcon, FolderOpen, X, GripVertical, Package, Search, Eye, EyeOff, CheckSquare } from "lucide-react";
 import { SortableList } from "./SortableList";
 import { SortableItem } from "./SortableItem";
 
@@ -52,6 +52,10 @@ export function CategoryManager() {
     image: "",
   });
   const [imageUrl, setImageUrl] = useState("");
+  
+  // Bulk selection
+  const [selectedCatIds, setSelectedCatIds] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
   
   // Products management
   const [products, setProducts] = useState<Product[]>([]);
@@ -301,6 +305,94 @@ export function CategoryManager() {
     }
   };
 
+  // --- Bulk category actions ---
+  const toggleCatSelect = useCallback((id: string) => {
+    setSelectedCatIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAllCats = useCallback(() => {
+    setSelectedCatIds(prev => {
+      if (prev.size === localCategories.length) return new Set();
+      return new Set(localCategories.map(c => c.id));
+    });
+  }, [localCategories]);
+
+  const handleBulkCatHide = async () => {
+    if (!selectedCatIds.size) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ is_visible: false } as any)
+        .in("id", Array.from(selectedCatIds));
+      if (error) throw error;
+      toast({ title: `${selectedCatIds.size} категорий скрыто` });
+      setSelectedCatIds(new Set());
+      window.location.reload();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при скрытии" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkCatShow = async () => {
+    if (!selectedCatIds.size) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ is_visible: true } as any)
+        .in("id", Array.from(selectedCatIds));
+      if (error) throw error;
+      toast({ title: `${selectedCatIds.size} категорий показано` });
+      setSelectedCatIds(new Set());
+      window.location.reload();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при показе" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkCatDelete = async () => {
+    if (!selectedCatIds.size) return;
+    if (!confirm(`Удалить ${selectedCatIds.size} категорий? Товары категорий не будут удалены.`)) return;
+    setBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .in("id", Array.from(selectedCatIds));
+      if (error) throw error;
+      toast({ title: `${selectedCatIds.size} категорий удалено` });
+      setSelectedCatIds(new Set());
+      window.location.reload();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка при удалении" });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleToggleCatVisibility = async (catId: string, currentlyVisible: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ is_visible: !currentlyVisible } as any)
+        .eq("id", catId);
+      if (error) throw error;
+      toast({ title: currentlyVisible ? "Категория скрыта" : "Категория показана" });
+      window.location.reload();
+    } catch {
+      toast({ variant: "destructive", title: "Ошибка" });
+    }
+  };
+
   const toggleProductSelection = (productId: string) => {
     setSelectedProducts(prev => 
       prev.includes(productId) 
@@ -545,19 +637,59 @@ export function CategoryManager() {
         </Dialog>
       </CardHeader>
       <CardContent>
+        {/* Bulk Action Bar */}
+        {selectedCatIds.size > 0 && (
+          <div className="sticky top-0 z-20 bg-primary text-primary-foreground rounded-lg p-3 flex flex-wrap items-center gap-2 shadow-lg mb-4 animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 mr-auto">
+              <CheckSquare className="h-5 w-5" />
+              <span className="font-medium text-sm">Выбрано: {selectedCatIds.size}</span>
+            </div>
+            <Button size="sm" variant="secondary" onClick={handleBulkCatShow} disabled={bulkProcessing}>
+              <Eye className="h-4 w-4 mr-1" /> Показать
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleBulkCatHide} disabled={bulkProcessing}>
+              <EyeOff className="h-4 w-4 mr-1" /> Скрыть
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleBulkCatDelete} disabled={bulkProcessing}>
+              <Trash2 className="h-4 w-4 mr-1" /> Удалить
+            </Button>
+            <Button size="sm" variant="ghost" className="text-primary-foreground hover:text-primary-foreground/80" onClick={() => setSelectedCatIds(new Set())}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         {localCategories.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             Категории не созданы
           </p>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground mb-4">
-              Перетащите категории для изменения порядка отображения
-            </p>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                checked={localCategories.length > 0 && selectedCatIds.size === localCategories.length}
+                onChange={toggleSelectAllCats}
+                className="h-4 w-4 rounded border-primary accent-primary cursor-pointer"
+              />
+              <span className="text-sm text-muted-foreground">
+                Выбрать все · Перетащите для изменения порядка
+              </span>
+            </div>
             <SortableList items={localCategories} onReorder={handleReorder}>
-              {localCategories.map((cat) => (
-                <SortableItem key={cat.id} id={cat.id} className="p-2 mb-2">
+              {localCategories.map((cat) => {
+                const isVisible = (cat as any).is_visible !== false;
+                return (
+                <SortableItem key={cat.id} id={cat.id} className={`p-2 mb-2 ${!isVisible ? "opacity-60" : ""} ${selectedCatIds.has(cat.id) ? "ring-2 ring-primary" : ""}`}>
                   <div className="flex items-center gap-3 flex-1">
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedCatIds.has(cat.id)}
+                        onChange={() => toggleCatSelect(cat.id)}
+                        className="h-4 w-4 rounded border-primary accent-primary cursor-pointer"
+                      />
+                    </div>
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                       {cat.image ? (
                         <img
@@ -575,7 +707,18 @@ export function CategoryManager() {
                       <p className="font-medium truncate">{cat.name}</p>
                       <p className="text-sm text-muted-foreground truncate">{cat.slug}</p>
                     </div>
+                    {!isVisible && (
+                      <span className="text-xs text-orange-500 border border-orange-300 rounded px-1.5 py-0.5">Скрыта</span>
+                    )}
                     <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleCatVisibility(cat.id, isVisible)}
+                        title={isVisible ? "Скрыть" : "Показать"}
+                      >
+                        {isVisible ? <Eye className="h-4 w-4 text-muted-foreground" /> : <EyeOff className="h-4 w-4 text-orange-500" />}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -593,7 +736,8 @@ export function CategoryManager() {
                     </div>
                   </div>
                 </SortableItem>
-              ))}
+                );
+              })}
             </SortableList>
           </div>
         )}
