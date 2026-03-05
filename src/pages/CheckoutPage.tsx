@@ -26,8 +26,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Ticket } from "lucide-react";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
 
 type Step = 1 | 2 | 3;
+
+function SocialLinksBlock() {
+  const { data: links } = useSocialLinks({ floating: true });
+  if (!links || links.length === 0) return null;
+  return (
+    <div className="mt-8 pt-6 border-t">
+      <p className="text-muted-foreground mb-4">Напишите нам в мессенджер:</p>
+      <div className="flex justify-center gap-4">
+        {links.map((link) => (
+          <a
+            key={link.id}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors"
+          >
+            {link.icon_url && (
+              <img src={link.icon_url} alt={link.name} className="h-6 w-6 object-contain" />
+            )}
+            <span className="text-sm font-medium">{link.name}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface CouponData {
   id: string;
@@ -375,6 +402,8 @@ const CheckoutPage = () => {
                 <Link to="/contacts">Связаться с нами</Link>
               </Button>
             </div>
+
+            <SocialLinksBlock />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
