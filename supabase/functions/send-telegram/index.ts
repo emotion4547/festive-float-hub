@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SITE_URL = 'https://radugaprazdnika.ru';
+
 interface TelegramPayload {
   type: 'callback' | 'order';
   data: Record<string, unknown>;
@@ -17,15 +19,12 @@ serve(async (req) => {
   }
 
   try {
-    // First try environment secrets, then fall back to database settings
     let TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
     let TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_CHAT_ID');
 
-    // If env secrets are empty, try reading from site_settings
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      
       const supabase = createClient(supabaseUrl, supabaseKey);
       
       const { data: settings } = await supabase
@@ -36,13 +35,8 @@ serve(async (req) => {
       if (settings) {
         const tokenSetting = settings.find(s => s.key === 'telegram_bot_token');
         const chatSetting = settings.find(s => s.key === 'telegram_chat_id');
-        
-        if (!TELEGRAM_BOT_TOKEN && tokenSetting?.value) {
-          TELEGRAM_BOT_TOKEN = tokenSetting.value;
-        }
-        if (!TELEGRAM_CHAT_ID && chatSetting?.value) {
-          TELEGRAM_CHAT_ID = chatSetting.value;
-        }
+        if (!TELEGRAM_BOT_TOKEN && tokenSetting?.value) TELEGRAM_BOT_TOKEN = tokenSetting.value;
+        if (!TELEGRAM_CHAT_ID && chatSetting?.value) TELEGRAM_CHAT_ID = chatSetting.value;
       }
     }
 
@@ -55,24 +49,16 @@ serve(async (req) => {
 
     if (payload.type === 'callback') {
       const { name, phone, comment } = payload.data as { name: string; phone: string; comment?: string };
-      message = `📞 *Заявка на обратный звонок*\n\n` +
-        `👤 Имя: ${escapeMarkdown(name)}\n` +
-        `📱 Телефон: ${escapeMarkdown(phone)}\n` +
-        (comment ? `💬 Комментарий: ${escapeMarkdown(comment)}` : '');
+      message = `📞 <b>Заявка на обратный звонок</b>\n\n` +
+        `👤 Имя: ${esc(name)}\n` +
+        `📱 Телефон: ${esc(phone)}\n` +
+        (comment ? `💬 Комментарий: ${esc(comment)}` : '');
+
     } else if (payload.type === 'order') {
       const { 
-        orderNumber, 
-        customerName, 
-        customerPhone, 
-        customerEmail,
-        deliveryMethod,
-        deliveryAddress,
-        deliveryDate,
-        deliveryTime,
-        paymentMethod,
-        total,
-        items,
-        comment
+        orderNumber, customerName, customerPhone, customerEmail,
+        deliveryMethod, deliveryAddress, deliveryDate, deliveryTime,
+        paymentMethod, total, items, comment
       } = payload.data as {
         orderNumber: string;
         customerName: string;
@@ -84,13 +70,17 @@ serve(async (req) => {
         deliveryTime?: string;
         paymentMethod: string;
         total: number;
-        items: Array<{ name: string; quantity: number; price: number }>;
+        items: Array<{ name: string; quantity: number; price: number; productId?: string }>;
         comment?: string;
       };
 
-      const itemsList = items.map(item => 
-        `  • ${escapeMarkdown(item.name)} × ${item.quantity} = ${item.price * item.quantity} ₽`
-      ).join('\n');
+      const itemsList = items.map(item => {
+        const line = `  • ${esc(item.name)} × ${item.quantity} = ${item.price * item.quantity} ₽`;
+        if (item.productId) {
+          return `${line}\n    🔗 <a href="${SITE_URL}/product/${item.productId}">Открыть товар</a>`;
+        }
+        return line;
+      }).join('\n');
 
       const deliveryMethodText = deliveryMethod === 'pickup' ? 'Самовывоз' : 'Доставка';
       
@@ -101,18 +91,18 @@ serve(async (req) => {
       };
       const paymentMethodText = paymentMethodMap[paymentMethod] || paymentMethod;
 
-      message = `🛒 *Новый заказ ${escapeMarkdown(orderNumber)}*\n\n` +
-        `👤 Клиент: ${escapeMarkdown(customerName)}\n` +
-        `📱 Телефон: ${escapeMarkdown(customerPhone)}\n` +
-        (customerEmail ? `📧 Email: ${escapeMarkdown(customerEmail)}\n` : '') +
+      message = `🛒 <b>Новый заказ ${esc(orderNumber)}</b>\n\n` +
+        `👤 Клиент: ${esc(customerName)}\n` +
+        `📱 Телефон: ${esc(customerPhone)}\n` +
+        (customerEmail ? `📧 Email: ${esc(customerEmail)}\n` : '') +
         `\n📦 Способ получения: ${deliveryMethodText}\n` +
-        (deliveryAddress ? `📍 Адрес: ${escapeMarkdown(deliveryAddress)}\n` : '') +
-        (deliveryDate ? `📅 Дата: ${escapeMarkdown(deliveryDate)}\n` : '') +
-        (deliveryTime ? `⏰ Время: ${escapeMarkdown(deliveryTime)}\n` : '') +
+        (deliveryAddress ? `📍 Адрес: ${esc(deliveryAddress)}\n` : '') +
+        (deliveryDate ? `📅 Дата: ${esc(deliveryDate)}\n` : '') +
+        (deliveryTime ? `⏰ Время: ${esc(deliveryTime)}\n` : '') +
         `💳 Оплата: ${paymentMethodText}\n` +
-        `\n🧾 *Товары:*\n${itemsList}\n` +
-        `\n💰 *Итого: ${total} ₽*` +
-        (comment ? `\n\n💬 Комментарий: ${escapeMarkdown(comment)}` : '');
+        `\n🧾 <b>Товары:</b>\n${itemsList}\n` +
+        `\n💰 <b>Итого: ${total} ₽</b>` +
+        (comment ? `\n\n💬 Комментарий: ${esc(comment)}` : '');
     } else {
       throw new Error('Unknown message type');
     }
@@ -125,7 +115,8 @@ serve(async (req) => {
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
       }),
     });
 
@@ -148,7 +139,7 @@ serve(async (req) => {
   }
 });
 
-function escapeMarkdown(text: string): string {
+function esc(text: string): string {
   if (!text) return '';
-  return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

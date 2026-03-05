@@ -242,6 +242,7 @@ const CheckoutPage = () => {
                   name: item.product.name,
                   quantity: item.quantity,
                   price: item.product.price,
+                  productId: String(item.product.id),
                 })),
                 comment: formData.comment || null,
               },
