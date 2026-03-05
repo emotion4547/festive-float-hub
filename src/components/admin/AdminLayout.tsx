@@ -1,4 +1,5 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -13,11 +14,19 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    mainRef.current?.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-muted/30 flex w-full">
+    <div className="h-screen bg-muted/30 flex w-full overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="fixed left-0 top-0 z-40 h-screen hidden lg:block">
+      <div className="hidden lg:block flex-shrink-0">
         <AdminSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       </div>
 
@@ -53,31 +62,31 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-background border-b">
-        <div className="flex items-center justify-between px-4 h-14">
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <span className="font-semibold">{title}</span>
-          <div className="w-10" />
-        </div>
-      </header>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden flex-shrink-0 bg-background border-b z-30">
+          <div className="flex items-center justify-between px-4 h-14">
+            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+            <span className="font-semibold truncate max-w-[200px]">{title}</span>
+            <div className="w-10" />
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <main 
-        className={cn(
-          "flex-1 min-h-screen transition-all duration-300",
-          "lg:ml-16", // collapsed sidebar width
-          sidebarOpen && "lg:ml-64" // expanded sidebar width
-        )}
-      >
-        <div className="p-3 sm:p-6 pt-16 lg:pt-6">
-          {/* Desktop Title */}
-          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 hidden lg:block">{title}</h1>
-          {children}
-        </div>
-      </main>
+        {/* Scrollable Content */}
+        <main 
+          ref={mainRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+        >
+          <div className="p-3 sm:p-6">
+            {/* Desktop Title */}
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 hidden lg:block truncate">{title}</h1>
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

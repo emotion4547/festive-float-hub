@@ -491,10 +491,10 @@ export default function AdminProductsPage() {
 
           {/* Bulk Action Bar */}
           {selectedIds.size > 0 && (
-            <div className="sticky top-0 z-20 bg-primary text-primary-foreground rounded-lg p-3 flex flex-wrap items-center gap-2 shadow-lg animate-in slide-in-from-top-2">
+            <div className="sticky top-0 z-20 bg-primary text-primary-foreground rounded-lg p-3 flex flex-wrap items-center gap-2 shadow-lg animate-in slide-in-from-top-2 overflow-x-auto">
               <div className="flex items-center gap-2 mr-auto">
                 <CheckSquare className="h-5 w-5" />
-                <span className="font-medium text-sm">
+                <span className="font-medium text-sm whitespace-nowrap">
                   Выбрано: {selectedIds.size} из {filteredProducts.length}
                 </span>
               </div>
