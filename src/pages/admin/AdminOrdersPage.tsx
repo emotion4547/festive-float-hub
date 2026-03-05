@@ -528,7 +528,7 @@ export default function AdminOrdersPage() {
                   <span className="text-muted-foreground">Доставка:</span>
                   <span>
                     {Number(selectedOrder.delivery_cost) === 0 
-                      ? "Бесплатно" 
+                      ? "Самовывоз" 
                       : `${Number(selectedOrder.delivery_cost).toLocaleString("ru-RU")} ₽`}
                   </span>
                 </div>

@@ -456,7 +456,7 @@ const ProductPage = () => {
               <div className="prose max-w-none">
                 <h3>Способы доставки:</h3>
                 <ul>
-                  <li><strong>По Краснодару</strong> — от 500 ₽</li>
+                  <li><strong>По Краснодару</strong> — от 300 ₽</li>
                   <li><strong>Самовывоз</strong> — бесплатно</li>
                 </ul>
                 <h3>Способы оплаты:</h3>

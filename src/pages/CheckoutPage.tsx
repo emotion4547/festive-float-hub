@@ -109,7 +109,7 @@ const CheckoutPage = () => {
       : effectiveUserCoupon 
         ? calculateUserCouponDiscount(total) 
         : 0;
-  const deliveryCost = formData.deliveryMethod === "pickup" ? 0 : total >= 5000 ? 0 : 200;
+  const deliveryCost = formData.deliveryMethod === "pickup" ? 0 : 300;
   const finalTotal = total - discount + deliveryCost;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -444,9 +444,7 @@ const CheckoutPage = () => {
                         <RadioGroupItem value="courier" id="courier" />
                         <Label htmlFor="courier" className="flex-1 cursor-pointer">
                           <span className="font-medium">Курьер по городу</span>
-                          <span className="text-muted-foreground ml-2">
-                            {total >= 5000 ? "Бесплатно" : "200 ₽"}
-                          </span>
+                          <span className="text-muted-foreground ml-2">от 300 ₽</span>
                         </Label>
                       </div>
                       <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
@@ -688,9 +686,9 @@ const CheckoutPage = () => {
                     <span className="text-muted-foreground">Доставка:</span>
                     <span>
                       {deliveryCost === 0 ? (
-                        <span className="text-success">Бесплатно</span>
+                        <span className="text-success">Бесплатно (самовывоз)</span>
                       ) : (
-                        `${deliveryCost} ₽`
+                        `от ${deliveryCost} ₽`
                       )}
                     </span>
                   </div>
