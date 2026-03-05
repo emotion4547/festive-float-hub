@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Star, Volume2, VolumeX, Eye, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ interface ProductCardProps {
   onQuickView?: (product: ProductCardProduct) => void;
 }
 
-export function ProductCard({ product, onQuickView }: ProductCardProps) {
+export const ProductCard = React.forwardRef<HTMLAnchorElement, ProductCardProps>(function ProductCard({ product, onQuickView }, forwardedRef) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { toast } = useToast();
@@ -162,7 +162,11 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
     <Link 
       to={`/product/${product.id}`} 
       className="group h-full"
-      ref={cardRef}
+      ref={(node: HTMLAnchorElement | null) => {
+        (cardRef as React.MutableRefObject<HTMLAnchorElement | null>).current = node;
+        if (typeof forwardedRef === 'function') forwardedRef(node);
+        else if (forwardedRef) (forwardedRef as React.MutableRefObject<HTMLAnchorElement | null>).current = node;
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -336,4 +340,5 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       </div>
     </Link>
   );
-}
+});
+ProductCard.displayName = "ProductCard";
