@@ -67,7 +67,7 @@ const CartPage = () => {
   const selectedCouponDiscount = (selectedUserCoupon && !userCouponMatch) ? calculateUserCouponDiscount(total) : 0;
   const discount = manualCouponDiscount + selectedCouponDiscount;
   
-  const deliveryCost = total >= 5000 ? 0 : 200;
+  const deliveryCost = 300;
   const finalTotal = total - discount + deliveryCost;
 
   // Filter discount coupons (not gifts) for display
@@ -304,20 +304,11 @@ const CartPage = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Доставка:</span>
-                  <span className="font-medium">
-                    {deliveryCost === 0 ? (
-                      <span className="text-success">Бесплатно</span>
-                    ) : (
-                      `${deliveryCost} ₽`
-                    )}
-                  </span>
+                  <span className="font-medium">от {deliveryCost} ₽</span>
                 </div>
-                {total < 5000 && (
+                {false && (
                   <p className="text-sm text-muted-foreground">
-                    Бесплатная доставка от 5 000 ₽. Ещё{" "}
-                    <span className="text-primary font-medium">
-                      {(5000 - total).toLocaleString("ru-RU")} ₽
-                    </span>
+                    Placeholder
                   </p>
                 )}
                 {manualCouponDiscount > 0 && (coupon || userCouponMatch) && (

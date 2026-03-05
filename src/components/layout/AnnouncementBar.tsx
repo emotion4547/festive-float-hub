@@ -1,5 +1,5 @@
 export function AnnouncementBar() {
-  const text = "Окончательную цену уточняйте при заказе. Доставка по городу от 500 руб.";
+  const text = "Окончательную цену уточняйте при заказе. Доставка по городу от 300 руб.";
   
   return (
     <div className="bg-primary text-primary-foreground py-2 overflow-hidden">
