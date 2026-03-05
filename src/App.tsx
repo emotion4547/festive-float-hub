@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SiteDataProvider } from "@/contexts/SiteDataContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import CatalogPage from "./pages/CatalogPage";
 import ProductPage from "./pages/ProductPage";
@@ -59,6 +60,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductPage />} />
