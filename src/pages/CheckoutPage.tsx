@@ -98,7 +98,7 @@ const CheckoutPage = () => {
     deliveryDate: "",
     deliveryTime: "",
     deliveryMethod: "courier",
-    paymentMethod: "cash",
+    paymentMethod: "card",
   });
 
   // Calculate discount - prioritize admin coupon, then manual user coupon match, then selected user coupon
@@ -604,12 +604,6 @@ const CheckoutPage = () => {
                     }
                     className="space-y-3"
                   >
-                    <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                      <RadioGroupItem value="cash" id="cash" />
-                      <Label htmlFor="cash" className="flex-1 cursor-pointer">
-                        <span className="font-medium">Наличными при получении</span>
-                      </Label>
-                    </div>
                     <div className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:border-primary transition-colors">
                       <RadioGroupItem value="card" id="card" />
                       <Label htmlFor="card" className="flex-1 cursor-pointer">
