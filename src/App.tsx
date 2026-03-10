@@ -60,7 +60,15 @@ const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminShowcasePage = lazy(() => import("./pages/admin/AdminShowcasePage"));
 const AdminCollectionEditPage = lazy(() => import("./pages/admin/AdminCollectionEditPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,  // 5 minutes
+      gcTime: 10 * 60 * 1000,    // 10 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function PageLoader() {
   return (
