@@ -90,6 +90,8 @@ export function CategoriesSection({
                       <img 
                         src={productImage} 
                         alt={category.name}
+                        width={300}
+                        height={300}
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
