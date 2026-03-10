@@ -40,9 +40,7 @@ export function CategoriesSection({
     return categoryProduct?.images?.[0] || null;
   };
 
-  const visibleCategories = isExpanded 
-    ? categories 
-    : categories.slice(0, initialVisibleCount);
+  const visibleCategories = categories.slice(0, initialVisibleCount);
 
   const hasMoreCategories = categories.length > initialVisibleCount;
 
