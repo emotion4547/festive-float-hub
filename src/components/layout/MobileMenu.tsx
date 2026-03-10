@@ -122,7 +122,7 @@ export function MobileMenu() {
       >
         <div className="flex items-center justify-center">
           <img 
-            src="/assets/logo.png" 
+            src="/assets/logo.webp" 
             alt="Радуга Праздника" 
             className="h-12 w-auto"
           />

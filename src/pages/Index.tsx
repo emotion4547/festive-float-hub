@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Star,
   ChevronLeft,
-  SlidersHorizontal
 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { 
@@ -24,19 +23,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/products/ProductCard";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { QuickViewDialog } from "@/components/products/QuickViewDialog";
-import { DynamicFilterSidebar, FilterState } from "@/components/products/DynamicFilterSidebar";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -44,8 +35,9 @@ import { useToast } from "@/hooks/use-toast";
 import { AgendaSection } from "@/components/home/AgendaSection";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
 import { useSiteData } from "@/contexts/SiteDataContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-// Lazy load ShaderGradient for performance
+// Lazy load ShaderGradient for performance — only on desktop
 const ShaderGradientCanvas = lazy(() => 
   import("shadergradient").then(mod => ({ default: mod.ShaderGradientCanvas }))
 );
@@ -104,30 +96,20 @@ const PRODUCTS_PER_ROW = 4;
 const MAX_ROWS = 2;
 const MAX_PRODUCTS = PRODUCTS_PER_ROW * MAX_ROWS;
 
-const defaultFilters: FilterState = {
-  priceRange: [300, 15000],
-  types: [],
-  occasions: [],
-  sizes: [],
-  colors: [],
-  categories: [],
-  inStock: null,
-};
-
 const Index = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [quickViewProduct, setQuickViewProduct] = useState<any>(null);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const { toast } = useToast();
   const { settings: siteSettings } = useSiteData();
+  const isMobile = useIsMobile();
   
-  // Load products from database
-  const { products, loading: productsLoading } = useProducts({});
+  // Load only limited products for homepage — no need for all 1800+
+  const { products, loading: productsLoading } = useProducts({ limit: 50 });
   const { categories, loading: categoriesLoading } = useCategories();
 
   // Hero settings from DB
@@ -185,50 +167,26 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [banners.length]);
 
-  // Filter and sort products
+  // Sort products for display — no client-side filtering on homepage
   const displayProducts = useMemo(() => {
     let result = [...products];
 
-    // Apply filters
-    result = result.filter((product) => {
-      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) {
-        return false;
-      }
-      if (filters.types.length > 0 && product.type && !filters.types.includes(product.type)) {
-        return false;
-      }
-      if (filters.occasions.length > 0 && product.occasion && !product.occasion.some((o) => filters.occasions.includes(o))) {
-        return false;
-      }
-      if (filters.sizes.length > 0 && product.size && !filters.sizes.includes(product.size)) {
-        return false;
-      }
-      if (filters.colors.length > 0 && product.colors && !product.colors.some((c) => filters.colors.includes(c))) {
-        return false;
-      }
-      if (filters.categories.length > 0 && product.category_id && !filters.categories.includes(product.category_id)) {
-        return false;
-      }
-      if (filters.inStock === true && !product.in_stock) {
-        return false;
-      }
-      return true;
-    });
-
-    // Sort: products with images first
+    // Sort: products with images first, then by popularity
     result.sort((a, b) => {
       const aHasImage = a.images && a.images.length > 0 && a.images[0];
       const bHasImage = b.images && b.images.length > 0 && b.images[0];
       if (aHasImage && !bHasImage) return -1;
       if (!aHasImage && bHasImage) return 1;
-      // Then by popularity (rating * reviews_count)
       return ((b.rating || 0) * (b.reviews_count || 0)) - ((a.rating || 0) * (a.reviews_count || 0));
     });
 
     return result.slice(0, MAX_PRODUCTS);
-  }, [products, filters]);
+  }, [products]);
 
   const currentBanner = banners[currentBannerIndex];
+
+  // Determine if we should use ShaderGradient (desktop only, no reduced motion)
+  const useShaderGradient = !isMobile && !prefersReducedMotion;
 
   return (
     <Layout>
@@ -248,11 +206,9 @@ const Index = () => {
       />
       {/* Hero Section with Animated Gradient */}
       <section className="relative overflow-hidden min-h-[400px] md:min-h-[480px]">
-        {/* Shader Gradient Background - or static gradient if reduced motion */}
+        {/* Shader Gradient Background — CSS gradient on mobile, Three.js on desktop */}
         <div className="absolute inset-0 z-0">
-          {prefersReducedMotion ? (
-            <div className="absolute inset-0 gradient-hero" />
-          ) : (
+          {useShaderGradient ? (
             <Suspense fallback={<div className="absolute inset-0 gradient-hero" />}>
               <ShaderGradientCanvas
                 style={{
@@ -292,6 +248,8 @@ const Index = () => {
                 />
               </ShaderGradientCanvas>
             </Suspense>
+          ) : (
+            <div className="absolute inset-0 gradient-hero" />
           )}
         </div>
 
@@ -405,97 +363,58 @@ const Index = () => {
         initialVisibleCount={6}
       />
 
-      {/* Products Catalog - Limited to 3 rows with Filters */}
+      {/* Products Catalog - Limited to 2 rows */}
       <section className="py-16 section-alt">
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="font-heading text-2xl md:text-3xl font-bold">Популярные товары</h2>
-              <p className="text-muted-foreground mt-1">{displayProducts.length} из {products.length} товаров</p>
+              <p className="text-muted-foreground mt-1">{displayProducts.length} товаров</p>
             </div>
-            <div className="flex items-center gap-4">
-              {/* Mobile Filter Button */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Фильтры
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Фильтры</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <DynamicFilterSidebar
-                      filters={filters}
-                      onFilterChange={setFilters}
-                      onReset={() => setFilters(defaultFilters)}
-                      showCategoryFilter={true}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              <Link
-                to="/catalog"
-                className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors font-medium"
-              >
-                Смотреть все
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <Link
+              to="/catalog"
+              className="flex items-center gap-1 text-primary hover:text-primary-hover transition-colors font-medium"
+            >
+              Смотреть все
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
-          <div className="flex gap-8">
-            {/* Desktop Filters */}
-            <aside className="hidden lg:block w-64 shrink-0">
-              <div className="sticky top-24 bg-background rounded-xl p-6 shadow-sm border">
-                <DynamicFilterSidebar
-                  filters={filters}
-                  onFilterChange={setFilters}
-                  onReset={() => setFilters(defaultFilters)}
-                  showCategoryFilter={true}
-                />
+          {/* Products Grid - no filters on homepage */}
+          <div>
+            {productsLoading ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                {[...Array(MAX_PRODUCTS)].map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="aspect-square rounded-xl" />
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))}
               </div>
-            </aside>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                {displayProducts.map((product) => (
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    onQuickView={setQuickViewProduct}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Products Grid - 3 rows max */}
-            <div className="flex-1">
-              {productsLoading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {[...Array(MAX_PRODUCTS)].map((_, i) => (
-                    <div key={i} className="space-y-3">
-                      <Skeleton className="aspect-square rounded-xl" />
-                      <Skeleton className="h-3 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {displayProducts.map((product) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      onQuickView={setQuickViewProduct}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Show More Button */}
-              {products.length > MAX_PRODUCTS && (
-                <div className="text-center mt-8">
-                  <Button size="lg" asChild>
-                    <Link to="/catalog" className="gap-2">
-                      Показать больше
-                      <ArrowRight className="h-5 w-5" />
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
+            {/* Show More Button */}
+            {products.length > MAX_PRODUCTS && (
+              <div className="text-center mt-8">
+                <Button size="lg" asChild>
+                  <Link to="/catalog" className="gap-2">
+                    Показать больше
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -605,7 +524,6 @@ const Index = () => {
                   return;
                 }
                 
-                // Email validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(newsletterEmail)) {
                   toast({

@@ -5,7 +5,7 @@ import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_LOGO = "/assets/logo.png";
+const DEFAULT_LOGO = "/assets/logo.webp";
 
 export function Footer() {
   const phone = useSetting("phone", "+7 (918) 179-00-56");
@@ -178,8 +178,8 @@ export function Footer() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <img src="https://cdn.svgporn.com/logos/visa.svg" alt="Visa" className="h-6 opacity-70" />
-              <img src="https://cdn.svgporn.com/logos/mastercard.svg" alt="Mastercard" className="h-6 opacity-70" />
+              <img src="/assets/visa.svg" alt="Visa" className="h-6 opacity-70" />
+              <img src="/assets/mastercard.svg" alt="Mastercard" className="h-6 opacity-70" />
               <span className="text-xs bg-[#4CAF50] text-white px-2 py-1 rounded opacity-70">МИР</span>
             </div>
           </div>
