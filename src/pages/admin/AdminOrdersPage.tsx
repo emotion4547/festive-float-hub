@@ -82,7 +82,7 @@ const statusOptions = [
 ];
 
 const paymentMethods: Record<string, string> = {
-  card: "Картой при получении",
+  card: "Банковским переводом",
   cash: "Наличными при получении",
   invoice: "Счёт для юр. лиц",
 };
