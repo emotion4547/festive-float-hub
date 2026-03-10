@@ -16,31 +16,33 @@ export interface SocialLink {
   updated_at: string;
 }
 
-export function useSocialLinks(filter?: { header?: boolean; footer?: boolean; floating?: boolean }) {
+// Single query for all active social links — filtered on client to avoid duplicate requests
+function useAllActiveSocialLinks() {
   return useQuery({
-    queryKey: ["social-links", filter],
+    queryKey: ["social-links", "active"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("social_links")
         .select("*")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
-
-      if (filter?.header) {
-        query = query.eq("show_in_header", true);
-      }
-      if (filter?.footer) {
-        query = query.eq("show_in_footer", true);
-      }
-      if (filter?.floating) {
-        query = query.eq("show_in_floating", true);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data as SocialLink[];
     },
   });
+}
+
+export function useSocialLinks(filter?: { header?: boolean; footer?: boolean; floating?: boolean }) {
+  const { data: allLinks, ...rest } = useAllActiveSocialLinks();
+
+  const filtered = allLinks?.filter((link) => {
+    if (filter?.header && !link.show_in_header) return false;
+    if (filter?.footer && !link.show_in_footer) return false;
+    if (filter?.floating && !link.show_in_floating) return false;
+    return true;
+  });
+
+  return { data: filtered, ...rest };
 }
 
 export function useAllSocialLinks() {
