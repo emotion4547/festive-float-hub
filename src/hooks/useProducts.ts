@@ -144,6 +144,7 @@ export function useCategories() {
         const { data, error } = await supabase
           .from("categories")
           .select("id, name, slug, image, parent_id, is_visible")
+          .eq("is_visible", true)
           .order("sort_order", { ascending: true });
 
         if (error) throw error;
