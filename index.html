@@ -23,7 +23,10 @@
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://mc.yandex.ru" />
     
-    <!-- Fonts loaded via Google Fonts CSS — no specific preload to avoid 404 -->
+    <!-- Google Fonts — loaded as link for non-blocking render -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap&subset=latin,cyrillic" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap&subset=latin,cyrillic" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap&subset=latin,cyrillic" /></noscript>
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://radugaprazdnika.ru/" />
     <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/zYCJEf7EExYpUN5NtnvHc7yDk1x1/social-images/social-1769506331575-2026-01-27_14-31-59.png">
