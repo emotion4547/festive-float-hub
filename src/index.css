@@ -6,7 +6,7 @@
 html, body {
   overflow-x: hidden;
 }
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap&subset=latin,cyrillic');
+/* Google Fonts loaded via <link> in index.html for non-blocking render */
 
 /* Радуга Праздника - Festive E-commerce Design System */
 
