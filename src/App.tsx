@@ -10,10 +10,10 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Critical path — loaded eagerly
+// Critical path — only Index loaded eagerly
 import Index from "./pages/Index";
-import CatalogPage from "./pages/CatalogPage";
-import ProductPage from "./pages/ProductPage";
+const CatalogPage = lazy(() => import("./pages/CatalogPage"));
+const ProductPage = lazy(() => import("./pages/ProductPage"));
 
 // Lazy-loaded routes for code splitting
 const CartPage = lazy(() => import("./pages/CartPage"));
@@ -60,7 +60,15 @@ const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminShowcasePage = lazy(() => import("./pages/admin/AdminShowcasePage"));
 const AdminCollectionEditPage = lazy(() => import("./pages/admin/AdminCollectionEditPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,  // 5 minutes
+      gcTime: 10 * 60 * 1000,    // 10 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function PageLoader() {
   return (

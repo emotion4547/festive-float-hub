@@ -1,106 +1,97 @@
 
+# План оптимизации производительности и SEO
 
-# План дальнейшей оптимизации производительности
+## ✅ ВЫПОЛНЕНО
 
-## Текущее состояние
-Уже выполнено: code splitting, WebP логотип, limit на продукты, отключение ShaderGradient на мобильных, локальные SVG. Остаются значительные возможности для улучшения.
+### 1. Оптимизация изображений
+
+**Созданные файлы:**
+- `src/lib/imageUtils.ts` — утилиты для оптимизации изображений через Supabase Storage Transform API
+  - Автоматическая конвертация в WebP
+  - Генерация srcset для responsive изображений
+  - Lazy loading с Intersection Observer
+
+- `src/components/ui/optimized-image.tsx` — компонент OptimizedImage
+  - Skeleton placeholder во время загрузки
+  - Автоматическая оптимизация Supabase-изображений
+  - Priority loading для критичных изображений
+
+**Обновлённые файлы:**
+- `src/components/products/ProductCard.tsx` — оптимизация изображений товаров (400px, WebP, 80% quality)
+
+### 2. SEO-разметка (Schema.org)
+
+**Создан файл:** `src/lib/seoSchemas.ts`
+
+Поддерживаемые схемы:
+- **Product** — для страниц товаров (цена, наличие, рейтинг)
+- **BreadcrumbList** — хлебные крошки
+- **Organization** — информация о компании
+- **LocalBusiness** — локальный бизнес с адресом и координатами
+- **ItemList** — списки товаров в категориях
+- **FAQPage** — часто задаваемые вопросы
+- **WebSite** — с поддержкой SearchAction
+
+**Обновлённые страницы:**
+- `src/pages/ProductPage.tsx` — Product + BreadcrumbList схемы
+- `src/pages/Index.tsx` — WebSite + LocalBusiness + FAQPage схемы
+- `src/pages/CatalogPage.tsx` — ItemList + BreadcrumbList схемы
+
+### 3. Оптимизация загрузки ресурсов
+
+**Обновлён:** `index.html`
+- Preconnect к Supabase Storage
+- DNS prefetch для Yandex Metrika
+- Preload критичных шрифтов (Montserrat, Open Sans)
 
 ---
 
-## 1. Критическое: Google Fonts блокирует рендер (~500-800 мс)
+## Как работает оптимизация изображений
 
-**Проблема:** `@import url('https://fonts.googleapis.com/...')` в `index.css` (строка 9) — это render-blocking CSS import. Браузер не рисует страницу, пока не загрузит шрифты.
+Supabase Storage Transform API автоматически:
+1. Конвертирует изображения в WebP (экономия до 30%)
+2. Изменяет размер под нужное разрешение
+3. Применяет сжатие с заданным качеством
+4. Кэширует результаты на CDN
 
-**Решение:**
-- Перенести загрузку шрифтов из CSS `@import` в `<link>` тег в `index.html` с `display=swap`
-- Добавить `font-display: swap` для мгновенного отображения текста системным шрифтом
+**Пример URL-преобразования:**
+```
+# Исходный URL:
+https://xxx.supabase.co/storage/v1/object/public/product-images/photo.jpg
 
----
-
-## 2. Критическое: Водопад запросов на главной (8+ параллельных)
-
-**Проблема:** При загрузке главной страницы происходит каскад запросов:
-- `SiteDataContext` → site_settings + page_content (2 запроса)
-- `AuthContext` → auth.getSession + user_roles (2 запроса)
-- `Index` → products + categories + banners + reviews + collections (5 запросов)
-- `Header` → social_links (1 запрос)
-- `FloatingButtons` → social_links (ещё 1 запрос)
-
-**Решение:**
-- Объединить запросы social_links: Header и FloatingButtons делают отдельные запросы с разными фильтрами — загружать все active social_links один раз и фильтровать на клиенте
-- Defer загрузку reviews и collections на главной — они ниже fold, загружать через IntersectionObserver или `requestIdleCallback`
-- Настроить `staleTime` в QueryClient, чтобы повторные навигации не делали новые запросы
-
----
-
-## 3. Важное: QueryClient без кэширования
-
-**Проблема:** `const queryClient = new QueryClient()` создаётся с дефолтными настройками — `staleTime: 0`, что означает каждый mount компонента делает новый запрос.
-
-**Решение:**
-```typescript
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,  // 5 минут
-      gcTime: 10 * 60 * 1000,    // 10 минут
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+# Оптимизированный URL:
+https://xxx.supabase.co/storage/v1/render/image/public/product-images/photo.jpg?width=400&quality=80&format=webp&resize=cover
 ```
 
 ---
 
-## 4. Важное: CatalogPage и ProductPage загружаются eager
+## Ожидаемые улучшения
 
-**Проблема:** `CatalogPage` и `ProductPage` импортируются eager в App.tsx (строки 15-16), хотя пользователь может никогда не зайти на них при первом визите.
+### Производительность:
+- **LCP (Largest Contentful Paint)**: улучшение на 20-40% за счёт WebP и правильных размеров
+- **FID (First Input Delay)**: улучшение за счёт lazy loading и code splitting
+- **CLS (Cumulative Layout Shift)**: skeleton placeholders предотвращают сдвиги
 
-**Решение:** Перевести на lazy import — они не нужны для начального рендера главной.
-
----
-
-## 5. Среднее: Тяжёлые зависимости в критическом пути
-
-**Проблема:** 
-- `react-helmet-async` загружается синхронно в main.tsx
-- `date-fns` импортируется с `ru` locale в AgendaSection (в hero-секции)
-- `recharts` (если используется) — тяжёлая библиотека
-
-**Решение:**
-- Убрать `HelmetProvider` из main.tsx — react-helmet-async можно инициализировать лениво или заменить на нативные `document.title` вызовы
-- Использовать динамический import для date-fns locale
+### SEO:
+- Расширенные сниппеты в поиске (rich results)
+- Улучшенное понимание структуры сайта ботами
+- Правильные хлебные крошки в результатах поиска
+- Карточки товаров с ценой и наличием в Google
 
 ---
 
-## 6. Среднее: Оптимизация изображений категорий
+## Дополнительные рекомендации
 
-**Проблема:** `CategoriesSection` использует обычные `<img>` без оптимизации, а `getCategoryImage()` ищет продукт в массиве products для каждой категории.
+### На уровне хостинга (VPS):
+1. Включить Brotli/Gzip сжатие в Nginx
+2. Настроить кэширование статики (уже есть в docs/nginx-vps-config.md)
+3. Использовать HTTP/2 или HTTP/3
 
-**Решение:** Использовать компонент `OptimizedImage` для изображений категорий с `loading="lazy"` и `width/height` атрибутами.
+### На уровне Supabase:
+1. Убедиться, что бакеты `product-images` и `product-videos` публичные
+2. Рассмотреть миграцию старых изображений через Storage Transform
 
----
-
-## 7. Среднее: Yandex Metrika в head блокирует парсинг
-
-**Проблема:** Скрипт Яндекс.Метрики загружается синхронно в `<head>`, хотя он async — всё равно парсит JS в критическом пути.
-
-**Решение:** Перенести скрипт Метрики в конец `<body>`, после `<div id="root">`.
-
----
-
-## Порядок реализации (по влиянию на скорость)
-
-1. **Google Fonts → link tag** (экономия ~500-800 мс FCP)
-2. **QueryClient staleTime** (убрать повторные запросы, меньше нагрузки)
-3. **Lazy import CatalogPage + ProductPage** (уменьшить initial bundle ~50-100 KiB)
-4. **Отложить reviews/collections** на главной (меньше запросов до интерактивности)
-5. **Яндекс.Метрика в конец body** (~100 мс экономии TBT)
-6. **OptimizedImage в категориях** (быстрее LCP для категорий)
-7. **Объединить social_links запросы** (на 1 запрос меньше)
-
-### Ожидаемый результат
-- FCP: ~3-4 сек → ~2-3 сек (мобильный)
-- TBT: снижение на ~500-1000 мс
-- Performance Score: ~45-60 → ~55-70
-
+### Мониторинг:
+1. Использовать Lighthouse для регулярной проверки
+2. Настроить Real User Monitoring (RUM) через Yandex Metrika
+3. Следить за Core Web Vitals в Search Console
