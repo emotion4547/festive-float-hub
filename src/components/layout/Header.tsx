@@ -19,7 +19,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 
-const DEFAULT_LOGO = "/assets/logo.png";
+const DEFAULT_LOGO = "/assets/logo.webp";
 
 const mainNavLinks = [
   { name: "ГЛАВНАЯ", href: "/" },

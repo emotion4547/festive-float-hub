@@ -109,8 +109,8 @@ export function SidebarWidgets() {
             <span className="text-sm text-muted-foreground">Доставка</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <img src="https://cdn.svgporn.com/logos/mastercard.svg" alt="Mastercard" className="h-6" />
-            <img src="https://cdn.svgporn.com/logos/visa.svg" alt="Visa" className="h-6" />
+            <img src="/assets/mastercard.svg" alt="Mastercard" className="h-6" />
+            <img src="/assets/visa.svg" alt="Visa" className="h-6" />
             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">МИР</span>
           </div>
           <Link to="/payment" className="text-sm text-primary hover:underline mt-3 block">

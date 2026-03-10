@@ -41,8 +41,8 @@ const PaymentPage = () => {
                   Оплата картами Visa, MasterCard, МИР. Безопасные платежи через защищённое соединение.
                 </p>
                 <div className="flex gap-2">
-                  <img src="https://cdn.svgporn.com/logos/visa.svg" alt="Visa" className="h-8" />
-                  <img src="https://cdn.svgporn.com/logos/mastercard.svg" alt="Mastercard" className="h-8" />
+                  <img src="/assets/visa.svg" alt="Visa" className="h-8" />
+                  <img src="/assets/mastercard.svg" alt="Mastercard" className="h-8" />
                   <span className="bg-green-500 text-white px-3 py-1 rounded text-sm font-semibold">МИР</span>
                 </div>
               </div>

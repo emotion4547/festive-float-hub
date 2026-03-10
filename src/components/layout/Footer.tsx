@@ -5,7 +5,7 @@ import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_LOGO = "/assets/logo.png";
+const DEFAULT_LOGO = "/assets/logo.webp";
 
 export function Footer() {
   const phone = useSetting("phone", "+7 (918) 179-00-56");
