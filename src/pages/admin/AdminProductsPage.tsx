@@ -209,6 +209,9 @@ const ProductMobileCard = memo(({
 ProductMobileCard.displayName = "ProductMobileCard";
 
 export default function AdminProductsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "products";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);

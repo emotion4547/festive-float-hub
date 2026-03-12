@@ -60,6 +60,9 @@ interface CollectionCategory {
 }
 
 export default function AdminCollectionEditPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "products";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();

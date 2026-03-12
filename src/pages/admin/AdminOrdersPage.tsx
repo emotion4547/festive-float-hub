@@ -94,6 +94,9 @@ const deliveryMethods: Record<string, string> = {
 };
 
 export default function AdminOrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "orders";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

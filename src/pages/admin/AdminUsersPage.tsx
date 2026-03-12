@@ -67,6 +67,9 @@ const roleIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function AdminUsersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "customers";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   // === Customers State ===
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);

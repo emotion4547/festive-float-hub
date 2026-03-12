@@ -54,6 +54,9 @@ const pageLabels: Record<string, string> = {
 };
 
 export default function AdminSettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "branding";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   const [settings, setSettings] = useState<Setting[]>([]);
   const [pageContent, setPageContent] = useState<PageContentItem[]>([]);

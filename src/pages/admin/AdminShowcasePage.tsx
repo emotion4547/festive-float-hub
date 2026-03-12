@@ -63,6 +63,9 @@ interface Collection {
 }
 
 export default function AdminShowcasePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "banners";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   // === Banners State ===
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);

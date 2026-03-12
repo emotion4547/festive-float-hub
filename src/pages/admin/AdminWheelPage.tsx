@@ -93,6 +93,9 @@ const emptySegment = {
 };
 
 export default function AdminWheelPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "segments";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   
   // === Segments State ===
