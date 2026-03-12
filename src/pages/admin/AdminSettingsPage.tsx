@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,9 @@ const pageLabels: Record<string, string> = {
 };
 
 export default function AdminSettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "branding";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   const [settings, setSettings] = useState<Setting[]>([]);
   const [pageContent, setPageContent] = useState<PageContentItem[]>([]);
@@ -167,7 +171,7 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout title="Настройки">
-      <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4 sm:space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="branding" className="text-xs sm:text-sm">Брендинг</TabsTrigger>
           <TabsTrigger value="hero" className="text-xs sm:text-sm">Херо-блок</TabsTrigger>

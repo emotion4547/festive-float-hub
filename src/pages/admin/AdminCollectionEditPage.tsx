@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,9 @@ interface CollectionCategory {
 }
 
 export default function AdminCollectionEditPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "products";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -353,7 +356,7 @@ export default function AdminCollectionEditPage() {
           Назад к подборкам
         </Button>
 
-        <Tabs defaultValue="products">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="products">Отдельные товары ({collectionProducts.length})</TabsTrigger>
             <TabsTrigger value="categories">Категории ({collectionCategories.length})</TabsTrigger>

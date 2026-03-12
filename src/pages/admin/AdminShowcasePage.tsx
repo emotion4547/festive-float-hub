@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,9 @@ interface Collection {
 }
 
 export default function AdminShowcasePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "banners";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   // === Banners State ===
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
@@ -459,7 +463,7 @@ export default function AdminShowcasePage() {
 
   return (
     <AdminLayout title="Витрина">
-      <Tabs defaultValue="banners" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="banners">Баннеры</TabsTrigger>
           <TabsTrigger value="collections">Подборки</TabsTrigger>

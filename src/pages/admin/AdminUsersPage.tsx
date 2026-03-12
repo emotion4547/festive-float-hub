@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,9 @@ const roleIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function AdminUsersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "customers";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   // === Customers State ===
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
@@ -243,7 +247,7 @@ export default function AdminUsersPage() {
 
   return (
     <AdminLayout title="Пользователи">
-      <Tabs defaultValue="customers" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="customers">Клиенты</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>

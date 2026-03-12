@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,9 @@ const emptySegment = {
 };
 
 export default function AdminWheelPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "segments";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   
   // === Segments State ===
@@ -324,7 +328,7 @@ export default function AdminWheelPage() {
 
   return (
     <AdminLayout title="Колесо фортуны">
-      <Tabs defaultValue="segments" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="segments">Сегменты</TabsTrigger>
           <TabsTrigger value="stats">Статистика</TabsTrigger>

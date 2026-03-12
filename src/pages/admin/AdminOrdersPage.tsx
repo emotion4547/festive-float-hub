@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +94,9 @@ const deliveryMethods: Record<string, string> = {
 };
 
 export default function AdminOrdersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "orders";
+  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,7 +230,7 @@ export default function AdminOrdersPage() {
 
   return (
     <AdminLayout title="Заказы">
-      <Tabs defaultValue="orders" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="orders">Заказы</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
