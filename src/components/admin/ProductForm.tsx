@@ -424,7 +424,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       }
 
       onSuccess?.();
-      navigate("/admin/products");
+      navigate("/admin/products?tab=products");
     } catch (error) {
       console.error("Error saving product:", error);
       toast({
