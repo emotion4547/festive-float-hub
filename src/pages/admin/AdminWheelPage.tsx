@@ -325,7 +325,7 @@ export default function AdminWheelPage() {
 
   return (
     <AdminLayout title="Колесо фортуны">
-      <Tabs defaultValue="segments" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="segments">Сегменты</TabsTrigger>
           <TabsTrigger value="stats">Статистика</TabsTrigger>

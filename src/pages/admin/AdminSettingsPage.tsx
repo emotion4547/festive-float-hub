@@ -167,7 +167,7 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminLayout title="Настройки">
-      <Tabs defaultValue="branding" className="space-y-4 sm:space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4 sm:space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="branding" className="text-xs sm:text-sm">Брендинг</TabsTrigger>
           <TabsTrigger value="hero" className="text-xs sm:text-sm">Херо-блок</TabsTrigger>

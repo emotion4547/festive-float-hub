@@ -227,7 +227,7 @@ export default function AdminOrdersPage() {
 
   return (
     <AdminLayout title="Заказы">
-      <Tabs defaultValue="orders" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="orders">Заказы</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">

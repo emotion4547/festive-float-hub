@@ -353,7 +353,7 @@ export default function AdminCollectionEditPage() {
           Назад к подборкам
         </Button>
 
-        <Tabs defaultValue="products">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="products">Отдельные товары ({collectionProducts.length})</TabsTrigger>
             <TabsTrigger value="categories">Категории ({collectionCategories.length})</TabsTrigger>

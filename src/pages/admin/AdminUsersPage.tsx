@@ -244,7 +244,7 @@ export default function AdminUsersPage() {
 
   return (
     <AdminLayout title="Пользователи">
-      <Tabs defaultValue="customers" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="customers">Клиенты</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>

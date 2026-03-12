@@ -437,7 +437,7 @@ export default function AdminProductsPage() {
 
   return (
     <AdminLayout title="Товары">
-      <Tabs defaultValue="products" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="products">Товары</TabsTrigger>
           <TabsTrigger value="categories">Категории</TabsTrigger>

@@ -460,7 +460,7 @@ export default function AdminShowcasePage() {
 
   return (
     <AdminLayout title="Витрина">
-      <Tabs defaultValue="banners" className="space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="banners">Баннеры</TabsTrigger>
           <TabsTrigger value="collections">Подборки</TabsTrigger>

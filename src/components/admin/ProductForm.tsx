@@ -841,7 +841,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
           {isCopy ? "Создать копию" : product ? "Сохранить" : "Создать товар"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => navigate("/admin/products")}>
+        <Button type="button" variant="outline" onClick={() => navigate("/admin/products?tab=products")}>
           Отмена
         </Button>
       </div>
