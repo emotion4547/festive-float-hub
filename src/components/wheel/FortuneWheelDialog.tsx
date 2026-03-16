@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
 const WHEEL_SHOWN_KEY = "fortune_wheel_shown";
-const WHEEL_DELAY_MS = 30000; // 30 seconds
+const WHEEL_DELAY_MS = 30000;
 
 export function FortuneWheelDialog() {
   const [open, setOpen] = useState(false);
