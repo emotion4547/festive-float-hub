@@ -19,7 +19,7 @@ export function Footer() {
   return (
     <footer className="bg-foreground text-background">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* О магазине */}
           <div className="space-y-4">
             <h4 className="font-heading font-semibold text-lg text-primary">О МАГАЗИНЕ</h4>
