@@ -9,12 +9,6 @@ import { toast } from "sonner";
 import { useSetting, usePageContent } from "@/contexts/SiteDataContext";
 import { SEOHead } from "@/components/SEOHead";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useSetting, usePageContent } from "@/contexts/SiteDataContext";
-import { SEOHead } from "@/components/SEOHead";
 
 const ContactsPage = () => {
   const pageContent = usePageContent("contacts");
