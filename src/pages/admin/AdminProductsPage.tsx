@@ -267,7 +267,8 @@ export default function AdminProductsPage() {
       const { data, error } = await supabase
         .from("products")
         .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at, category_id")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, 2999);
 
       if (error) throw error;
       setProducts((data || []).map((p) => ({ ...p, is_visible: p.is_visible ?? true })));

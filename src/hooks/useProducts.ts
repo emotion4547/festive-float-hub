@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface DbProduct {
@@ -40,125 +40,96 @@ interface UseProductsOptions {
   isHit?: boolean;
 }
 
+async function fetchAllProducts(options: UseProductsOptions): Promise<DbProduct[]> {
+  let query = supabase
+    .from("products")
+    .select(`
+      *,
+      categories (name, slug)
+    `)
+    .eq("is_visible", true)
+    .order("created_at", { ascending: false });
+
+  if (options.categorySlug) {
+    query = query.eq("categories.slug", options.categorySlug);
+  }
+
+  if (options.search) {
+    query = query.ilike("name", `%${options.search}%`);
+  }
+
+  if (options.isNew) {
+    query = query.eq("is_new", true);
+  }
+
+  if (options.isHit) {
+    query = query.eq("is_hit", true);
+  }
+
+  if (options.limit) {
+    query = query.limit(options.limit);
+  } else {
+    // Override Supabase default 1000-row limit for full catalog
+    query = query.range(0, 2999);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
 export function useProducts(options: UseProductsOptions = {}) {
-  const [products, setProducts] = useState<DbProduct[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryKey = ["products", options.categorySlug, options.search, options.limit, options.isNew, options.isHit];
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from("products")
-          .select(`
-            *,
-            categories (name, slug)
-          `)
-          .order("created_at", { ascending: false });
+  const { data: products = [], isLoading: loading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchAllProducts(options),
+    staleTime: 5 * 60 * 1000, // 5 min cache
+    gcTime: 10 * 60 * 1000,
+  });
 
-        if (options.categorySlug) {
-          query = query.eq("categories.slug", options.categorySlug);
-        }
-
-        // Only show visible products on public pages
-        query = query.eq("is_visible", true);
-
-        if (options.search) {
-          query = query.ilike("name", `%${options.search}%`);
-        }
-
-        if (options.isNew) {
-          query = query.eq("is_new", true);
-        }
-
-        if (options.isHit) {
-          query = query.eq("is_hit", true);
-        }
-
-        if (options.limit) {
-          query = query.limit(options.limit);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        setProducts(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [options.categorySlug, options.search, options.limit, options.isNew, options.isHit]);
-
-  return { products, loading, error };
+  return { products, loading, error: error as Error | null };
 }
 
 export function useProduct(id: string) {
-  const [product, setProduct] = useState<DbProduct | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: product = null, isLoading: loading, error } = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          categories (name, slug)
+        `)
+        .eq("id", id)
+        .maybeSingle();
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("products")
-          .select(`
-            *,
-            categories (name, slug)
-          `)
-          .eq("id", id)
-          .maybeSingle();
+      if (error) throw error;
+      return data as DbProduct | null;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-        if (error) throw error;
-
-        setProduct(data);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchProduct();
-    }
-  }, [id]);
-
-  return { product, loading, error };
+  return { product, loading, error: error as Error | null };
 }
 
 export function useCategories() {
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; image: string | null; parent_id: string | null; is_visible: boolean }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: categories = [], isLoading: loading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, slug, image, parent_id, is_visible")
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true });
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("categories")
-          .select("id, name, slug, image, parent_id, is_visible")
-          .eq("is_visible", true)
-          .order("sort_order", { ascending: true });
-
-        if (error) throw error;
-
-        setCategories(data || []);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
   return { categories, loading };
 }
