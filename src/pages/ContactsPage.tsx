@@ -16,11 +16,7 @@ const ContactsPage = () => {
   const phone2 = useSetting("phone_2");
   const email = useSetting("email", "info@radugaprazdnika.ru");
   const address = useSetting("address", "г. Краснодар, ул. Красная, 123");
-  
-  const whatsapp = useSetting("whatsapp");
-  const telegram = useSetting("telegram");
-  const vk = useSetting("vk");
-  const instagram = useSetting("instagram");
+  const { data: socialLinks } = useSocialLinks({ floating: true });
 
   const [formData, setFormData] = useState({
     name: "",
