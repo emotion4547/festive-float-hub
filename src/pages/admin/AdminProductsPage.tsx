@@ -225,65 +225,41 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState("date-desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const initialPage = parseInt(searchParams.get("page") || "0", 10);
-  const [page, setPage] = useState(isNaN(initialPage) ? 0 : initialPage);
 
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at, category_id")
-        .order("created_at", { ascending: false });
+  const page = useMemo(() => {
+    const raw = Number(searchParams.get("page") ?? "0");
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
+  }, [searchParams]);
 
-      if (error) throw error;
-      setProducts((data || []).map(p => ({ ...p, is_visible: p.is_visible ?? true })));
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const setPage = useCallback((nextPage: number) => {
+    const normalized = Math.max(0, Math.floor(nextPage));
+    setSearchParams((prev) => {
+      const currentPage = Number(prev.get("page") ?? "0");
+      const currentTab = prev.get("tab") || "products";
 
-  const fetchCategories = async () => {
-    const { data } = await supabase.from("categories").select("id, name").order("name");
-    setCategories(data || []);
-  };
+      if (currentPage === normalized && currentTab === "products") {
+        return prev;
+      }
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
+      const next = new URLSearchParams(prev);
+      next.set("tab", "products");
+      next.set("page", String(normalized));
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const hasInitializedFilters = useRef(false);
+  const previousFilters = useRef({ searchQuery: "", sortBy: "date-desc" });
 
   useEffect(() => {
-    if (!hasInitializedFilters.current) {
-      hasInitializedFilters.current = true;
+    const prev = previousFilters.current;
+    if (prev.searchQuery === searchQuery && prev.sortBy === sortBy) {
       return;
     }
 
+    previousFilters.current = { searchQuery, sortBy };
     setSelectedIds(new Set());
     setPage(0);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("tab", tab);
-      next.set("page", "0");
-      return next;
-    }, { replace: true });
-  }, [searchQuery, sortBy, setSearchParams, tab]);
-
-  // Sync page to URL and sessionStorage
-  useEffect(() => {
-    const urlPage = searchParams.get("page");
-    if (urlPage !== String(page)) {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        next.set("page", String(page));
-        return next;
-      }, { replace: true });
-    }
-    sessionStorage.setItem("adminProductsPage", String(page));
-  }, [page, searchParams, setSearchParams]);
+  }, [searchQuery, sortBy, setPage]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
