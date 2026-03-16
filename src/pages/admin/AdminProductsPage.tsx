@@ -51,6 +51,7 @@ const PAGE_SIZE = 50;
 // Memoized table row — only re-renders when its own props change
 const ProductTableRow = memo(({ 
   product, 
+  page,
   isSelected, 
   onToggleSelect, 
   onToggleVisibility, 
@@ -58,6 +59,7 @@ const ProductTableRow = memo(({
   onDelete 
 }: {
   product: Product;
+  page: number;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onToggleVisibility: (product: Product) => void;
