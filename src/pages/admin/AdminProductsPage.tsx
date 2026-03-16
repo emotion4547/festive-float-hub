@@ -215,7 +215,21 @@ ProductMobileCard.displayName = "ProductMobileCard";
 export default function AdminProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get("tab") || "products";
-  const setTab = (v: string) => setSearchParams({ tab: v, page: "0" }, { replace: true });
+  const setTab = useCallback((nextTab: string) => {
+    setSearchParams((prev) => {
+      const currentTab = prev.get("tab") || "products";
+      if (currentTab === nextTab) return prev;
+
+      const next = new URLSearchParams(prev);
+      next.set("tab", nextTab);
+      if (nextTab === "products") {
+        if (!next.get("page")) next.set("page", "0");
+      } else {
+        next.delete("page");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
