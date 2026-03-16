@@ -375,10 +375,10 @@ export default function AdminProductsPage() {
   );
 
   useEffect(() => {
-    if (page !== safePage) {
+    if (!loading && page !== safePage) {
       setPage(safePage);
     }
-  }, [page, safePage, setPage]);
+  }, [loading, page, safePage, setPage]);
 
   const paginatedProducts = useMemo(() => {
     const start = safePage * PAGE_SIZE;
