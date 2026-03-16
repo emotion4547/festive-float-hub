@@ -256,12 +256,13 @@ export default function AdminProductsPage() {
     setSearchParams(prev => { prev.set("page", "0"); return prev; }, { replace: true });
   }, [searchQuery, sortBy]);
 
-  // Sync page to URL
+  // Sync page to URL and sessionStorage
   useEffect(() => {
     const urlPage = searchParams.get("page");
     if (urlPage !== String(page)) {
       setSearchParams(prev => { prev.set("page", String(page)); return prev; }, { replace: true });
     }
+    sessionStorage.setItem("adminProductsPage", String(page));
   }, [page]);
 
   const handleDelete = useCallback(async (id: string) => {
