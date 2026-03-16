@@ -556,6 +556,7 @@ export default function AdminProductsPage() {
                   <ProductMobileCard
                     key={product.id}
                     product={product}
+                    page={safePage}
                     isSelected={selectedIds.has(product.id)}
                     onToggleSelect={toggleSelect}
                     onToggleVisibility={handleToggleVisibility}
