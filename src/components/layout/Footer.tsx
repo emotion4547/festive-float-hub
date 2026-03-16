@@ -59,7 +59,7 @@ export function Footer() {
                 Печать на шарах
               </Link>
               <Link to="/about/warranty" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Гарантия и возврат
+                Гарантия
               </Link>
             </nav>
           </div>

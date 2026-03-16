@@ -7,9 +7,9 @@ const WarrantyPage = () => {
   return (
     <Layout>
       <SEOHead
-        title="Гарантия и возврат"
-        description="Условия гарантии на воздушные шары. Гарантия на полёт шаров 2-4 дня. Возврат и обмен товара. Радуга Праздника, Краснодар."
-        keywords="гарантия на шары, возврат шаров, обмен воздушных шаров, гарантия полета шаров"
+        title="Гарантия"
+        description="Условия гарантии на воздушные шары. Гарантия на полёт шаров 2-4 дня. Радуга Праздника, Краснодар."
+        keywords="гарантия на шары, гарантия полета шаров"
         canonicalPath="/about/warranty"
       />
       <div className="container py-8">
@@ -17,7 +17,7 @@ const WarrantyPage = () => {
           
           <main className="flex-1">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-8">
-              ГАРАНТИЯ И ВОЗВРАТ
+              ГАРАНТИЯ
             </h1>
 
             <div className="prose prose-lg max-w-none mb-8">

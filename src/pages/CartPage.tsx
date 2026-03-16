@@ -491,7 +491,7 @@ const CartPage = () => {
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <RefreshCw className="h-5 w-5 text-primary shrink-0" />
-                  <span>Возврат в течение 14 дней</span>
+                  <span>Гарантия свежести</span>
                 </div>
               </div>
             </div>
