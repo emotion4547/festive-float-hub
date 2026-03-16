@@ -80,23 +80,6 @@ export function Footer() {
             </nav>
           </div>
 
-          {/* Время работы */}
-          <div className="space-y-4">
-            <h4 className="font-heading font-semibold text-lg text-primary">ВРЕМЯ РАБОТЫ</h4>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p>Время работы магазина:</p>
-                  <p>С 10:00 до 20:00 ежедневно</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <p>Приём заказов 24/7</p>
-              </div>
-            </div>
-          </div>
 
           {/* Контакты */}
           <div className="space-y-4">

@@ -156,14 +156,6 @@ export function generateLocalBusinessSchema() {
       latitude: 45.052788,
       longitude: 39.017834,
     },
-    openingHoursSpecification: [
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-        opens: '10:00',
-        closes: '20:00',
-      },
-    ],
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
       name: 'Каталог воздушных шаров',
