@@ -253,7 +253,16 @@ export default function AdminProductsPage() {
   useEffect(() => {
     setSelectedIds(new Set());
     setPage(0);
+    setSearchParams(prev => { prev.set("page", "0"); return prev; }, { replace: true });
   }, [searchQuery, sortBy]);
+
+  // Sync page to URL
+  useEffect(() => {
+    const urlPage = searchParams.get("page");
+    if (urlPage !== String(page)) {
+      setSearchParams(prev => { prev.set("page", String(page)); return prev; }, { replace: true });
+    }
+  }, [page]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
