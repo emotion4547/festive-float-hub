@@ -221,7 +221,8 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState("date-desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const [page, setPage] = useState(0);
+  const initialPage = parseInt(searchParams.get("page") || "0", 10);
+  const [page, setPage] = useState(isNaN(initialPage) ? 0 : initialPage);
 
   const fetchProducts = async () => {
     try {
