@@ -28,6 +28,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCategories } from "@/hooks/useProducts";
 import { useSetting } from "@/contexts/SiteDataContext";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
+import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mainNavItems = [
