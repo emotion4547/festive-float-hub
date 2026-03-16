@@ -72,6 +72,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isCopy = searchParams.get("copy") === "true";
+  const returnPage = searchParams.get("page") || "0";
   const { toast } = useToast();
   const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
