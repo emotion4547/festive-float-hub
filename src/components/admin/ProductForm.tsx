@@ -843,7 +843,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           {isCopy ? "Создать копию" : product ? "Сохранить" : "Создать товар"}
         </Button>
         <Button type="button" variant="outline" onClick={() => {
-          const returnPage = sessionStorage.getItem("adminProductsPage") || "0";
           navigate(`/admin/products?tab=products&page=${returnPage}`);
         }}>
           Отмена
