@@ -250,20 +250,36 @@ export default function AdminProductsPage() {
     fetchCategories();
   }, []);
 
+  const hasInitializedFilters = useRef(false);
+
   useEffect(() => {
+    if (!hasInitializedFilters.current) {
+      hasInitializedFilters.current = true;
+      return;
+    }
+
     setSelectedIds(new Set());
     setPage(0);
-    setSearchParams(prev => { prev.set("page", "0"); return prev; }, { replace: true });
-  }, [searchQuery, sortBy]);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", tab);
+      next.set("page", "0");
+      return next;
+    }, { replace: true });
+  }, [searchQuery, sortBy, setSearchParams, tab]);
 
   // Sync page to URL and sessionStorage
   useEffect(() => {
     const urlPage = searchParams.get("page");
     if (urlPage !== String(page)) {
-      setSearchParams(prev => { prev.set("page", String(page)); return prev; }, { replace: true });
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("page", String(page));
+        return next;
+      }, { replace: true });
     }
     sessionStorage.setItem("adminProductsPage", String(page));
-  }, [page]);
+  }, [page, searchParams, setSearchParams]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
