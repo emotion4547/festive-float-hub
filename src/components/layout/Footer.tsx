@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Phone, MapPin, Clock, ExternalLink } from "lucide-react";
+import { Phone, MapPin, ExternalLink } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
