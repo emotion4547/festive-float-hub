@@ -99,9 +99,7 @@ export function MobileMenu() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   
   const phone = useSetting("phone", "+7 (918) 179-00-56");
-  const whatsapp = useSetting("whatsapp", "https://wa.me/79181790056");
-  const telegram = useSetting("telegram", "https://t.me/+79181790056");
-  const vk = useSetting("vk", "https://vk.com/radugaprazdnika");
+  const { data: socialLinks } = useSocialLinks({ floating: true });
   const cleanPhone = phone.replace(/[^\d+]/g, "");
 
   // Group categories by parent
