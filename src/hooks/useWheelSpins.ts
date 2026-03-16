@@ -35,8 +35,15 @@ export function useWheelSpins() {
   const checkCanSpin = async () => {
     setIsLoading(true);
 
+    // If wheel was already shown, user can't spin
+    const wasShown = localStorage.getItem(WHEEL_SHOWN_KEY);
+    if (wasShown) {
+      setCanSpin(false);
+      setIsLoading(false);
+      return;
+    }
+
     if (!user) {
-      // For anonymous users, check localStorage
       const pendingSpin = localStorage.getItem(PENDING_SPIN_KEY);
       setCanSpin(!pendingSpin);
       setNextSpinDate(null);
@@ -45,31 +52,21 @@ export function useWheelSpins() {
     }
 
     try {
-      // Check last spin for authenticated user
+      // Check if authenticated user has ever spun
       const { data } = await supabase
         .from("user_wheel_spins")
-        .select("spun_at")
+        .select("id")
         .eq("user_id", user.id)
-        .order("spun_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (data) {
-        const lastSpinDate = new Date(data.spun_at);
-        const nextSpin = new Date(lastSpinDate);
-        nextSpin.setDate(nextSpin.getDate() + COOLDOWN_DAYS);
-
-        if (nextSpin > new Date()) {
-          setCanSpin(false);
-          setNextSpinDate(nextSpin);
-        } else {
-          setCanSpin(true);
-          setNextSpinDate(null);
-        }
+        setCanSpin(false);
+        localStorage.setItem(WHEEL_SHOWN_KEY, "true");
       } else {
         setCanSpin(true);
-        setNextSpinDate(null);
       }
+      setNextSpinDate(null);
     } catch (error) {
       console.error("Error checking spin eligibility:", error);
       setCanSpin(false);
