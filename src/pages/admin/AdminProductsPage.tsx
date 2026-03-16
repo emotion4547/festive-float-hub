@@ -211,7 +211,7 @@ ProductMobileCard.displayName = "ProductMobileCard";
 export default function AdminProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get("tab") || "products";
-  const setTab = (v: string) => setSearchParams({ tab: v }, { replace: true });
+  const setTab = (v: string) => setSearchParams({ tab: v, page: "0" }, { replace: true });
   const { toast } = useToast();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
@@ -221,7 +221,8 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState("date-desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const [page, setPage] = useState(0);
+  const initialPage = parseInt(searchParams.get("page") || "0", 10);
+  const [page, setPage] = useState(isNaN(initialPage) ? 0 : initialPage);
 
   const fetchProducts = async () => {
     try {
@@ -252,7 +253,17 @@ export default function AdminProductsPage() {
   useEffect(() => {
     setSelectedIds(new Set());
     setPage(0);
+    setSearchParams(prev => { prev.set("page", "0"); return prev; }, { replace: true });
   }, [searchQuery, sortBy]);
+
+  // Sync page to URL and sessionStorage
+  useEffect(() => {
+    const urlPage = searchParams.get("page");
+    if (urlPage !== String(page)) {
+      setSearchParams(prev => { prev.set("page", String(page)); return prev; }, { replace: true });
+    }
+    sessionStorage.setItem("adminProductsPage", String(page));
+  }, [page]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
