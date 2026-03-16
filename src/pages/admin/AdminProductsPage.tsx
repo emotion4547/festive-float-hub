@@ -51,6 +51,7 @@ const PAGE_SIZE = 50;
 // Memoized table row — only re-renders when its own props change
 const ProductTableRow = memo(({ 
   product, 
+  page,
   isSelected, 
   onToggleSelect, 
   onToggleVisibility, 
@@ -58,6 +59,7 @@ const ProductTableRow = memo(({
   onDelete 
 }: {
   product: Product;
+  page: number;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onToggleVisibility: (product: Product) => void;
@@ -119,7 +121,7 @@ const ProductTableRow = memo(({
           <Copy className="h-4 w-4 text-muted-foreground" />
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-          <Link to={`/admin/products/${product.id}`} title="Редактировать"><Edit className="h-4 w-4" /></Link>
+          <Link to={`/admin/products/${product.id}?page=${page}`} title="Редактировать"><Edit className="h-4 w-4" /></Link>
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(product.id)} title="Удалить">
           <Trash2 className="h-4 w-4 text-destructive" />
@@ -133,6 +135,7 @@ ProductTableRow.displayName = "ProductTableRow";
 // Memoized mobile card
 const ProductMobileCard = memo(({
   product,
+  page,
   isSelected,
   onToggleSelect,
   onToggleVisibility,
@@ -140,6 +143,7 @@ const ProductMobileCard = memo(({
   onDelete
 }: {
   product: Product;
+  page: number;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onToggleVisibility: (product: Product) => void;
@@ -195,7 +199,7 @@ const ProductMobileCard = memo(({
               <Copy className="h-4 w-4 text-muted-foreground" />
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to={`/admin/products/${product.id}`}><Edit className="h-4 w-4" /></Link>
+              <Link to={`/admin/products/${product.id}?page=${page}`}><Edit className="h-4 w-4" /></Link>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(product.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
@@ -221,8 +225,28 @@ export default function AdminProductsPage() {
   const [sortBy, setSortBy] = useState("date-desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const initialPage = parseInt(searchParams.get("page") || "0", 10);
-  const [page, setPage] = useState(isNaN(initialPage) ? 0 : initialPage);
+
+  const page = useMemo(() => {
+    const raw = Number(searchParams.get("page") ?? "0");
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
+  }, [searchParams]);
+
+  const setPage = useCallback((nextPage: number) => {
+    const normalized = Math.max(0, Math.floor(nextPage));
+    setSearchParams((prev) => {
+      const currentPage = Number(prev.get("page") ?? "0");
+      const currentTab = prev.get("tab") || "products";
+
+      if (currentPage === normalized && currentTab === "products") {
+        return prev;
+      }
+
+      const next = new URLSearchParams(prev);
+      next.set("tab", "products");
+      next.set("page", String(normalized));
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const fetchProducts = async () => {
     try {
@@ -232,7 +256,7 @@ export default function AdminProductsPage() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setProducts((data || []).map(p => ({ ...p, is_visible: p.is_visible ?? true })));
+      setProducts((data || []).map((p) => ({ ...p, is_visible: p.is_visible ?? true })));
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -250,36 +274,18 @@ export default function AdminProductsPage() {
     fetchCategories();
   }, []);
 
-  const hasInitializedFilters = useRef(false);
+  const previousFilters = useRef({ searchQuery: "", sortBy: "date-desc" });
 
   useEffect(() => {
-    if (!hasInitializedFilters.current) {
-      hasInitializedFilters.current = true;
+    const prev = previousFilters.current;
+    if (prev.searchQuery === searchQuery && prev.sortBy === sortBy) {
       return;
     }
 
+    previousFilters.current = { searchQuery, sortBy };
     setSelectedIds(new Set());
     setPage(0);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set("tab", tab);
-      next.set("page", "0");
-      return next;
-    }, { replace: true });
-  }, [searchQuery, sortBy, setSearchParams, tab]);
-
-  // Sync page to URL and sessionStorage
-  useEffect(() => {
-    const urlPage = searchParams.get("page");
-    if (urlPage !== String(page)) {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        next.set("page", String(page));
-        return next;
-      }, { replace: true });
-    }
-    sessionStorage.setItem("adminProductsPage", String(page));
-  }, [page, searchParams, setSearchParams]);
+  }, [searchQuery, sortBy, setPage]);
 
   const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Удалить этот товар?")) return;
@@ -312,11 +318,11 @@ export default function AdminProductsPage() {
       const { data, error } = await supabase.from("products").select("*").eq("id", product.id).single();
       if (error) throw error;
       sessionStorage.setItem("copyProductData", JSON.stringify(data));
-      navigate("/admin/products/new?copy=true");
+      navigate(`/admin/products/new?copy=true&page=${page}`);
     } catch {
       toast({ variant: "destructive", title: "Ошибка", description: "Не удалось скопировать товар" });
     }
-  }, [navigate, toast]);
+  }, [navigate, page, toast]);
 
   const filteredProducts = useMemo(() => {
     let result = products.filter((product) =>
@@ -349,10 +355,21 @@ export default function AdminProductsPage() {
   }, [products, searchQuery, sortBy]);
 
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const safePage = useMemo(
+    () => Math.min(page, Math.max(totalPages - 1, 0)),
+    [page, totalPages]
+  );
+
+  useEffect(() => {
+    if (page !== safePage) {
+      setPage(safePage);
+    }
+  }, [page, safePage, setPage]);
+
   const paginatedProducts = useMemo(() => {
-    const start = page * PAGE_SIZE;
+    const start = safePage * PAGE_SIZE;
     return filteredProducts.slice(start, start + PAGE_SIZE);
-  }, [filteredProducts, page]);
+  }, [filteredProducts, safePage]);
 
   // --- Bulk actions ---
   const toggleSelect = useCallback((id: string) => {
@@ -565,6 +582,7 @@ export default function AdminProductsPage() {
                   <ProductMobileCard
                     key={product.id}
                     product={product}
+                    page={safePage}
                     isSelected={selectedIds.has(product.id)}
                     onToggleSelect={toggleSelect}
                     onToggleVisibility={handleToggleVisibility}
@@ -601,6 +619,7 @@ export default function AdminProductsPage() {
                         <ProductTableRow
                           key={product.id}
                           product={product}
+                          page={safePage}
                           isSelected={selectedIds.has(product.id)}
                           onToggleSelect={toggleSelect}
                           onToggleVisibility={handleToggleVisibility}
@@ -617,14 +636,14 @@ export default function AdminProductsPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Показано {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredProducts.length)} из {filteredProducts.length}
+                    Показано {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filteredProducts.length)} из {filteredProducts.length}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    <Button variant="outline" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
                       <ChevronLeft className="h-4 w-4 mr-1" /> Назад
                     </Button>
-                    <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    <span className="text-sm text-muted-foreground">{safePage + 1} / {totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>
                       Далее <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>

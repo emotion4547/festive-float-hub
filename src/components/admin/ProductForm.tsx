@@ -72,6 +72,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isCopy = searchParams.get("copy") === "true";
+  const returnPage = searchParams.get("page") || "0";
   const { toast } = useToast();
   const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
@@ -424,7 +425,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       }
 
       onSuccess?.();
-      const returnPage = sessionStorage.getItem("adminProductsPage") || "0";
       navigate(`/admin/products?tab=products&page=${returnPage}`);
     } catch (error) {
       console.error("Error saving product:", error);
@@ -843,7 +843,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           {isCopy ? "Создать копию" : product ? "Сохранить" : "Создать товар"}
         </Button>
         <Button type="button" variant="outline" onClick={() => {
-          const returnPage = sessionStorage.getItem("adminProductsPage") || "0";
           navigate(`/admin/products?tab=products&page=${returnPage}`);
         }}>
           Отмена
