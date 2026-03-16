@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
 const WHEEL_SHOWN_KEY = "fortune_wheel_shown";
-const WHEEL_DELAY_MS = 30000; // 30 seconds
+const WHEEL_DELAY_MS = 30000;
 
 export function FortuneWheelDialog() {
   const [open, setOpen] = useState(false);
@@ -56,19 +56,17 @@ export function FortuneWheelDialog() {
   }, []);
 
   useEffect(() => {
-    // Check if wheel was already shown in this session
-    const wasShown = sessionStorage.getItem(WHEEL_SHOWN_KEY);
+    // Check if wheel was already shown ever (localStorage = permanent)
+    const wasShown = localStorage.getItem(WHEEL_SHOWN_KEY);
     if (wasShown) return;
 
-    // Don't show if user can't spin or still loading
     if (spinCheckLoading) return;
-    if (!canSpin && !hasPendingSpin()) return;
+    if (!canSpin) return;
 
-    // Show wheel after 30 seconds
     const timer = setTimeout(() => {
       if (segments.length > 0 && canSpin) {
         setOpen(true);
-        sessionStorage.setItem(WHEEL_SHOWN_KEY, "true");
+        localStorage.setItem(WHEEL_SHOWN_KEY, "true");
       }
     }, WHEEL_DELAY_MS);
 
