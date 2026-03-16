@@ -1,0 +1,1 @@
+UPDATE site_settings SET value = 'Добавьте ярких красок в ваше событие с нашими воздушными шарами!' WHERE key = 'hero_default_subtitle';
