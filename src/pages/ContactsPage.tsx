@@ -93,62 +93,27 @@ const ContactsPage = () => {
                   </div>
                 </div>
 
-                {/* Messengers */}
-                {(whatsapp || telegram) && (
+                {/* Social Links & Messengers from DB */}
+                {socialLinks && socialLinks.length > 0 && (
                   <div className="bg-background rounded-xl p-6 shadow-sm border">
-                    <h2 className="font-heading text-xl font-bold mb-4">Мессенджеры</h2>
-                    <div className="flex gap-4">
-                      {whatsapp && (
-                        <a 
-                          href={whatsapp} 
-                          target="_blank" 
+                    <h2 className="font-heading text-xl font-bold mb-4">Мессенджеры и соцсети</h2>
+                    <div className="flex flex-wrap gap-3">
+                      {socialLinks.map((link) => (
+                        <a
+                          key={link.id}
+                          href={link.url}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-foreground rounded-lg hover:bg-primary/20 transition-colors"
                         >
-                          <MessageCircle className="h-5 w-5" />
-                          WhatsApp
+                          {link.icon_url ? (
+                            <img src={link.icon_url} alt={link.name} className="h-5 w-5 rounded-full object-cover" />
+                          ) : (
+                            <ExternalLink className="h-5 w-5 text-primary" />
+                          )}
+                          {link.name}
                         </a>
-                      )}
-                      {telegram && (
-                        <a 
-                          href={telegram} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          <Send className="h-5 w-5" />
-                          Telegram
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Social Media */}
-                {(vk || instagram) && (
-                  <div className="bg-background rounded-xl p-6 shadow-sm border">
-                    <h2 className="font-heading text-xl font-bold mb-4">Мы в социальных сетях</h2>
-                    <div className="flex gap-4">
-                      {vk && (
-                        <a 
-                          href={vk} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          VK
-                        </a>
-                      )}
-                      {instagram && (
-                        <a 
-                          href={instagram} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-                        >
-                          Instagram
-                        </a>
-                      )}
+                      ))}
                     </div>
                   </div>
                 )}
