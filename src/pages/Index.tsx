@@ -117,7 +117,7 @@ const Index = () => {
   const heroColor2 = siteSettings.hero_color2 || "#5BC5C8";
   const heroColor3 = siteSettings.hero_color3 || "#abfffc";
   const heroTitle = siteSettings.hero_default_title || "Воздушные шары с доставкой по Краснодару";
-  const heroSubtitle = siteSettings.hero_default_subtitle || "Более 1000 композиций на любой праздник. Доставка от 2 часов. Гарантия свежести!";
+  const heroSubtitle = siteSettings.hero_default_subtitle || "Добавьте ярких красок в ваше событие с нашими воздушными шарами!";
   const heroBtnText = siteSettings.hero_btn_text || "Выбрать шары";
   const heroBtnLink = siteSettings.hero_btn_link || "/catalog";
 
