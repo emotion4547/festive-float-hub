@@ -425,7 +425,6 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       }
 
       onSuccess?.();
-      const returnPage = sessionStorage.getItem("adminProductsPage") || "0";
       navigate(`/admin/products?tab=products&page=${returnPage}`);
     } catch (error) {
       console.error("Error saving product:", error);
