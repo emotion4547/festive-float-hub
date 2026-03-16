@@ -89,11 +89,10 @@ export function useWheelSpins() {
       coupon_id: couponId,
     });
 
-    // Update local state
-    const nextSpin = new Date();
-    nextSpin.setDate(nextSpin.getDate() + COOLDOWN_DAYS);
+    // Mark as permanently used
+    localStorage.setItem(WHEEL_SHOWN_KEY, "true");
     setCanSpin(false);
-    setNextSpinDate(nextSpin);
+    setNextSpinDate(null);
   };
 
   // Save pending spin for anonymous user
