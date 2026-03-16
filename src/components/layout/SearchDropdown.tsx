@@ -29,7 +29,7 @@ const pageResults: SearchResult[] = [
   { id: "corporate", title: "Корпоративы", type: "page", url: "/corporate" },
   { id: "printing", title: "Печать на шарах", type: "page", url: "/printing" },
   { id: "reviews", title: "Отзывы", type: "page", url: "/reviews" },
-  { id: "warranty", title: "Гарантия и возврат", type: "page", url: "/about/warranty" },
+  { id: "warranty", title: "Гарантия", type: "page", url: "/about/warranty" },
   { id: "privacy", title: "Политика конфиденциальности", type: "page", url: "/about/privacy" },
   { id: "offer", title: "Публичная оферта", type: "page", url: "/about/offer" },
   { id: "partners", title: "Партнёры", type: "page", url: "/about/partners" },

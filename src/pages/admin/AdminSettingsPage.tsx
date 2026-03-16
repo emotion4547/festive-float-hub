@@ -45,7 +45,7 @@ const pageLabels: Record<string, string> = {
   printing: "Печать на шарах",
   payment: "Оплата",
   contacts: "Контакты",
-  warranty: "Гарантии и возврат",
+  warranty: "Гарантия",
   privacy: "Политика конфиденциальности",
   offer: "Публичная оферта",
   partners: "Партнёрам",
