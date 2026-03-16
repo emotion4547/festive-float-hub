@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
-import { Phone, Mail, MapPin, MessageCircle, Send } from "lucide-react";
+import { Phone, Mail, MapPin, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { useSetting, usePageContent } from "@/contexts/SiteDataContext";
+import { SEOHead } from "@/components/SEOHead";
+import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
