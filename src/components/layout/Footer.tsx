@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Phone, MapPin, Clock, ExternalLink } from "lucide-react";
+import { Phone, MapPin, ExternalLink } from "lucide-react";
 import { useSetting } from "@/contexts/SiteDataContext";
 import { useSocialLinks } from "@/hooks/useSocialLinks";
 import { CallbackFormDialog } from "@/components/CallbackFormDialog";
@@ -19,7 +19,7 @@ export function Footer() {
   return (
     <footer className="bg-foreground text-background">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* О магазине */}
           <div className="space-y-4">
             <h4 className="font-heading font-semibold text-lg text-primary">О МАГАЗИНЕ</h4>
@@ -80,23 +80,6 @@ export function Footer() {
             </nav>
           </div>
 
-          {/* Время работы */}
-          <div className="space-y-4">
-            <h4 className="font-heading font-semibold text-lg text-primary">ВРЕМЯ РАБОТЫ</h4>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p>Время работы магазина:</p>
-                  <p>С 10:00 до 20:00 ежедневно</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <p>Приём заказов 24/7</p>
-              </div>
-            </div>
-          </div>
 
           {/* Контакты */}
           <div className="space-y-4">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SidebarWidgets } from "@/components/layout/SidebarWidgets";
-import { Phone, Mail, MapPin, Clock, MessageCircle, Send } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ const ContactsPage = () => {
   const phone2 = useSetting("phone_2");
   const email = useSetting("email", "info@radugaprazdnika.ru");
   const address = useSetting("address", "г. Краснодар, ул. Красная, 123");
-  const workHours = useSetting("work_hours", "Пн-Вс: 09:00 - 21:00");
+  
   const whatsapp = useSetting("whatsapp");
   const telegram = useSetting("telegram");
   const vk = useSetting("vk");
@@ -93,15 +93,6 @@ const ContactsPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{workHours}</p>
-                        <p className="text-sm text-muted-foreground">Время работы</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
