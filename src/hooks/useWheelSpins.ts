@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const PENDING_SPIN_KEY = "pending_wheel_spin";
 const SESSION_ID_KEY = "wheel_session_id";
-const COOLDOWN_DAYS = 15;
+const WHEEL_SHOWN_KEY = "fortune_wheel_shown";
 
 interface PendingSpin {
   segmentId: string;
