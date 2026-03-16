@@ -248,6 +248,32 @@ export default function AdminProductsPage() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, price, old_price, in_stock, is_new, is_hit, is_visible, images, created_at, category_id")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setProducts((data || []).map((p) => ({ ...p, is_visible: p.is_visible ?? true })));
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    const { data } = await supabase.from("categories").select("id, name").order("name");
+    setCategories(data || []);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
+
   const previousFilters = useRef({ searchQuery: "", sortBy: "date-desc" });
 
   useEffect(() => {
