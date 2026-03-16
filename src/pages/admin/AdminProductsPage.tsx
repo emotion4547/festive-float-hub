@@ -593,6 +593,7 @@ export default function AdminProductsPage() {
                         <ProductTableRow
                           key={product.id}
                           product={product}
+                          page={safePage}
                           isSelected={selectedIds.has(product.id)}
                           onToggleSelect={toggleSelect}
                           onToggleVisibility={handleToggleVisibility}
