@@ -398,42 +398,28 @@ export function MobileMenu() {
             <Phone className="h-4 w-4" />
             {phone}
           </a>
-          <div className="flex items-center justify-center gap-3">
-            <motion.a
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              href={whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg"
-              aria-label="WhatsApp"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </motion.a>
-            <motion.a
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              href={telegram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-[#0088cc] text-white flex items-center justify-center shadow-lg"
-              aria-label="Telegram"
-            >
-              <Send className="h-5 w-5" />
-            </motion.a>
-            <motion.a
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              href={vk}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-[#0077FF] text-white flex items-center justify-center shadow-lg"
-              aria-label="VKontakte"
-            >
-              <span className="font-bold text-sm">VK</span>
-            </motion.a>
-          </div>
-          <p className="text-xs text-muted-foreground text-center">Ежедневно 9:00-21:00</p>
+          {socialLinks && socialLinks.length > 0 && (
+            <div className="flex items-center justify-center gap-3">
+              {socialLinks.map((link) => (
+                <motion.a
+                  key={link.id}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shadow-lg overflow-hidden"
+                  aria-label={link.name}
+                >
+                  {link.icon_url ? (
+                    <img src={link.icon_url} alt={link.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ExternalLink className="h-5 w-5 text-primary-foreground" />
+                  )}
+                </motion.a>
+              ))}
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
