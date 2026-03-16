@@ -610,14 +610,14 @@ export default function AdminProductsPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
-                    Показано {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredProducts.length)} из {filteredProducts.length}
+                    Показано {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filteredProducts.length)} из {filteredProducts.length}
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    <Button variant="outline" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>
                       <ChevronLeft className="h-4 w-4 mr-1" /> Назад
                     </Button>
-                    <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    <span className="text-sm text-muted-foreground">{safePage + 1} / {totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={safePage >= totalPages - 1} onClick={() => setPage(safePage + 1)}>
                       Далее <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   </div>
