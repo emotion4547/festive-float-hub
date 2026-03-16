@@ -292,11 +292,11 @@ export default function AdminProductsPage() {
       const { data, error } = await supabase.from("products").select("*").eq("id", product.id).single();
       if (error) throw error;
       sessionStorage.setItem("copyProductData", JSON.stringify(data));
-      navigate("/admin/products/new?copy=true");
+      navigate(`/admin/products/new?copy=true&page=${page}`);
     } catch {
       toast({ variant: "destructive", title: "Ошибка", description: "Не удалось скопировать товар" });
     }
-  }, [navigate, toast]);
+  }, [navigate, page, toast]);
 
   const filteredProducts = useMemo(() => {
     let result = products.filter((product) =>
