@@ -199,7 +199,7 @@ const ProductMobileCard = memo(({
               <Copy className="h-4 w-4 text-muted-foreground" />
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to={`/admin/products/${product.id}`}><Edit className="h-4 w-4" /></Link>
+              <Link to={`/admin/products/${product.id}?page=${page}`}><Edit className="h-4 w-4" /></Link>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(product.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
