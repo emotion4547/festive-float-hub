@@ -135,6 +135,7 @@ ProductTableRow.displayName = "ProductTableRow";
 // Memoized mobile card
 const ProductMobileCard = memo(({
   product,
+  page,
   isSelected,
   onToggleSelect,
   onToggleVisibility,
@@ -142,6 +143,7 @@ const ProductMobileCard = memo(({
   onDelete
 }: {
   product: Product;
+  page: number;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   onToggleVisibility: (product: Product) => void;
