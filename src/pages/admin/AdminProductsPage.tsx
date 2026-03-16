@@ -329,10 +329,21 @@ export default function AdminProductsPage() {
   }, [products, searchQuery, sortBy]);
 
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+  const safePage = useMemo(
+    () => Math.min(page, Math.max(totalPages - 1, 0)),
+    [page, totalPages]
+  );
+
+  useEffect(() => {
+    if (page !== safePage) {
+      setPage(safePage);
+    }
+  }, [page, safePage, setPage]);
+
   const paginatedProducts = useMemo(() => {
-    const start = page * PAGE_SIZE;
+    const start = safePage * PAGE_SIZE;
     return filteredProducts.slice(start, start + PAGE_SIZE);
-  }, [filteredProducts, page]);
+  }, [filteredProducts, safePage]);
 
   // --- Bulk actions ---
   const toggleSelect = useCallback((id: string) => {
