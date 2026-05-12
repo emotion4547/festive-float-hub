@@ -52,18 +52,20 @@ export function CallbackFormDialog({ children, trigger }: CallbackFormDialogProp
 
       // Send to Telegram
       try {
-        await supabase.functions.invoke("send-telegram", {
-          body: {
-            type: "callback",
-            data: {
-              name: formData.name.trim(),
-              phone: formData.phone.trim(),
-              comment: formData.comment.trim() || null,
-            },
+        const notificationPayload = {
+          type: "callback" as const,
+          data: {
+            name: formData.name.trim(),
+            phone: formData.phone.trim(),
+            comment: formData.comment.trim() || null,
           },
-        });
+        };
+        await Promise.allSettled([
+          supabase.functions.invoke("send-telegram", { body: notificationPayload }),
+          supabase.functions.invoke("send-max", { body: notificationPayload }),
+        ]);
       } catch (tgError) {
-        console.error("Telegram notification error:", tgError);
+        console.error("Notification error:", tgError);
       }
 
       toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
