@@ -33,6 +33,7 @@ import { Loader2, Search, Eye, Package, MapPin, Phone, Mail, Calendar, Truck, Be
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { TelegramSettings } from "@/components/admin/TelegramSettings";
+import { MaxSettings } from "@/components/admin/MaxSettings";
 
 interface OrderItem {
   id: string;
@@ -408,7 +409,10 @@ export default function AdminOrdersPage() {
         </TabsContent>
 
         <TabsContent value="notifications">
-          <TelegramSettings />
+          <div className="space-y-6">
+            <TelegramSettings />
+            <MaxSettings />
+          </div>
         </TabsContent>
       </Tabs>
 
