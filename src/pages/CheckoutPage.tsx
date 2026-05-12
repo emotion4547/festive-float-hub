@@ -224,32 +224,34 @@ const CheckoutPage = () => {
 
         // Send to Telegram
         try {
-          await supabase.functions.invoke("send-telegram", {
-            body: {
-              type: "order",
-              data: {
-                orderNumber: orderData.order_number,
-                customerName: formData.name,
-                customerPhone: formData.phone,
-                customerEmail: formData.email || null,
-                deliveryMethod: formData.deliveryMethod,
-                deliveryAddress: deliveryAddress,
-                deliveryDate: formData.deliveryDate || null,
-                deliveryTime: formData.deliveryTime || null,
-                paymentMethod: formData.paymentMethod,
-                total: finalTotal,
-                items: items.map(item => ({
-                  name: item.product.name,
-                  quantity: item.quantity,
-                  price: item.product.price,
-                  productId: String(item.product.id),
-                })),
-                comment: formData.comment || null,
-              },
+          const notificationPayload = {
+            type: "order" as const,
+            data: {
+              orderNumber: orderData.order_number,
+              customerName: formData.name,
+              customerPhone: formData.phone,
+              customerEmail: formData.email || null,
+              deliveryMethod: formData.deliveryMethod,
+              deliveryAddress: deliveryAddress,
+              deliveryDate: formData.deliveryDate || null,
+              deliveryTime: formData.deliveryTime || null,
+              paymentMethod: formData.paymentMethod,
+              total: finalTotal,
+              items: items.map(item => ({
+                name: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+                productId: String(item.product.id),
+              })),
+              comment: formData.comment || null,
             },
-          });
+          };
+          await Promise.allSettled([
+            supabase.functions.invoke("send-telegram", { body: notificationPayload }),
+            supabase.functions.invoke("send-max", { body: notificationPayload }),
+          ]);
         } catch (tgError) {
-          console.error("Telegram notification error:", tgError);
+          console.error("Notification error:", tgError);
         }
 
         setOrderNumber(orderData.order_number);
