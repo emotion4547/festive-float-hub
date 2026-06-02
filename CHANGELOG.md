@@ -28,6 +28,22 @@
 1. `src/pages/ContactsPage.tsx`
 2. `src/components/layout/MobileMenu.tsx`
 
+### Уведомления через MAX (Messaggio)
+
+- Добавлен Edge Function `send-max` для отправки уведомлений в мессенджер MAX
+- Новый компонент `MaxSettings.tsx` в админ-панели (вкладка "Уведомления")
+- Поддержка двух типов уведомлений: новый заказ и заявка на обратный звонок
+- Параллельная отправка уведомлений в Telegram и MAX (Promise.allSettled)
+- Интеграция в оформление заказа (`CheckoutPage.tsx`) и форму обратного звонка (`CallbackFormDialog.tsx`)
+- Настройки токена и chat_id хранятся в таблице `site_settings`
+
+#### Затронутые файлы:
+1. `supabase/functions/send-max/index.ts` — Edge Function для MAX API (новый)
+2. `src/components/admin/MaxSettings.tsx` — настройки MAX (новый)
+3. `src/pages/admin/AdminOrdersPage.tsx` — добавлен блок настроек MAX
+4. `src/pages/CheckoutPage.tsx` — параллельная отправка Telegram + MAX
+5. `src/components/CallbackFormDialog.tsx` — параллельная отправка Telegram + MAX
+
 ### Удаление упоминаний возврата
 
 - Убраны все упоминания «возврат» по всему сайту
