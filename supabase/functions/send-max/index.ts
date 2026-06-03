@@ -9,7 +9,7 @@ const corsHeaders = {
 const SITE_URL = 'https://radugaprazdnika.ru';
 
 interface MaxPayload {
-  type: 'callback' | 'order';
+  type: 'callback' | 'order' | 'test';
   data: Record<string, unknown>;
 }
 
@@ -47,7 +47,9 @@ serve(async (req) => {
     const payload: MaxPayload = await req.json();
     let message = '';
 
-    if (payload.type === 'callback') {
+    if (payload.type === 'test') {
+      message = '✅ <b>Тестовое сообщение</b>\n\nНастройки уведомлений MAX работают корректно!';
+    } else if (payload.type === 'callback') {
       const { name, phone, comment } = payload.data as { name: string; phone: string; comment?: string };
       message = `📞 <b>Заявка на обратный звонок</b>\n\n` +
         `👤 Имя: ${esc(name)}\n` +
@@ -107,7 +109,7 @@ serve(async (req) => {
       throw new Error('Unknown message type');
     }
 
-    const maxUrl = `https://botapi.max.ru/messages?chat_id=${encodeURIComponent(MAX_CHAT_ID)}&disable_link_preview=true`;
+    const maxUrl = `https://platform-api.max.ru/messages?chat_id=${encodeURIComponent(MAX_CHAT_ID)}&disable_link_preview=true`;
 
     const response = await fetch(maxUrl, {
       method: 'POST',
