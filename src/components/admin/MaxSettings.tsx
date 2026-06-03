@@ -94,39 +94,28 @@ export function MaxSettings() {
     setTestResult(null);
 
     try {
-      const url = `https://botapi.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": botToken,
-        },
-        body: JSON.stringify({
-          text: "✅ <b>Тестовое сообщение</b>\n\nНастройки уведомлений MAX работают корректно!",
-          format: "html",
-        }),
+      await saveSettings();
+
+      const { data, error } = await supabase.functions.invoke("send-max", {
+        body: { type: "test", data: {} },
       });
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (response.ok) {
+      if (data?.success) {
         setTestResult("success");
         toast({ title: "Тест успешен!", description: "Сообщение отправлено в MAX" });
       } else {
-        setTestResult("error");
-        toast({
-          variant: "destructive",
-          title: "Ошибка MAX",
-          description: result.message || result.error || "Не удалось отправить сообщение",
-        });
+        throw new Error(data?.error || "Не удалось отправить сообщение");
       }
     } catch (error) {
       console.error("Test error:", error);
+      const message = error instanceof Error ? error.message : "Не удалось отправить сообщение";
       setTestResult("error");
       toast({
         variant: "destructive",
-        title: "Ошибка сети",
-        description: "Не удалось подключиться к MAX API",
+        title: "Ошибка MAX",
+        description: message,
       });
     } finally {
       setTesting(false);
