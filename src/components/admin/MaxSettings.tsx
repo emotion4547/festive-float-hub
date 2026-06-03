@@ -94,10 +94,13 @@ export function MaxSettings() {
     setTestResult(null);
 
     try {
-      const url = `https://botapi.max.ru/messages?access_token=${encodeURIComponent(botToken)}&chat_id=${encodeURIComponent(chatId)}`;
+      const url = `https://botapi.max.ru/messages?chat_id=${encodeURIComponent(chatId)}`;
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": botToken,
+        },
         body: JSON.stringify({
           text: "✅ <b>Тестовое сообщение</b>\n\nНастройки уведомлений MAX работают корректно!",
           format: "html",
