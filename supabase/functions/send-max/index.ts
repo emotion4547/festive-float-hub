@@ -107,11 +107,14 @@ serve(async (req) => {
       throw new Error('Unknown message type');
     }
 
-    const maxUrl = `https://botapi.max.ru/messages?access_token=${encodeURIComponent(MAX_BOT_TOKEN)}&chat_id=${encodeURIComponent(MAX_CHAT_ID)}&disable_link_preview=true`;
+    const maxUrl = `https://botapi.max.ru/messages?chat_id=${encodeURIComponent(MAX_CHAT_ID)}&disable_link_preview=true`;
 
     const response = await fetch(maxUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': MAX_BOT_TOKEN,
+      },
       body: JSON.stringify({
         text: message,
         format: 'html',
